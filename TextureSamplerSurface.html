@@ -4,7 +4,7 @@
 <title>Analytical Surfaces Evaluated By the GPU Texture Sampler</title>
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
-canvas#RenderWindow {border:2px solid #00FF00;width:600px; height:600px;}
+canvas#RenderWindow {border:2px solid #00FF00;width:800px; height:800px;}
 </style>
 <script>
 /*=========================================================================================
@@ -21,11 +21,11 @@ var vertexShaderSource = `#version 300 es
 in vec4 a_position;
 
 // outputs
-out vec2 v_uv;
+out vec2 v_screenPosition;  // in [-0.5, 0.5]
 
 // logic 
 void main() {
-    v_uv = a_position.xy * 0.5 + 0.5;
+    v_screenPosition = a_position.xy / 2.0;
     gl_Position = vec4(a_position.xy, 0.0, 1.0);
 }
 `;
@@ -38,10 +38,9 @@ var fragmentShaderSourceTop = `#version 300 es
 precision mediump float;
 
 // inputs
-in vec2 v_uv;
+in vec2 v_screenPosition;  // in [-0.5, 0.5]
 
 // uniforms
-uniform float u_time;
 uniform vec3 u_mouse;  // z,y:  percent of screen. z: mouse button down or not
 
 // outputs
@@ -71,14 +70,41 @@ var fragmentShaderSource11 =`
 // Bilinear Code Begin
 uniform sampler2D u_texture11;
 
+/*
 float SurfaceHeight (vec2 uv)
 {
     return texture(u_texture11, (uv + 0.5) / 2.0).r;
 }
+*/
+
+float SurfaceHeight (vec2 uv)
+{
+    uv.x = 1.0 - uv.x;
+    float A = texture(u_texture11, vec2(0.25, 0.25)).r;
+    float B = texture(u_texture11, vec2(0.75, 0.25)).r;
+    float C = texture(u_texture11, vec2(0.25, 0.75)).r;
+    float D = texture(u_texture11, vec2(0.75, 0.75)).r;   
+
+    float a = mix(A, B, uv.x); 
+    float b = mix(B, C, uv.x);
+
+    return mix(a, b, uv.y);
+}
+
 // Bilinear Code End
 `;
  
  var fragmentShaderSourceBottom =`
+
+vec3 SurfaceNormal (vec2 uv)
+{
+    float eps = 0.01;
+    vec3 n = vec3( SurfaceHeight(vec2(uv.x-eps,uv.y)) - SurfaceHeight(vec2(uv.x+eps,uv.y)),
+             2.0*eps,
+             SurfaceHeight(vec2(uv.x,uv.y-eps)) - SurfaceHeight(vec2(uv.x,uv.y+eps)));
+    return normalize( n );
+}
+
 // logic
 void main() {
 
@@ -104,12 +130,10 @@ void main() {
     //-------------------------
     //------ Ray Setup --------
     //-------------------------
-
-    vec2 percent = v_uv - vec2(0.5,0.5);
     
     vec3 rayTarget = (cameraFwd * vec3(cameraDistance,cameraDistance,cameraDistance))
-                   - (cameraLeft * percent.x * cameraViewWidth)
-                   + (cameraUp * percent.y * cameraViewHeight);
+                   - (cameraLeft * v_screenPosition.x * cameraViewWidth)
+                   + (cameraUp * v_screenPosition.y * cameraViewHeight);
     vec3 rayDir = normalize(rayTarget);
 
     //-------------------------
@@ -123,9 +147,6 @@ void main() {
         outColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
-
-    // else set the pixel to dark green to show the box boundaries by default
-    outColor = vec4(0.0, 0.2, 0.0, 1.0);
 
     //-------------------------
     //------ Ray March --------
@@ -141,20 +162,59 @@ void main() {
     {
         bool isAbove = rayPos.y > SurfaceHeight(rayPos.xz);
         hit = (startedAbove != isAbove);
+        if (hit)
+          break;
         rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);
     }
 
-    if (hit)
+    //-------------------------
+    //------- Shading ---------
+    //-------------------------    
+    outColor.w = 1.0;
+
+    // if the surface in the box is missed, set to dark green to show where the box is
+    if (!hit)
     {
-        outColor = vec4(1.0, 0.1, 0.1, 1.0);
+        outColor.xyz = vec3(0.0, 0.2, 0.0);
+        return;    
     }
+
+    vec3 reverseLightDir = normalize(vec3(2.0, 1.0, 0.4));
+
+    // TODO: make this a function of uv, so we can show isolines (yellow?)
+    // TODO: should we also make a very slight checkerboard pattern? (red with slightly darker red?)
+    vec3 diffuseColor = vec3(1.0, 0.0, 0.0);
+
+    vec3 normal = SurfaceNormal(rayPos.xz);
+    if (dot(normal, rayDir) > 0.0)
+      normal *= -1.0;
+
+    // ambient
+    // TODO: add ambient again after diffuse fixed
+    outColor.xyz = diffuseColor * vec3(0.01);
+
+    // diffuse
+    // TODO: diffuse seems to be too smooth / too solid of a color
+    float dp = clamp(dot(normal, reverseLightDir), 0.0, 1.0);
+    outColor.xyz += diffuseColor * dp;
+
+    // specular
+    // TODO: specular has banding, how to fix that? check at work too.
+    vec3 reflection = reflect(reverseLightDir, normal);
+    dp = clamp(dot(rayDir, reflection), 0.0, 1.0);
+    outColor.xyz += pow(dp, 20.0); 
+
+    // gamma correct and clamp
+    outColor.xyz = sqrt(outColor.xyz);
+    outColor = clamp(outColor, 0.0, 1.0);
 }
 
 `;
 
 var gl = null;
 var canvas = null;
-var uniformTime = null;
+var uniformMouse = null;
+var mouse = {};
 
 //=========================================================================================
 function createShader (gl, type, source) {
@@ -235,8 +295,9 @@ function SetVertexAttributeData (gl, program, name, type, count, values)
 //=========================================================================================
 function DrawScene ()
 {
-    // update time
-    gl.uniform1f(uniformTime, (Date.now()%1000)/1000);
+    // update uniforms
+    gl.uniform3fv(uniformMouse, [mouse.PosX / 800,mouse.PosY / 800,mouse.IsDown]);
+    // TODO: no magic numbers for width / height here!
 
     // make sure gl is rendering to the the right size and has the right viewport info
     resize(gl.canvas);
@@ -253,21 +314,64 @@ function DrawScene ()
 }
 
 //=========================================================================================
+// TODO: make this code more in line w/ code style
+function piGetCoords( obj )
+{
+    var x = 0;
+    var y = 0; 
+    do
+    {
+         x += obj.offsetLeft;
+         y += obj.offsetTop;
+    }while( obj = obj.offsetParent );
+
+    return { mX:x, mY:y };
+}
+
+//=========================================================================================
 function SetupGL ()
 {
     // setup webgl2
-	canvas = document.getElementById("RenderWindow");
-	gl = canvas.getContext("webgl2");
-	if (!gl)
-	{
-		alert("This page requires WebGL2, which doesn't seem to be enabled ):");
-		return;
-	}
+    canvas = document.getElementById("RenderWindow");
+    gl = canvas.getContext("webgl2");
+    if (!gl)
+    {
+        alert("This page requires WebGL2, which doesn't seem to be enabled ):");
+        return;
+    }
+
+    // TODO: rename SetupGL to something else since we also hook up mouse stuff?
+    // TODO: make this code more in line w/ code style
+    canvas.onmousedown = function(ev)
+    {
+        var pos = piGetCoords( canvas );
+        mouse.OriX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+        mouse.OriY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+        mouse.PosX = mouse.OriX;
+        mouse.PosY = mouse.OriY;
+        mouse.IsDown = true;
+    }
+    canvas.onmousemove = function(ev)
+    {
+        if( mouse.IsDown )
+        {
+            var pos = piGetCoords( canvas );
+            mouse.PosX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+            mouse.PosY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+        }
+    }
+    canvas.onmouseup = function(ev)
+    {
+        mouse.IsDown = false;
+        mouse.OriX = -Math.abs( mouse.OriX );
+        mouse.OriY = -Math.abs( mouse.OriY );
+    }    
+
 
     // compile shaders
-	var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-	var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceTop + fragmentShaderSource11 + fragmentShaderSourceBottom);
-	var program = createProgram(gl, vertexShader, fragmentShader);
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceTop + fragmentShaderSource11 + fragmentShaderSourceBottom);
+    var program = createProgram(gl, vertexShader, fragmentShader);
 
     // vertex data - a single triangle that covers the screen
     var vao = gl.createVertexArray();
@@ -281,15 +385,15 @@ function SetupGL ()
     );   
 
     // get uniforms
-    uniformTime = gl.getUniformLocation(program, "u_time"); 
+    uniformMouse = gl.getUniformLocation(program, "u_mouse"); 
 
     // one time setup
     gl.clearColor(0, 0, 0, 0);
     gl.useProgram(program); 
 
     var textureData = [
-         20, 0, 0, 0,   40, 0, 0, 0,
-         60, 0, 0, 0,   50, 0, 0, 0
+          20, 0, 0, 0,   40, 0, 0, 0,
+         200, 0, 0, 0,   30, 0, 0, 0
     ];
 
     texture11 = createTextureRGBA(
@@ -326,26 +430,33 @@ To enable WebGL2 before then on chrome or other browsers, see this link:
 <hr>
 <pre>
 TODO:
-* make texture use a single color channel, after you get it working for bilinear case! R8 format doesnt seem to work, first try ):
-* get raytracing / raymarching working with a dumb height field to start (sine based?)
-* copy code from https://www.shadertoy.com/view/XtfSRj
-* hook up u_mouse so the camera can rotate? Or have JS tell shader the camera position and have it handle it?
+* to get normal, maybe make eps be 1/256 since it's 8 bit interpolated. try it and see.
 
-* shade the points!
+* make sliders for adjusting control points (0 to 255).  Remake texture when they are modified.
+
+* do you see banding at work with the software bilinear?
+* make texture use a single color channel, after you get it working for bilinear case! R8 format doesnt seem to work, first try ):
+
+* copy code from https://www.shadertoy.com/view/XtfSRj
 
 * get rid of u_time, don't need it!
-* v_uv is converted from -1,1 to 0,1 in VS, then converted back in PS. Maybe rename it and make it stay -1,1!
 
 * write out to console to do error handling, wherever something can go wrong
 
 * explain how it's rendered. raytrace then ray march.  Mention that the raytrace could be replaced by drawing the cube (with back face culling) to do rasterization instead of full screen pass!
 * also, for each surface type chosen, show texture layout and shader code source.
+* explain that you drag mouse to rotate box.
+
+? should the camera be improved?
+ * either make it so dragging x and y always rotates relative x and y
+ * or, when mouse is up, keep the last position still.
 
 * Workings
  * 3d volume texture RGBA for storage
  * let you specify bernstein coefficients
  * show it as raymarched surface.  show isolines.  raytrace cube, then raymarch interior.
  * drop down for surface degree: (1,1),  (2,1), (2,2), (3,3)
+ * choose texture or software interpolation?
 * show fps
 * should we show texture layout and shader code? maybe just texture layout and instructions for sampling surface?
 * link to post on how to convert polys to bernstein
