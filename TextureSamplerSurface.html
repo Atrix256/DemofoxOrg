@@ -31,7 +31,7 @@ void main() {
 `;
  
 //=========================================================================================
-var fragmentShaderSource = `#version 300 es
+var fragmentShaderSourceTop = `#version 300 es
 
 #define NUM_RAY_STEPS 20
 
@@ -64,12 +64,21 @@ bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir
     
     return time.y>time.x && time.y>0.0;
 }
+`;
+
+var fragmentShaderSource11 =`
+
+// Bilinear Code Begin
+uniform sampler2D u_texture11;
 
 float SurfaceHeight (vec2 uv)
 {
-    return uv.x*uv.y * 0.5 + 0.25;
+    return texture(u_texture11, (uv + 0.5) / 2.0).r;
 }
+// Bilinear Code End
+`;
  
+ var fragmentShaderSourceBottom =`
 // logic
 void main() {
 
@@ -140,6 +149,7 @@ void main() {
         outColor = vec4(1.0, 0.1, 0.1, 1.0);
     }
 }
+
 `;
 
 var gl = null;
@@ -173,6 +183,17 @@ function createProgram (gl, vertexShader, fragmentShader) {
  
   console.log(gl.getProgramInfoLog(program));
   gl.deleteProgram(program);
+}
+
+//=========================================================================================
+function createTextureRGBA (byteArrayWithRGBAData, width, height) {
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(byteArrayWithRGBAData));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return texture;
 }
 
 //=========================================================================================
@@ -245,7 +266,7 @@ function SetupGL ()
 
     // compile shaders
 	var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-	var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+	var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceTop + fragmentShaderSource11 + fragmentShaderSourceBottom);
 	var program = createProgram(gl, vertexShader, fragmentShader);
 
     // vertex data - a single triangle that covers the screen
@@ -266,6 +287,22 @@ function SetupGL ()
     gl.clearColor(0, 0, 0, 0);
     gl.useProgram(program); 
 
+    var textureData = [
+         20, 0, 0, 0,   40, 0, 0, 0,
+         60, 0, 0, 0,   50, 0, 0, 0
+    ];
+
+    texture11 = createTextureRGBA(
+        textureData,
+        2, 2
+    );
+
+    var uniformTexture11 = gl.getUniformLocation(program, "u_texture11"); 
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture11);
+    gl.uniform1i(uniformTexture11, 0);
+
+
     // start the render loop
     requestAnimationFrame(DrawScene);
 }
@@ -282,15 +319,17 @@ To enable WebGL2 before then on chrome or other browsers, see this link:
 <br>
 <canvas id="RenderWindow"></canvas>
 
+
 </body></html>
 
 <br>
 <hr>
 <pre>
 TODO:
+* make texture use a single color channel, after you get it working for bilinear case! R8 format doesnt seem to work, first try ):
 * get raytracing / raymarching working with a dumb height field to start (sine based?)
 * copy code from https://www.shadertoy.com/view/XtfSRj
-* hook up u_mouse
+* hook up u_mouse so the camera can rotate? Or have JS tell shader the camera position and have it handle it?
 
 * shade the points!
 
@@ -298,6 +337,9 @@ TODO:
 * v_uv is converted from -1,1 to 0,1 in VS, then converted back in PS. Maybe rename it and make it stay -1,1!
 
 * write out to console to do error handling, wherever something can go wrong
+
+* explain how it's rendered. raytrace then ray march.  Mention that the raytrace could be replaced by drawing the cube (with back face culling) to do rasterization instead of full screen pass!
+* also, for each surface type chosen, show texture layout and shader code source.
 
 * Workings
  * 3d volume texture RGBA for storage
