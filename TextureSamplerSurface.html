@@ -32,7 +32,9 @@ void main() {
  
 //=========================================================================================
 var fragmentShaderSource = `#version 300 es
- 
+
+#define NUM_RAY_STEPS 20
+
 precision mediump float;
 
 // inputs
@@ -40,13 +42,103 @@ in vec2 v_uv;
 
 // uniforms
 uniform float u_time;
+uniform vec3 u_mouse;  // z,y:  percent of screen. z: mouse button down or not
 
 // outputs
 out vec4 outColor;
+
+bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir, out vec2 time)
+{
+    vec3 roo = rayPos - (boxMin+boxMax)*0.5;
+    vec3 rad = (boxMax - boxMin)*0.5;
+
+    vec3 m = 1.0/rayDir;
+    vec3 n = m*roo;
+    vec3 k = abs(m)*rad;
+    
+    vec3 t1 = -n - k;
+    vec3 t2 = -n + k;
+
+    time = vec2( max( max( t1.x, t1.y ), t1.z ),
+                 min( min( t2.x, t2.y ), t2.z ) );
+    
+    return time.y>time.x && time.y>0.0;
+}
+
+float SurfaceHeight (vec2 uv)
+{
+    return uv.x*uv.y * 0.5 + 0.25;
+}
  
 // logic
 void main() {
-  outColor = vec4(v_uv, fract(u_time), 1);
+
+    //-------------------------
+    //----- Camera Setup ------
+    //-------------------------
+
+    vec3 cameraAt   = vec3(0.5,0.5,0.5);
+
+    float angleX = u_mouse.z > 0.0 ? 6.28 * u_mouse.x : 3.14 ;
+    float angleY = u_mouse.z > 0.0 ? (u_mouse.y * 6.28) - 0.4 : 0.5;
+    vec3 cameraPos  = (vec3(sin(angleX)*cos(angleY), sin(angleY), cos(angleX)*cos(angleY))) * 3.0;
+    cameraPos += vec3(0.5,0.5,0.5);
+
+    vec3 cameraFwd  = normalize(cameraAt - cameraPos);
+    vec3 cameraLeft  = normalize(cross(normalize(cameraAt - cameraPos), vec3(0.0,sign(cos(angleY)),0.0)));
+    vec3 cameraUp   = normalize(cross(cameraLeft, cameraFwd));
+
+    float cameraViewWidth   = 6.0;
+    float cameraViewHeight  = cameraViewWidth;
+    float cameraDistance    = 6.0;  // intuitively backwards!
+
+    //-------------------------
+    //------ Ray Setup --------
+    //-------------------------
+
+    vec2 percent = v_uv - vec2(0.5,0.5);
+    
+    vec3 rayTarget = (cameraFwd * vec3(cameraDistance,cameraDistance,cameraDistance))
+                   - (cameraLeft * percent.x * cameraViewWidth)
+                   + (cameraUp * percent.y * cameraViewHeight);
+    vec3 rayDir = normalize(rayTarget);
+
+    //-------------------------
+    //------ Ray Trace --------
+    //-------------------------
+    
+    // if the ray misses the bounding box, bail out
+    vec2 rayMinMax;
+    if (!RayIntersectAABox(vec3(0.0, 0.0, 0.0), vec3(1.0,1.0,1.0), cameraPos, rayDir, rayMinMax))
+    {
+        outColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+
+    // else set the pixel to dark green to show the box boundaries by default
+    outColor = vec4(0.0, 0.2, 0.0, 1.0);
+
+    //-------------------------
+    //------ Ray March --------
+    //-------------------------
+
+    vec3 rayPos = clamp(cameraPos + rayDir * rayMinMax.x, 0.0, 1.0);
+    vec3 rayStop = clamp(cameraPos + rayDir * rayMinMax.y, 0.0, 1.0);
+    vec3 rayDelta = (rayStop - rayPos) / float(NUM_RAY_STEPS-1);
+
+    bool startedAbove = rayPos.y > SurfaceHeight(rayPos.xz);
+    bool hit = false;
+    for (int i = 0; i < NUM_RAY_STEPS; ++i)
+    {
+        bool isAbove = rayPos.y > SurfaceHeight(rayPos.xz);
+        hit = (startedAbove != isAbove);
+        rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);
+    }
+
+    if (hit)
+    {
+        outColor = vec4(1.0, 0.1, 0.1, 1.0);
+    }
 }
 `;
 
@@ -105,7 +197,6 @@ function SetVertexAttributeData (gl, program, name, type, count, values)
     var attributeLocation = gl.getAttribLocation(program, name);
     if (attributeLocation == -1)
         return;
-    // TODO: need to error handle somehow or something.
 
     var buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -198,6 +289,15 @@ To enable WebGL2 before then on chrome or other browsers, see this link:
 <pre>
 TODO:
 * get raytracing / raymarching working with a dumb height field to start (sine based?)
+* copy code from https://www.shadertoy.com/view/XtfSRj
+* hook up u_mouse
+
+* shade the points!
+
+* get rid of u_time, don't need it!
+* v_uv is converted from -1,1 to 0,1 in VS, then converted back in PS. Maybe rename it and make it stay -1,1!
+
+* write out to console to do error handling, wherever something can go wrong
 
 * Workings
  * 3d volume texture RGBA for storage
@@ -212,6 +312,7 @@ TODO:
 * have blog post link to this
 * link to demos from main bezier page as well
 * link to http://webgl2fundamentals.org/
+* checkbox for control points and containing box.
 
 * clean up this code / add comments etc?
 ? get demofox.org into this repository?
