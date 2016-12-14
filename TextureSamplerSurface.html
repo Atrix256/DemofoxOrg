@@ -1,7 +1,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Analytical Surfaces Evaluated By the GPU Texture Sampler</title>
+<title>Analytical Surfaces Evaluated by the GPU Texture Sampler</title>
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
 canvas#RenderWindow {border:2px solid #00FF00;width:800px; height:800px;}
@@ -15,8 +15,7 @@ https://twitter.com/Atrix256
 =========================================================================================*/
 
 //=========================================================================================
-var vertexShaderSource = `#version 300 es
- 
+var vertexShaderSource = ` 
 // inputs
 in vec4 a_position;
 
@@ -31,8 +30,7 @@ void main() {
 `;
  
 //=========================================================================================
-var fragmentShaderSourceTop = `#version 300 es
-
+var fragmentShaderSource = `
 #define NUM_RAY_STEPS 20
 
 precision mediump float;
@@ -45,6 +43,44 @@ uniform vec3 u_mouse;  // z,y:  percent of screen. z: mouse button down or not
 
 // outputs
 out vec4 outColor;
+
+// ----- STATIC_BRANCH_DEGREE 0: (1,1) HW Interpolation -----
+#if STATIC_BRANCH_DEGREE == 0
+
+    #define DEGREE_X 1
+    #define DEGREE_Y 1
+
+    uniform sampler2D u_texture11;
+
+    float SurfaceHeight (vec2 uv)
+    {
+        return texture(u_texture11, (uv + 0.5) / 2.0).r;
+    }
+
+// ----- STATIC_BRANCH_DEGREE 1: (1,1) SW Interpolation -----
+#elif STATIC_BRANCH_DEGREE == 1
+
+    #define DEGREE_X 1
+    #define DEGREE_Y 1
+
+    uniform sampler2D u_texture11;
+
+    float SurfaceHeight (vec2 uv)
+    {
+        uv.x = 1.0 - uv.x;
+        float A = texture(u_texture11, vec2(0.25, 0.25)).r;
+        float B = texture(u_texture11, vec2(0.75, 0.25)).r;
+        float C = texture(u_texture11, vec2(0.25, 0.75)).r;
+        float D = texture(u_texture11, vec2(0.75, 0.75)).r;   
+
+        float a = mix(A, B, uv.x); 
+        float b = mix(B, C, uv.x);
+
+        return mix(a, b, uv.y);
+    }
+
+#endif
+// ------------------------
 
 bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir, out vec2 time)
 {
@@ -63,46 +99,32 @@ bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir
     
     return time.y>time.x && time.y>0.0;
 }
-`;
-
-var fragmentShaderSource11 =`
-
-// Bilinear Code Begin
-uniform sampler2D u_texture11;
-
-/*
-float SurfaceHeight (vec2 uv)
-{
-    return texture(u_texture11, (uv + 0.5) / 2.0).r;
-}
-*/
-
-float SurfaceHeight (vec2 uv)
-{
-    uv.x = 1.0 - uv.x;
-    float A = texture(u_texture11, vec2(0.25, 0.25)).r;
-    float B = texture(u_texture11, vec2(0.75, 0.25)).r;
-    float C = texture(u_texture11, vec2(0.25, 0.75)).r;
-    float D = texture(u_texture11, vec2(0.75, 0.75)).r;   
-
-    float a = mix(A, B, uv.x); 
-    float b = mix(B, C, uv.x);
-
-    return mix(a, b, uv.y);
-}
-
-// Bilinear Code End
-`;
- 
- var fragmentShaderSourceBottom =`
 
 vec3 SurfaceNormal (vec2 uv)
 {
-    float eps = 0.01;
+    float eps = 0.05;
     vec3 n = vec3( SurfaceHeight(vec2(uv.x-eps,uv.y)) - SurfaceHeight(vec2(uv.x+eps,uv.y)),
              2.0*eps,
              SurfaceHeight(vec2(uv.x,uv.y-eps)) - SurfaceHeight(vec2(uv.x,uv.y+eps)));
     return normalize( n );
+}
+
+vec3 SurfaceDiffuse (vec2 uv)
+{
+    // checkerboard pattern
+    float checkerboard = mod(floor(uv.x * 10.0) + floor(uv.y * 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
+    vec3 ret = vec3(checkerboard, 0.0, 0.0);
+
+    // isolines
+    float distx = abs(0.5 - fract(uv.x * float(DEGREE_X) + 0.5)) / float(DEGREE_X);
+    distx = smoothstep(0.0, 0.01, distx);
+    ret = mix(vec3(1.0, 1.0, 0.0), ret, distx);
+
+    float disty = abs(0.5 - fract(uv.y * float(DEGREE_Y) + 0.5)) / float(DEGREE_Y);
+    disty = smoothstep(0.0, 0.01, disty);
+    ret = mix(vec3(1.0, 1.0, 0.0), ret, disty);
+
+    return ret;
 }
 
 // logic
@@ -125,7 +147,7 @@ void main() {
 
     float cameraViewWidth   = 6.0;
     float cameraViewHeight  = cameraViewWidth;
-    float cameraDistance    = 6.0;  // intuitively backwards!
+    float cameraDistance    = 10.0;  // intuitively backwards!
 
     //-------------------------
     //------ Ray Setup --------
@@ -155,60 +177,69 @@ void main() {
     vec3 rayPos = clamp(cameraPos + rayDir * rayMinMax.x, 0.0, 1.0);
     vec3 rayStop = clamp(cameraPos + rayDir * rayMinMax.y, 0.0, 1.0);
     vec3 rayDelta = (rayStop - rayPos) / float(NUM_RAY_STEPS-1);
+    float hitTime = rayMinMax.x;
+    float deltaT = (rayMinMax.y - rayMinMax.x) / float(NUM_RAY_STEPS);
+    float lastHeight = 0.0;
+    float lastY = 0.0;
+    float height = 0.0;
 
     bool startedAbove = rayPos.y > SurfaceHeight(rayPos.xz);
     bool hit = false;
     for (int i = 0; i < NUM_RAY_STEPS; ++i)
     {
-        bool isAbove = rayPos.y > SurfaceHeight(rayPos.xz);
+        height = SurfaceHeight(rayPos.xz);
+
+        bool isAbove = rayPos.y > height;
         hit = (startedAbove != isAbove);
         if (hit)
           break;
+
+        lastHeight = height;
+        lastY = rayPos.y;     
         rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);
+        hitTime += deltaT;
     }
+
+    // if the surface in the box is missed, set to dark green to show where the box is
+    if (!hit)
+    {
+        outColor = vec4(0.0, 0.2, 0.0, 1.0);
+        return;    
+    }    
+
+    // estimate where the hit was
+    hitTime = hitTime - deltaT + deltaT*(lastHeight-lastY)/(rayPos.y-lastY-height+lastHeight);
+    vec3 rayHitPos = cameraPos + rayDir * hitTime;
 
     //-------------------------
     //------- Shading ---------
     //-------------------------    
     outColor.w = 1.0;
 
-    // if the surface in the box is missed, set to dark green to show where the box is
-    if (!hit)
-    {
-        outColor.xyz = vec3(0.0, 0.2, 0.0);
-        return;    
-    }
+    vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
 
-    vec3 reverseLightDir = normalize(vec3(2.0, 1.0, 0.4));
+    vec3 diffuseColor = SurfaceDiffuse(rayHitPos.xz);
 
-    // TODO: make this a function of uv, so we can show isolines (yellow?)
-    // TODO: should we also make a very slight checkerboard pattern? (red with slightly darker red?)
-    vec3 diffuseColor = vec3(1.0, 0.0, 0.0);
-
-    vec3 normal = SurfaceNormal(rayPos.xz);
+    vec3 normal = SurfaceNormal(rayHitPos.xz);
     if (dot(normal, rayDir) > 0.0)
       normal *= -1.0;
 
     // ambient
-    // TODO: add ambient again after diffuse fixed
     outColor.xyz = diffuseColor * vec3(0.01);
 
     // diffuse
-    // TODO: diffuse seems to be too smooth / too solid of a color
     float dp = clamp(dot(normal, reverseLightDir), 0.0, 1.0);
     outColor.xyz += diffuseColor * dp;
 
     // specular
-    // TODO: specular has banding, how to fix that? check at work too.
     vec3 reflection = reflect(reverseLightDir, normal);
     dp = clamp(dot(rayDir, reflection), 0.0, 1.0);
-    outColor.xyz += pow(dp, 20.0); 
+    outColor.xyz += pow(dp, 60.0); 
 
     // gamma correct and clamp
     outColor.xyz = sqrt(outColor.xyz);
     outColor = clamp(outColor, 0.0, 1.0);
 }
-
 `;
 
 var gl = null;
@@ -217,9 +248,9 @@ var uniformMouse = null;
 var mouse = {};
 
 //=========================================================================================
-function createShader (gl, type, source) {
+function createShader (gl, type, source, staticBranches) {
   var shader = gl.createShader(type);
-  gl.shaderSource(shader, source);
+  gl.shaderSource(shader, "#version 300 es\n" + staticBranches + source);
   gl.compileShader(shader);
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
   if (success) {
@@ -296,8 +327,7 @@ function SetVertexAttributeData (gl, program, name, type, count, values)
 function DrawScene ()
 {
     // update uniforms
-    gl.uniform3fv(uniformMouse, [mouse.PosX / 800,mouse.PosY / 800,mouse.IsDown]);
-    // TODO: no magic numbers for width / height here!
+    gl.uniform3fv(uniformMouse, [mouse.PosX / gl.canvas.width, mouse.PosY / gl.canvas.height, mouse.IsDown]);
 
     // make sure gl is rendering to the the right size and has the right viewport info
     resize(gl.canvas);
@@ -369,8 +399,8 @@ function SetupGL ()
 
 
     // compile shaders
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceTop + fragmentShaderSource11 + fragmentShaderSourceBottom);
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource, "");
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 1");
     var program = createProgram(gl, vertexShader, fragmentShader);
 
     // vertex data - a single triangle that covers the screen
@@ -415,31 +445,83 @@ function SetupGL ()
 </script>
 </head>
 <body onLoad="SetupGL()">
-<h1>Analytical Surfaces Evaluated By the GPU Texture Sampler</h1>
+<h1>Analytical Surfaces Evaluated by the GPU Texture Sampler</h1>
 
 This page uses WebGL2, which will be enabled by default in chrome 56 in January 2017.<br>
 To enable WebGL2 before then on chrome or other browsers, see this link:
 <a href="http://webgl2fundamentals.org/webgl/lessons/webgl-getting-webgl2.html" target="_blank">How to use WebGL2</a><br>
 <br>
+Drag the mouse to rotate the box.<br>
+<br>
 <canvas id="RenderWindow"></canvas>
+<br>
+Degree: 
+<select id="STATIC_BRANCH_DEGREE">
+    <option value="0">(1,1) Bilinear (Hardware Interpolation)</option>
+    <option value="1">(1,1) Bilinear (Software Interpolation)</option>
+    <option value="2">(2,1) Quadratic / Linear (HW)</option>
+    <option value="3">(2,2) Biquadratic (HW)</option>
+    <option value="4">(3,3) Bicubic (HW)</option>
+</select>
+<br>
+Shading Mode: <select id="u_ShadingMode">
+    <option value="0">Lit</option>
+    <option value="1">UVs</option>
+</select>
+<br>
+Draw Bounding Box: <input type="checkbox" id="u_BoundingBox" checked="true"/><br>
+Draw Control Points: <input type="checkbox" id="u_ControlPoints" checked="true"/><br>
+<br>
+Control Points:<br>
+A: <input type="range" min="0" max="255" id="CP_A" value="0"/><br>
+B: <input type="range" min="0" max="255" id="CP_B" value="0"/><br>
+C: <input type="range" min="0" max="255" id="CP_C" value="0"/><br>
+D: <input type="range" min="0" max="255" id="CP_D" value="0"/><br>
 
+<h2>How It's Rendered</h2>
 
+The rendering is done by doing a ray trace of the bounding cube to see which rays might intersect the surface.
+<br><br>
+The rays that hit the cube then ray marchin from the start of the cube to the end of the cube to see if they hit the surface.  If they do hit the surface, they are shaded, else they are not.
+<br><br>
+Instead of doing the initial ray trace, the cube could be rendered with triangles so that it would become a rasterization process instead of a full screen raytrace vs a box.  The ray marching would then be done in the pixel shader.
+<br><br>
+The GPU texture sampler is used to calculate the y axis value (height) of the surface at a given x,z value.
+<br><br>
+TODO: put details of how each degree curve is stored / sampled<br>
+TODO: link to blog post
 </body></html>
 
 <br>
 <hr>
 <pre>
 TODO:
-* to get normal, maybe make eps be 1/256 since it's 8 bit interpolated. try it and see.
+* put the UI to the right of the canvas instead of below it!
+* Make UI functional
+* use a table to layout the UI?
 
-* make sliders for adjusting control points (0 to 255).  Remake texture when they are modified.
+* There's some weird distortion with the far side of the ray march (isolines disappear).  I think maybe our ray march isn't quite correct for that case!
 
-* do you see banding at work with the software bilinear?
+? should we have an unlit mode (show u,v coordinates as color) to not start off by showing the problem with the normals (derivatives)?
+
+* make permutations of shaders in a multidimensional array
+ * pass static branch values as #defines
+ * build them all at startup (or should we build on demand?)
+ * re-get uniforms when shader changes
+ * send whatever uniforms are present
+ * [4] -> degree
+ * [2] -> software or hardware (not sure if wanting to do for all degrees. if not, just make another "degree" option)
+ * should we do draw box / control points / isolines?  could make them uniforms
+
+? maybe actually render a cube instead of ray tracing the cube? it'd be a good learning experience!
+
+* see about doing a render fence thing to do async shader compiles in webgl2.  If compile times get long.
+
+* make sliders for adjusting control points (0 to 255).  Remake texture when they are modified.  Make a different panel for each degree (texture)
+
 * make texture use a single color channel, after you get it working for bilinear case! R8 format doesnt seem to work, first try ):
 
 * copy code from https://www.shadertoy.com/view/XtfSRj
-
-* get rid of u_time, don't need it!
 
 * write out to console to do error handling, wherever something can go wrong
 
@@ -450,6 +532,14 @@ TODO:
 ? should the camera be improved?
  * either make it so dragging x and y always rotates relative x and y
  * or, when mouse is up, keep the last position still.
+
+? why is there specular on the back of the surface? shouldn't be i don't think!
+
+? can we anti alias the checkerboard somehow?
+
+? should we add anti aliasing options?
+
+! add to blog post that bilinear is not actually a linear surface!
 
 * Workings
  * 3d volume texture RGBA for storage
@@ -470,4 +560,5 @@ TODO:
 * clean up this code / add comments etc?
 ? get demofox.org into this repository?
 ? is there a way to back up wordpress into git as well?
+
 </pre>
