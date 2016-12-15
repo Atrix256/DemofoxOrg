@@ -87,13 +87,13 @@ float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
     #define DEGREE_X 1
     #define DEGREE_Y 1
 
-    uniform sampler2D u_texture11;
+    uniform sampler2D u_texture2d;
 
     uniform vec4 u_controlPoints11;
 
     float SurfaceHeight (vec2 uv)
     {
-        return texture(u_texture11, (uv + 0.5) / 2.0).r;
+        return texture(u_texture2d, (uv + 0.5) / 2.0).r;
     }
 
     bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
@@ -120,16 +120,16 @@ float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
     #define DEGREE_X 1
     #define DEGREE_Y 1
 
-    uniform sampler2D u_texture11;
+    uniform sampler2D u_texture2d;
 
     uniform vec4 u_controlPoints11;    
 
     float SurfaceHeight (vec2 uv)
     {
-        float A = texture(u_texture11, vec2(0.25, 0.25)).r;
-        float B = texture(u_texture11, vec2(0.75, 0.25)).r;
-        float C = texture(u_texture11, vec2(0.25, 0.75)).r;
-        float D = texture(u_texture11, vec2(0.75, 0.75)).r;   
+        float A = texture(u_texture2d, vec2(0.25, 0.25)).r;
+        float B = texture(u_texture2d, vec2(0.75, 0.25)).r;
+        float C = texture(u_texture2d, vec2(0.25, 0.75)).r;
+        float D = texture(u_texture2d, vec2(0.75, 0.75)).r;   
 
         float a = mix(A, B, uv.x); 
         float b = mix(C, D, uv.x);
@@ -152,6 +152,54 @@ float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
             rayMaxTime = time;
             return true;
         }
+        return false;
+    }
+
+// ----- STATIC_BRANCH_DEGREE 3: (2,2) -----
+#elif STATIC_BRANCH_DEGREE == 3
+
+    #define DEGREE_X 2
+    #define DEGREE_Y 2
+
+    uniform sampler2D u_texture2d;
+
+    uniform vec3 u_controlPoints22A;    
+    uniform vec3 u_controlPoints22B;
+    uniform vec3 u_controlPoints22C;
+
+    float SurfaceHeight (vec2 uv)
+    {
+        vec3 value = texture(u_texture2d, (uv.xx + 0.5) / 2.0).rgb;
+
+        float t = uv.y;
+        float s = 1.0 - t;
+
+        return value.r*s*s+value.g*2.0*s*t+value.b*t*t;
+    }
+
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0, u_controlPoints22A.x, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints22A.y, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints22A.z, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints22B.x, 0.5, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints22B.y, 0.5, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints22B.z, 0.5, CONTROL_POINT_SIZE), rayPos, rayDir));  
+
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints22C.x, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints22C.y, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints22C.z, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));              
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }
+        
         return false;
     }
 
@@ -355,10 +403,15 @@ var uniformBoxColor = null;
 var uniformIsolines = null;
 var uniformDrawControlpoints = null;
 var uniformControlpoints11 = null;
-var uniformTexture11 = null;
+var uniformControlpoints22A = null;
+var uniformControlpoints22B = null;
+var uniformControlpoints22C = null;
+var uniformTexture2d = null;
 var mouse = {PosX:0, PosX:0, IsDown: false, OriX: 0, OriY: 0};
 var shaderPrograms = [];
 var currentShaderProgram = null;
+
+var texture2d = null;
 
 //=========================================================================================
 function createShader (gl, type, source, staticBranches) {
@@ -390,8 +443,9 @@ function createProgram (gl, vertexShader, fragmentShader) {
 }
 
 //=========================================================================================
-function createTextureRGBA (byteArrayWithRGBAData, width, height) {
-    var texture = gl.createTexture();
+function createTextureRGBA (texture, byteArrayWithRGBAData, width, height) {
+    if (texture == null)
+        texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(byteArrayWithRGBAData));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -461,12 +515,25 @@ function DrawScene ()
     else
         gl.uniform1i(uniformDrawControlpoints, 0);
 
-    // control points!
+    // control points
     var cp11_00 = document.getElementById("CP11_00").value / 255;
     var cp11_10 = document.getElementById("CP11_10").value / 255;
     var cp11_01 = document.getElementById("CP11_01").value / 255;
     var cp11_11 = document.getElementById("CP11_11").value / 255;
     gl.uniform4fv(uniformControlpoints11, [cp11_00, cp11_10, cp11_01, cp11_11]);
+
+    var cp22_00 = document.getElementById("CP22_00").value / 255;
+    var cp22_10 = document.getElementById("CP22_10").value / 255;
+    var cp22_20 = document.getElementById("CP22_20").value / 255;
+    gl.uniform3fv(uniformControlpoints22A, [cp22_00, cp22_10, cp22_20]);
+    var cp22_01 = document.getElementById("CP22_01").value / 255;
+    var cp22_11 = document.getElementById("CP22_11").value / 255;
+    var cp22_21 = document.getElementById("CP22_21").value / 255;
+    gl.uniform3fv(uniformControlpoints22B, [cp22_01, cp22_11, cp22_21]);
+    var cp22_02 = document.getElementById("CP22_02").value / 255;
+    var cp22_12 = document.getElementById("CP22_12").value / 255;
+    var cp22_22 = document.getElementById("CP22_22").value / 255;
+    gl.uniform3fv(uniformControlpoints22C, [cp22_02, cp22_12, cp22_22]);        
 
     // make sure gl is rendering to the the right size and has the right viewport info
     resize(gl.canvas);
@@ -499,25 +566,56 @@ function GetPos ( obj )
 //=========================================================================================
 function UpdateTexture ()
 {
-    // set up texture data from control points
-    var cp11_00 = document.getElementById("CP11_00").value;
-    var cp11_10 = document.getElementById("CP11_10").value;
-    var cp11_01 = document.getElementById("CP11_01").value;
-    var cp11_11 = document.getElementById("CP11_11").value;
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var degree = e.options[e.selectedIndex].value
 
-    var textureData = [
-        cp11_00, 0, 0, 0,
-        cp11_10, 0, 0, 0,
-        cp11_01, 0, 0, 0,
-        cp11_11, 0, 0, 0
-    ];
-    texture11 = createTextureRGBA(
-        textureData,
-        2, 2
-    );
-    gl.bindTexture(gl.TEXTURE_2D, texture11);
-    gl.uniform1i(uniformTexture11, 0);    
+    if (degree == 0 || degree == 1)
+    {
+        var cp11_00 = document.getElementById("CP11_00").value;
+        var cp11_10 = document.getElementById("CP11_10").value;
+        var cp11_01 = document.getElementById("CP11_01").value;
+        var cp11_11 = document.getElementById("CP11_11").value;
 
+        var textureData = [
+            cp11_00, 0, 0, 0,
+            cp11_10, 0, 0, 0,
+            cp11_01, 0, 0, 0,
+            cp11_11, 0, 0, 0
+        ];
+        texture2d = createTextureRGBA(
+            texture2d,
+            textureData,
+            2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_2D, texture2d);
+        gl.uniform1i(uniformTexture2d, 0);    
+    }
+    else if (degree == 3)
+    {
+        var cp22_00 = document.getElementById("CP22_00").value;
+        var cp22_10 = document.getElementById("CP22_10").value;
+        var cp22_20 = document.getElementById("CP22_20").value;
+        var cp22_01 = document.getElementById("CP22_01").value;
+        var cp22_11 = document.getElementById("CP22_11").value;
+        var cp22_21 = document.getElementById("CP22_21").value;
+        var cp22_02 = document.getElementById("CP22_02").value;
+        var cp22_12 = document.getElementById("CP22_12").value;
+        var cp22_22 = document.getElementById("CP22_22").value;                
+
+        var textureData = [
+            cp22_00, cp22_01, cp22_02, 0,
+            cp22_10, cp22_11, cp22_12, 0,
+            cp22_10, cp22_11, cp22_12, 0,
+            cp22_20, cp22_21, cp22_22, 0
+        ];
+        texture2d = createTextureRGBA(
+            texture2d,
+            textureData,
+            2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_2D, texture2d);
+        gl.uniform1i(uniformTexture2d, 0);            
+    }
 }
 
 //=========================================================================================
@@ -550,8 +648,11 @@ function SelectShaderProgram ()
     uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
     uniformIsolines = gl.getUniformLocation(currentShaderProgram,"u_isolines");
     uniformDrawControlpoints = gl.getUniformLocation(currentShaderProgram,"u_drawControlPoints");
-    uniformControlpoints11 = gl.getUniformLocation(currentShaderProgram, "u_controlPoints11")
-    uniformTexture11 = gl.getUniformLocation(currentShaderProgram, "u_texture11");     
+    uniformControlpoints11 = gl.getUniformLocation(currentShaderProgram, "u_controlPoints11");
+    uniformControlpoints22A = gl.getUniformLocation(currentShaderProgram, "u_controlPoints22A");
+    uniformControlpoints22B = gl.getUniformLocation(currentShaderProgram, "u_controlPoints22B");
+    uniformControlpoints22C = gl.getUniformLocation(currentShaderProgram, "u_controlPoints22C");
+    uniformTexture2d = gl.getUniformLocation(currentShaderProgram, "u_texture2d");     
 
     // update the texture we are sampling from
     UpdateTexture();
@@ -564,6 +665,8 @@ function DegreeChanged ()
     var degree = e.options[e.selectedIndex].value;
 
     document.getElementById("ControlPoints11").style.visibility = (degree == 0 || degree == 1) ? "visible" : "hidden";
+
+    document.getElementById("ControlPoints22").style.visibility = (degree == 3) ? "visible" : "hidden";
 }
 
 //=========================================================================================
@@ -617,6 +720,9 @@ function Initialize ()
     fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 1");
     shaderPrograms[1] = createProgram(gl, vertexShader, fragmentShader);
 
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 3");
+    shaderPrograms[3] = createProgram(gl, vertexShader, fragmentShader);    
+
     // start the render loop
     requestAnimationFrame(DrawScene);
 }
@@ -645,9 +751,9 @@ Drag the mouse to rotate the surface.<br>
         <select id="STATIC_BRANCH_DEGREE" onChange="DegreeChanged()">
             <option value="0">(1,1) Bilinear (Hardware Interpolation)</option>
             <option value="1">(1,1) Bilinear (Software Interpolation)</option>
-            <option value="2">(2,1) Quadratic / Linear (HW)</option>
-            <option value="3">(2,2) Biquadratic (HW)</option>
-            <option value="4">(3,3) Bicubic (HW)</option>
+            <option value="2">(2,1) Quadratic / Linear</option>
+            <option value="3">(2,2) Biquadratic</option>
+            <option value="4">(3,3) Bicubic</option>
         </select>
         </td>
         </tr>
@@ -672,6 +778,17 @@ Drag the mouse to rotate the surface.<br>
         <tr><td>01:</td><td><input type="range" min="0" max="255" id="CP11_01" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>11:</td><td><input type="range" min="0" max="255" id="CP11_11" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         </table>
+        <table id="ControlPoints22">
+        <tr><td>00:</td><td><input type="range" min="0" max="255" id="CP22_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>10:</td><td><input type="range" min="0" max="255" id="CP22_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>20:</td><td><input type="range" min="0" max="255" id="CP22_20" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>01:</td><td><input type="range" min="0" max="255" id="CP22_01" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>11:</td><td><input type="range" min="0" max="255" id="CP22_11" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>21:</td><td><input type="range" min="0" max="255" id="CP22_21" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>02:</td><td><input type="range" min="0" max="255" id="CP22_02" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>12:</td><td><input type="range" min="0" max="255" id="CP22_12" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>22:</td><td><input type="range" min="0" max="255" id="CP22_22" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
+        </table>        
     </td>
 </tr>
 </table>
@@ -694,9 +811,12 @@ TODO: put details of how each degree curve is stored / sampled<br>
 <pre>
 TODO:
 
+* get better default control points for biquadratic
+
+* make it so invisible UI doesn't take up space (the control points!)
+
 * get UI and functionality working for other degree curves.
  * (2,1) -> 3d texture R, sampled (u,u,v)
- * (2,2) -> 2d texture RGB, sampled (u,u), then quadratic combine RGB by v.
  * (3,3) -> 3d texture RGBA, sampled (u,u,u), then cubic combine RGBA by v.
 
 ? should the camera be improved?
