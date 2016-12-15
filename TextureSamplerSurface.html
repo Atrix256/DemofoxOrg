@@ -33,16 +33,53 @@ void main() {
 var fragmentShaderSource = `
 #define NUM_RAY_STEPS 20
 
+#define CONTROL_POINT_SIZE 0.01
+
 precision mediump float;
 
 // inputs
 in vec2 v_screenPosition;  // in [-0.5, 0.5]
 
 // uniforms
-uniform vec3 u_mouse;  // z,y:  percent of screen. z: mouse button down or not
+uniform vec2 u_mouse;             // z,y:  percent of screen. z: mouse button down or not.
+uniform bool u_lit;               // false = show uv. true = do lighting.
+uniform vec3 u_boxColor;          // color of the bounding box.
+uniform bool u_isolines;          // whether isolines should be drawn or not
+uniform bool u_drawControlPoints; // whether we should draw control points
 
 // outputs
 out vec4 outColor;
+
+float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
+{
+    //get the vector from the center of this circle to where the ray begins.
+    vec3 m = rayPos - sphere.xyz;
+
+    //get the dot product of the above vector and the ray's vector
+    float b = dot(m, rayDir);
+
+    float c = dot(m, m) - sphere.w * sphere.w;
+
+    //exit if r's origin outside s (c > 0) and r pointing away from s (b > 0)
+    if(c > 0.0 && b > 0.0)
+        return -1.0;
+
+    //calculate discriminant
+    float discr = b * b - c;
+
+    //a negative discriminant corresponds to ray missing sphere
+    if(discr < 0.0)
+        return -1.0;
+
+    //ray now found to intersect sphere, compute smallest t value of intersection
+    float collisionTime = -b - sqrt(discr);
+
+    //if t is negative, ray started inside sphere so clamp t to zero and remember that we hit from the inside
+    if(collisionTime < 0.0)
+        collisionTime = -b + sqrt(discr);
+    
+    return collisionTime;
+}
 
 // ----- STATIC_BRANCH_DEGREE 0: (1,1) HW Interpolation -----
 #if STATIC_BRANCH_DEGREE == 0
@@ -52,9 +89,29 @@ out vec4 outColor;
 
     uniform sampler2D u_texture11;
 
+    uniform vec4 u_controlPoints11;
+
     float SurfaceHeight (vec2 uv)
     {
         return texture(u_texture11, (uv + 0.5) / 2.0).r;
+    }
+
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0, u_controlPoints11.x, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.y, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints11.z, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.w, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }
+        return false;
     }
 
 // ----- STATIC_BRANCH_DEGREE 1: (1,1) SW Interpolation -----
@@ -65,22 +122,40 @@ out vec4 outColor;
 
     uniform sampler2D u_texture11;
 
+    uniform vec4 u_controlPoints11;    
+
     float SurfaceHeight (vec2 uv)
     {
-        uv.x = 1.0 - uv.x;
         float A = texture(u_texture11, vec2(0.25, 0.25)).r;
         float B = texture(u_texture11, vec2(0.75, 0.25)).r;
         float C = texture(u_texture11, vec2(0.25, 0.75)).r;
         float D = texture(u_texture11, vec2(0.75, 0.75)).r;   
 
         float a = mix(A, B, uv.x); 
-        float b = mix(B, C, uv.x);
+        float b = mix(C, D, uv.x);
 
         return mix(a, b, uv.y);
     }
 
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0, u_controlPoints11.x, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.y, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints11.z, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.w, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }
+        return false;
+    }
+
 #endif
-// ------------------------
 
 bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir, out vec2 time)
 {
@@ -102,7 +177,7 @@ bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir
 
 vec3 SurfaceNormal (vec2 uv)
 {
-    float eps = 0.05;
+    float eps = 0.1;
     vec3 n = vec3( SurfaceHeight(vec2(uv.x-eps,uv.y)) - SurfaceHeight(vec2(uv.x+eps,uv.y)),
              2.0*eps,
              SurfaceHeight(vec2(uv.x,uv.y-eps)) - SurfaceHeight(vec2(uv.x,uv.y+eps)));
@@ -111,18 +186,31 @@ vec3 SurfaceNormal (vec2 uv)
 
 vec3 SurfaceDiffuse (vec2 uv)
 {
-    // checkerboard pattern
-    float checkerboard = mod(floor(uv.x * 10.0) + floor(uv.y * 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
-    vec3 ret = vec3(checkerboard, 0.0, 0.0);
+    vec3 ret;
+
+    if (u_lit)
+    {
+        // checkerboard pattern if lit
+        float checkerboard = mod(floor(uv.x * 10.0) + floor(uv.y * 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
+        ret = vec3(checkerboard, 0.0, 0.0);
+    } 
+    else
+    {
+        // uv coordinates if unlit
+        ret = vec3(uv, 0.0);
+    }
 
     // isolines
-    float distx = abs(0.5 - fract(uv.x * float(DEGREE_X) + 0.5)) / float(DEGREE_X);
-    distx = smoothstep(0.0, 0.01, distx);
-    ret = mix(vec3(1.0, 1.0, 0.0), ret, distx);
+    if (u_isolines)
+    {
+        float distx = abs(0.5 - fract(uv.x * float(DEGREE_X) + 0.5)) / float(DEGREE_X);
+        distx = smoothstep(0.005, 0.0075, distx);
+        ret = mix(vec3(0.0, 0.0, 1.0), ret, distx);
 
-    float disty = abs(0.5 - fract(uv.y * float(DEGREE_Y) + 0.5)) / float(DEGREE_Y);
-    disty = smoothstep(0.0, 0.01, disty);
-    ret = mix(vec3(1.0, 1.0, 0.0), ret, disty);
+        float disty = abs(0.5 - fract(uv.y * float(DEGREE_Y) + 0.5)) / float(DEGREE_Y);
+        disty = smoothstep(0.005, 0.0075, disty);
+        ret = mix(vec3(0.0, 0.0, 1.0), ret, disty);
+    }
 
     return ret;
 }
@@ -136,8 +224,8 @@ void main() {
 
     vec3 cameraAt   = vec3(0.5,0.5,0.5);
 
-    float angleX = u_mouse.z > 0.0 ? 6.28 * u_mouse.x : 3.14 ;
-    float angleY = u_mouse.z > 0.0 ? (u_mouse.y * 6.28) - 0.4 : 0.5;
+    float angleX = 6.28 * u_mouse.x + 3.34;
+    float angleY = (u_mouse.y * 6.28) + 0.5;
     vec3 cameraPos  = (vec3(sin(angleX)*cos(angleY), sin(angleY), cos(angleX)*cos(angleY))) * 3.0;
     cameraPos += vec3(0.5,0.5,0.5);
 
@@ -166,9 +254,16 @@ void main() {
     vec2 rayMinMax;
     if (!RayIntersectAABox(vec3(0.0, 0.0, 0.0), vec3(1.0,1.0,1.0), cameraPos, rayDir, rayMinMax))
     {
-        outColor = vec4(0.0, 0.0, 0.0, 1.0);
+        float maxDist = 1000.0;
+        if (HitCP(cameraPos, rayDir, maxDist))
+            outColor = vec4(1.0, 0.0, 1.0, 1.0);
+        else
+            outColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
+
+    // test the ray against control points and remember if we hit one. Also shorten max distance if we did.
+    bool hitCP = HitCP(cameraPos, rayDir, rayMinMax.y);
 
     //-------------------------
     //------ Ray March --------
@@ -178,7 +273,7 @@ void main() {
     vec3 rayStop = clamp(cameraPos + rayDir * rayMinMax.y, 0.0, 1.0);
     vec3 rayDelta = (rayStop - rayPos) / float(NUM_RAY_STEPS-1);
     float hitTime = rayMinMax.x;
-    float deltaT = (rayMinMax.y - rayMinMax.x) / float(NUM_RAY_STEPS);
+    float deltaT = (rayMinMax.y - rayMinMax.x) / float(NUM_RAY_STEPS-1);
     float lastHeight = 0.0;
     float lastY = 0.0;
     float height = 0.0;
@@ -200,10 +295,14 @@ void main() {
         hitTime += deltaT;
     }
 
-    // if the surface in the box is missed, set to dark green to show where the box is
+    // If the surface in the box is missed, set to dark green to show where the box is.
+    // If we previously hit a control point, set it to the control point color though.
     if (!hit)
     {
-        outColor = vec4(0.0, 0.2, 0.0, 1.0);
+        if (hitCP)
+            outColor = vec4(1.0, 0.0, 1.0, 1.0);
+        else
+            outColor = vec4(u_boxColor, 1.0);
         return;    
     }    
 
@@ -213,12 +312,18 @@ void main() {
 
     //-------------------------
     //------- Shading ---------
-    //-------------------------    
+    //-------------------------
     outColor.w = 1.0;
 
-    vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
-
     vec3 diffuseColor = SurfaceDiffuse(rayHitPos.xz);
+
+    if (!u_lit)
+    {
+        outColor.xyz = diffuseColor;
+        return;
+    }
+
+    vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
 
     vec3 normal = SurfaceNormal(rayHitPos.xz);
     if (dot(normal, rayDir) > 0.0)
@@ -245,7 +350,15 @@ void main() {
 var gl = null;
 var canvas = null;
 var uniformMouse = null;
-var mouse = {};
+var uniformLit = null;
+var uniformBoxColor = null;
+var uniformIsolines = null;
+var uniformDrawControlpoints = null;
+var uniformControlpoints11 = null;
+var uniformTexture11 = null;
+var mouse = {PosX:0, PosX:0, IsDown: false, OriX: 0, OriY: 0};
+var shaderPrograms = [];
+var currentShaderProgram = null;
 
 //=========================================================================================
 function createShader (gl, type, source, staticBranches) {
@@ -283,6 +396,8 @@ function createTextureRGBA (byteArrayWithRGBAData, width, height) {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(byteArrayWithRGBAData));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
     return texture;
 }
@@ -326,8 +441,32 @@ function SetVertexAttributeData (gl, program, name, type, count, values)
 //=========================================================================================
 function DrawScene ()
 {
+    // set which shader we are using
+    SelectShaderProgram();
+
     // update uniforms
-    gl.uniform3fv(uniformMouse, [mouse.PosX / gl.canvas.width, mouse.PosY / gl.canvas.height, mouse.IsDown]);
+    gl.uniform2fv(uniformMouse, [mouse.PosX / gl.canvas.width, mouse.PosY / gl.canvas.height]);
+    var e = document.getElementById("u_lit");
+    gl.uniform1i(uniformLit, e.options[e.selectedIndex].value);
+    if (document.getElementById("u_boxColor").checked)
+        gl.uniform3fv(uniformBoxColor, [0,0.2,0]);
+    else
+        gl.uniform3fv(uniformBoxColor, [0,0,0]);
+    if (document.getElementById("u_isolines").checked)
+        gl.uniform1i(uniformIsolines, 1);
+    else
+        gl.uniform1i(uniformIsolines, 0);
+    if (document.getElementById("u_drawControlPoints").checked)
+        gl.uniform1i(uniformDrawControlpoints, 1);
+    else
+        gl.uniform1i(uniformDrawControlpoints, 0);
+
+    // control points!
+    var cp11_00 = document.getElementById("CP11_00").value / 255;
+    var cp11_10 = document.getElementById("CP11_10").value / 255;
+    var cp11_01 = document.getElementById("CP11_01").value / 255;
+    var cp11_11 = document.getElementById("CP11_11").value / 255;
+    gl.uniform4fv(uniformControlpoints11, [cp11_00, cp11_10, cp11_01, cp11_11]);
 
     // make sure gl is rendering to the the right size and has the right viewport info
     resize(gl.canvas);
@@ -344,8 +483,7 @@ function DrawScene ()
 }
 
 //=========================================================================================
-// TODO: make this code more in line w/ code style
-function piGetCoords( obj )
+function GetPos ( obj )
 {
     var x = 0;
     var y = 0; 
@@ -359,8 +497,81 @@ function piGetCoords( obj )
 }
 
 //=========================================================================================
-function SetupGL ()
+function UpdateTexture ()
 {
+    // set up texture data from control points
+    var cp11_00 = document.getElementById("CP11_00").value;
+    var cp11_10 = document.getElementById("CP11_10").value;
+    var cp11_01 = document.getElementById("CP11_01").value;
+    var cp11_11 = document.getElementById("CP11_11").value;
+
+    var textureData = [
+        cp11_00, 0, 0, 0,
+        cp11_10, 0, 0, 0,
+        cp11_01, 0, 0, 0,
+        cp11_11, 0, 0, 0
+    ];
+    texture11 = createTextureRGBA(
+        textureData,
+        2, 2
+    );
+    gl.bindTexture(gl.TEXTURE_2D, texture11);
+    gl.uniform1i(uniformTexture11, 0);    
+
+}
+
+//=========================================================================================
+function SelectShaderProgram ()
+{
+    // if we are using the same shader program that we are supposed to be using, nothing to do
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var newShaderProgram = shaderPrograms[e.options[e.selectedIndex].value];
+    if (newShaderProgram == currentShaderProgram)
+        return;
+
+    // switch to the new shader program if we need to change
+    currentShaderProgram = newShaderProgram;
+    gl.useProgram(currentShaderProgram); 
+
+    // vertex data - a single triangle that covers the screen
+    var vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    SetVertexAttributeData(gl, currentShaderProgram, "a_position", gl.FLOAT, 2,
+        [
+            -1,  3,
+             3, -1,
+            -1, -1,
+        ]
+    );   
+
+    // get uniforms for this shader program
+    uniformMouse = gl.getUniformLocation(currentShaderProgram, "u_mouse"); 
+    uniformLit = gl.getUniformLocation(currentShaderProgram, "u_lit");
+    uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
+    uniformIsolines = gl.getUniformLocation(currentShaderProgram,"u_isolines");
+    uniformDrawControlpoints = gl.getUniformLocation(currentShaderProgram,"u_drawControlPoints");
+    uniformControlpoints11 = gl.getUniformLocation(currentShaderProgram, "u_controlPoints11")
+    uniformTexture11 = gl.getUniformLocation(currentShaderProgram, "u_texture11");     
+
+    // update the texture we are sampling from
+    UpdateTexture();
+}
+
+//=========================================================================================
+function DegreeChanged ()
+{
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var degree = e.options[e.selectedIndex].value;
+
+    document.getElementById("ControlPoints11").style.visibility = (degree == 0 || degree == 1) ? "visible" : "hidden";
+}
+
+//=========================================================================================
+function Initialize ()
+{
+    // make sure the UI is setup correctly
+    DegreeChanged();
+
     // setup webgl2
     canvas = document.getElementById("RenderWindow");
     gl = canvas.getContext("webgl2");
@@ -370,72 +581,41 @@ function SetupGL ()
         return;
     }
 
-    // TODO: rename SetupGL to something else since we also hook up mouse stuff?
-    // TODO: make this code more in line w/ code style
+    // Setup mouse input stuff
+    mouse.PosX = 0;
+    mouse.PosY = 0;
+    mouse.IsDown = false;
     canvas.onmousedown = function(ev)
     {
-        var pos = piGetCoords( canvas );
-        mouse.OriX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
-        mouse.OriY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
-        mouse.PosX = mouse.OriX;
-        mouse.PosY = mouse.OriY;
+        var pos = GetPos(canvas);
+        mouse.PosX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+        mouse.PosY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
         mouse.IsDown = true;
     }
     canvas.onmousemove = function(ev)
     {
         if( mouse.IsDown )
         {
-            var pos = piGetCoords( canvas );
+            var pos = GetPos( canvas );
             mouse.PosX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
             mouse.PosY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
         }
     }
-    canvas.onmouseup = function(ev)
-    {
-        mouse.IsDown = false;
-        mouse.OriX = -Math.abs( mouse.OriX );
-        mouse.OriY = -Math.abs( mouse.OriY );
-    }    
+    canvas.onmouseup = function(ev) {mouse.IsDown = false;}
 
+    // set clear color to black
+    gl.clearColor(0, 0, 0, 1);
 
-    // compile shaders
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource, "");
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 1");
-    var program = createProgram(gl, vertexShader, fragmentShader);
-
-    // vertex data - a single triangle that covers the screen
-    var vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-    SetVertexAttributeData(gl, program, "a_position", gl.FLOAT, 2,
-        [
-            -1,  3,
-             3, -1,
-            -1, -1,
-        ]
-    );   
-
-    // get uniforms
-    uniformMouse = gl.getUniformLocation(program, "u_mouse"); 
-
-    // one time setup
-    gl.clearColor(0, 0, 0, 0);
-    gl.useProgram(program); 
-
-    var textureData = [
-          20, 0, 0, 0,   40, 0, 0, 0,
-         200, 0, 0, 0,   30, 0, 0, 0
-    ];
-
-    texture11 = createTextureRGBA(
-        textureData,
-        2, 2
-    );
-
-    var uniformTexture11 = gl.getUniformLocation(program, "u_texture11"); 
+    // activate texture 0
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture11);
-    gl.uniform1i(uniformTexture11, 0);
 
+    // compile all shaders
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource, "");
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 0");
+    shaderPrograms[0] = createProgram(gl, vertexShader, fragmentShader);
+
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 1");
+    shaderPrograms[1] = createProgram(gl, vertexShader, fragmentShader);
 
     // start the render loop
     requestAnimationFrame(DrawScene);
@@ -444,121 +624,110 @@ function SetupGL ()
 
 </script>
 </head>
-<body onLoad="SetupGL()">
+<body onLoad="Initialize()">
 <h1>Analytical Surfaces Evaluated by the GPU Texture Sampler</h1>
 
 This page uses WebGL2, which will be enabled by default in chrome 56 in January 2017.<br>
-To enable WebGL2 before then on chrome or other browsers, see this link:
+To enable WebGL2 before then, or on other browsers, see this link:
 <a href="http://webgl2fundamentals.org/webgl/lessons/webgl-getting-webgl2.html" target="_blank">How to use WebGL2</a><br>
 <br>
-Drag the mouse to rotate the box.<br>
+Drag the mouse to rotate the surface.<br>
 <br>
-<canvas id="RenderWindow"></canvas>
-<br>
-Degree: 
-<select id="STATIC_BRANCH_DEGREE">
-    <option value="0">(1,1) Bilinear (Hardware Interpolation)</option>
-    <option value="1">(1,1) Bilinear (Software Interpolation)</option>
-    <option value="2">(2,1) Quadratic / Linear (HW)</option>
-    <option value="3">(2,2) Biquadratic (HW)</option>
-    <option value="4">(3,3) Bicubic (HW)</option>
-</select>
-<br>
-Shading Mode: <select id="u_ShadingMode">
-    <option value="0">Lit</option>
-    <option value="1">UVs</option>
-</select>
-<br>
-Draw Bounding Box: <input type="checkbox" id="u_BoundingBox" checked="true"/><br>
-Draw Control Points: <input type="checkbox" id="u_ControlPoints" checked="true"/><br>
-<br>
-Control Points:<br>
-A: <input type="range" min="0" max="255" id="CP_A" value="0"/><br>
-B: <input type="range" min="0" max="255" id="CP_B" value="0"/><br>
-C: <input type="range" min="0" max="255" id="CP_C" value="0"/><br>
-D: <input type="range" min="0" max="255" id="CP_D" value="0"/><br>
+<table>
+<tr>
+    <td><canvas id="RenderWindow"></canvas></td>
+    <td valign="top">
+        <br>
+        <table>
+        <tr>
+        <td>Degree:</td>
+        <td>
+        <select id="STATIC_BRANCH_DEGREE" onChange="DegreeChanged()">
+            <option value="0">(1,1) Bilinear (Hardware Interpolation)</option>
+            <option value="1">(1,1) Bilinear (Software Interpolation)</option>
+            <option value="2">(2,1) Quadratic / Linear (HW)</option>
+            <option value="3">(2,2) Biquadratic (HW)</option>
+            <option value="4">(3,3) Bicubic (HW)</option>
+        </select>
+        </td>
+        </tr>
+        <tr>
+        <td>Shading Mode:</td>
+        <td>
+        <select id="u_lit">
+            <option value="0">UV</option>
+            <option value="1" selected="true">Lit</option>
+        </select>
+        </td>
+        </tr>
+        <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
+        <tr><td>Draw Control Points:</td><td><input type="checkbox" id="u_drawControlPoints" checked="true"/></td></tr>
+        <tr><td>Draw Isolines:</td><td><input type="checkbox" id="u_isolines" checked="true"/></td></tr>
+        </table>
+        <br>
+        Control Points:<br>        
+        <table id="ControlPoints11">
+        <tr><td>00:</td><td><input type="range" min="0" max="255" id="CP11_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>10:</td><td><input type="range" min="0" max="255" id="CP11_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>01:</td><td><input type="range" min="0" max="255" id="CP11_01" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>11:</td><td><input type="range" min="0" max="255" id="CP11_11" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        </table>
+    </td>
+</tr>
+</table>
 
 <h2>How It's Rendered</h2>
 
 The rendering is done by doing a ray trace of the bounding cube to see which rays might intersect the surface.
 <br><br>
-The rays that hit the cube then ray marchin from the start of the cube to the end of the cube to see if they hit the surface.  If they do hit the surface, they are shaded, else they are not.
+The rays that hit the cube then ray march from the start of the cube to the end of the cube to see if they hit the surface.  If they do hit the surface, they are shaded, else they are not.
 <br><br>
-Instead of doing the initial ray trace, the cube could be rendered with triangles so that it would become a rasterization process instead of a full screen raytrace vs a box.  The ray marching would then be done in the pixel shader.
+Instead of doing the initial ray trace, the cube could be rendered with triangles so that it would become a rasterization process instead of a full screen raytrace vs a box.  The ray marching would still be done in the pixel shader like it is now.
 <br><br>
 The GPU texture sampler is used to calculate the y axis value (height) of the surface at a given x,z value.
 <br><br>
 TODO: put details of how each degree curve is stored / sampled<br>
-TODO: link to blog post
 </body></html>
 
 <br>
 <hr>
 <pre>
 TODO:
-* put the UI to the right of the canvas instead of below it!
-* Make UI functional
-* use a table to layout the UI?
 
-* There's some weird distortion with the far side of the ray march (isolines disappear).  I think maybe our ray march isn't quite correct for that case!
-
-? should we have an unlit mode (show u,v coordinates as color) to not start off by showing the problem with the normals (derivatives)?
-
-* make permutations of shaders in a multidimensional array
- * pass static branch values as #defines
- * build them all at startup (or should we build on demand?)
- * re-get uniforms when shader changes
- * send whatever uniforms are present
- * [4] -> degree
- * [2] -> software or hardware (not sure if wanting to do for all degrees. if not, just make another "degree" option)
- * should we do draw box / control points / isolines?  could make them uniforms
-
-? maybe actually render a cube instead of ray tracing the cube? it'd be a good learning experience!
-
-* see about doing a render fence thing to do async shader compiles in webgl2.  If compile times get long.
-
-* make sliders for adjusting control points (0 to 255).  Remake texture when they are modified.  Make a different panel for each degree (texture)
-
-* make texture use a single color channel, after you get it working for bilinear case! R8 format doesnt seem to work, first try ):
-
-* copy code from https://www.shadertoy.com/view/XtfSRj
-
-* write out to console to do error handling, wherever something can go wrong
-
-* explain how it's rendered. raytrace then ray march.  Mention that the raytrace could be replaced by drawing the cube (with back face culling) to do rasterization instead of full screen pass!
-* also, for each surface type chosen, show texture layout and shader code source.
-* explain that you drag mouse to rotate box.
+* get UI and functionality working for other degree curves.
+ * (2,1) -> 3d texture R, sampled (u,u,v)
+ * (2,2) -> 2d texture RGB, sampled (u,u), then quadratic combine RGB by v.
+ * (3,3) -> 3d texture RGBA, sampled (u,u,u), then cubic combine RGBA by v.
 
 ? should the camera be improved?
  * either make it so dragging x and y always rotates relative x and y
  * or, when mouse is up, keep the last position still.
+ * Maybe make the good camera position be at mouse (0.5,0.5)?
 
-? why is there specular on the back of the surface? shouldn't be i don't think!
+? can we anti alias the checkerboard somehow? do that but leave regular AA alone, need to let people see raw pixels of surface as made by texture sampler
+ * something like we smoothstep on each axis from light to dark and from dark to light.
 
-? can we anti alias the checkerboard somehow?
-
-? should we add anti aliasing options?
-
-! add to blog post that bilinear is not actually a linear surface!
-
-* Workings
- * 3d volume texture RGBA for storage
- * let you specify bernstein coefficients
- * show it as raymarched surface.  show isolines.  raytrace cube, then raymarch interior.
- * drop down for surface degree: (1,1),  (2,1), (2,2), (3,3)
- * choose texture or software interpolation?
 * show fps
-* should we show texture layout and shader code? maybe just texture layout and instructions for sampling surface?
-* link to post on how to convert polys to bernstein
-* volume demo after this
-* link to blog post
-* have blog post link to this
-* link to demos from main bezier page as well
-* link to http://webgl2fundamentals.org/
-* checkbox for control points and containing box.
 
 * clean up this code / add comments etc?
+
+* volume demo after this
+
+* BUG: when CP's at 0's or 1's, it has z-fighting / is invisible.  maybe grow bounding box slightly??
+
+After Done:
 ? get demofox.org into this repository?
 ? is there a way to back up wordpress into git as well?
+! add to blog post that bilinear is not actually a linear surface!
+* link to blog post
+* have blog post link to this
+* have demofox.org link to this
+* link to demos from main bezier texture sampler page as well
+
+Likely unneeded:
+* see about doing a render fence thing to do async shader compiles in webgl2.  If compile times get long.
+* make texture use a single color channel, after you get it working for bilinear case! R8 format doesnt seem to work, first try ):
+* copy code from https://www.shadertoy.com/view/XtfSRj
+
 
 </pre>
