@@ -5,6 +5,15 @@
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
 canvas#RenderWindow {border:2px solid #00FF00;width:800px; height:800px;}
+table {
+    border-collapse: collapse;
+}
+table, td {
+    border: 1px solid #00FF00;
+}
+table.NoBorder td {
+    border: 1px solid black;
+}
 </style>
 <script>
 /*=========================================================================================
@@ -1003,7 +1012,7 @@ To enable WebGL2 before then, or on other browsers, see this link:
 <br>
 Drag the mouse to rotate the surface.<br>
 <br>
-<table>
+<table class="NoBorder">
 <tr>
     <td><canvas id="RenderWindow"></canvas></td>
     <td valign="top">
@@ -1036,7 +1045,7 @@ Drag the mouse to rotate the surface.<br>
         </table>
         <br>
         Control Points:<br>        
-        <table id="ControlPoints11">
+        <table class="NoBorder" id="ControlPoints11">
         <tr><td colspan=3>Row 0</td></tr>        
         <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP11_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP11_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
@@ -1044,47 +1053,47 @@ Drag the mouse to rotate the surface.<br>
         <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP11_01" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP11_11" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         </table>
-        <table id="ControlPoints21">
-        <td colspan=3>Row 0</td>
+        <table class="NoBorder" id="ControlPoints21">
+        <tr><td colspan=3>Row 0</td></tr>
         <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP21_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP21_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>20:</td><td><input type="range" min="0" max="255" id="CP21_20" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <td colspan=3>Row 1</td>
+        <tr><td colspan=3>Row 1</td></tr>
         <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP21_01" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP21_11" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>21:</td><td><input type="range" min="0" max="255" id="CP21_21" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         </table>        
-        <table id="ControlPoints22">
-        <td colspan=3>Row 0</td>
+        <table class="NoBorder" id="ControlPoints22">
+        <tr><td colspan=3>Row 0</td></tr>
         <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP22_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP22_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>20:</td><td><input type="range" min="0" max="255" id="CP22_20" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <td colspan=3>Row 1</td>
+        <tr><td colspan=3>Row 1</td></tr>
         <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP22_01" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP22_11" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>21:</td><td><input type="range" min="0" max="255" id="CP22_21" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <td colspan=3>Row 2</td>
+        <tr><td colspan=3>Row 2</td></tr>
         <tr><td>&nbsp;</td><td>02:</td><td><input type="range" min="0" max="255" id="CP22_02" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>12:</td><td><input type="range" min="0" max="255" id="CP22_12" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>22:</td><td><input type="range" min="0" max="255" id="CP22_22" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
         </table>        
-        <table id="ControlPoints33">
-        <td colspan=3>Row 0</td>
+        <table class="NoBorder" id="ControlPoints33">
+        <tr><td colspan=3>Row 0</td></tr>
         <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP33_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP33_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>20:</td><td><input type="range" min="0" max="255" id="CP33_20" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>30:</td><td><input type="range" min="0" max="255" id="CP33_30" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <td colspan=3>Row 1</td>
+        <tr><td colspan=3>Row 1</td></tr>
         <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP33_01" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP33_11" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>21:</td><td><input type="range" min="0" max="255" id="CP33_21" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>31:</td><td><input type="range" min="0" max="255" id="CP33_31" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>        
-        <td colspan=3>Row 2</td>
+        <tr><td colspan=3>Row 2</td></tr>
         <tr><td>&nbsp;</td><td>02:</td><td><input type="range" min="0" max="255" id="CP33_02" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>12:</td><td><input type="range" min="0" max="255" id="CP33_12" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>22:</td><td><input type="range" min="0" max="255" id="CP33_22" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
         <tr><td>&nbsp;</td><td>32:</td><td><input type="range" min="0" max="255" id="CP33_32" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
-        <td colspan=3>Row 3</td>
+        <tr><td colspan=3>Row 3</td></tr>
         <tr><td>&nbsp;</td><td>03:</td><td><input type="range" min="0" max="255" id="CP33_03" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>13:</td><td><input type="range" min="0" max="255" id="CP33_13" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>23:</td><td><input type="range" min="0" max="255" id="CP33_23" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
@@ -1106,7 +1115,7 @@ Instead of doing the initial ray trace, the cube could be rendered with triangle
 The GPU texture sampler is used to calculate the y axis value (height) of the surface at a given u,v (or x,z) value, as described below.
 <h2>Bilinear</h2>
 The four control points are stored in a 2x2 2d texture's R channel in this pattern:<br><br>
-<table style="border-collapse: collapse; border: 1px solid #00FF00">
+<table>
 <tr><td>00</td><td>10</td></tr>
 <tr><td>01</td><td>11</td></tr>
 </table><br><br>
@@ -1118,7 +1127,7 @@ The texture is the same as above, but the pixel shader samples the texture at (0
 <h2>Quadratic / Linear</h2>
 
 The 6 control points are stored in a 2x2x2 3d volume texture's R channel in this pattern:<br><br>
-<table style="border-collapse: collapse; border: 1px solid #00FF00">
+<table>
 <tr><td colspan = 2>Slice 0</td></tr>
 <tr><td>00</td><td>10</td></tr>
 <tr><td>10</td><td>20</td></tr>
@@ -1131,7 +1140,7 @@ For a u,v coordinate, the texture is sampled at (uv.xxy + 0.5) / 2.0, with the R
 <h2>Biquadratic</h2>
 
 The 9 control points are stored in a 2x2 2d texture's RGB channels.  Each color channel contains a quadratic curve across the u axis like below:<br><br>
-<table style="border-collapse: collapse; border: 1px solid #00FF00">
+<table>
 <tr><td colspan = 2>Red</td></tr>
 <tr><td>00</td><td>10</td></tr>
 <tr><td>10</td><td>20</td></tr>
@@ -1147,7 +1156,7 @@ For a u,v coordinate, the texture is sampled at (uv.xx + 0.5) / 2.0 to get 3 qua
 <h2>Bicubic</h2>
 
 The 16 control points are stored in a 2x2x2 3d volume texture's RGBA channels.  Each color channel contains a cubic curve across the u axis like below:<br><br>
-<table style="border-collapse: collapse; border: 1px solid #00FF00">
+<table>
 <tr><td colspan = 2>Red Layer 0</td></tr>
 <tr><td>00</td><td>10</td></tr>
 <tr><td>10</td><td>20</td></tr>
