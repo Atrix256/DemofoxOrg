@@ -40,7 +40,7 @@ void main() {
  
 //=========================================================================================
 var fragmentShaderSource = `
-#define NUM_RAY_STEPS 20
+#define NUM_RAY_STEPS 50
 
 precision mediump float;
 precision mediump sampler3D;
@@ -112,6 +112,14 @@ bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir
     return time.y>time.x && time.y>0.0;
 }
 
+vec3 SurfaceDiffuse (vec3 uvw)
+{
+    // volumetric checkerboard pattern
+    // TODO: anti alias with 3d halton sequence? dunno...
+    float checkerboard = mod(floor(uvw.x * 10.0) + floor(uvw.y* 10.0) + floor(uvw.z* 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
+    return vec3(checkerboard, 0.0, 0.0);
+}
+
 // logic
 vec3 CalculateColor() {
 
@@ -159,17 +167,41 @@ vec3 CalculateColor() {
     vec3 rayPos = clamp(cameraPos + rayDir * rayMinMax.x, 0.0, 1.0);
     vec3 rayStop = clamp(cameraPos + rayDir * rayMinMax.y, 0.0, 1.0);
     vec3 rayDelta = (rayStop - rayPos) / float(NUM_RAY_STEPS-1);
-    float fogIntegral = 0.0;
+    float hitTime = rayMinMax.x;
+    float deltaT = (rayMinMax.y - rayMinMax.x) / float(NUM_RAY_STEPS-1);
+    float value = 0.0;   
+    float lastValue = 0.0;
+    bool hit = false;
+    float fogIntegral = 0.0;    
     for (int i = 0; i < NUM_RAY_STEPS; ++i)
     {
-        float fogValue = VolumeValue(rayPos);
+        value = VolumeValue(rayPos);
+        if (value > u_surfaceThreshold)
+        {
+            hit = true;
+            break;
+        }
 
-        // TODO: if above threshold, consider it a hit, calculate diffuse color and all that :P
-
-        fogIntegral += fogValue;
+        fogIntegral += value;
+        lastValue = value;
         rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);
+        hitTime += deltaT;        
     }
 
+    // estimate where the hit was linearly, if there was a hit.
+    // adjust the hit time as well as the fog integral
+    if (hit)
+    {
+        float percent = (u_surfaceThreshold - lastValue) / (value - lastValue);
+        hitTime = hitTime + percent * deltaT;
+        fogIntegral += percent * value;
+    }
+    vec3 rayHitPos = cameraPos + rayDir * hitTime;    
+
+    // calculate diffuse color
+    vec3 diffuseColor = hit ? SurfaceDiffuse(rayHitPos) : u_boxColor;
+
+    // Calculate fog amount
     /*
      Note:
      The intuitive way to calculate the fog would be to divide the fogIntegral by the length of
@@ -181,13 +213,15 @@ vec3 CalculateColor() {
     */
 
     float fogAmount = 1.0 - exp( -fogIntegral * u_fogIntensity );
-    return mix( u_boxColor, vec3(1.0), fogAmount );
 
     //-------------------------
     //------- Shading ---------
     //-------------------------
 
-    // TODO: later, handle a thresholded shape and fog it!
+    // TODO: shade the diffuse color if there was a hit! if no hit, just return the fogged box color
+
+    // return the fogged color
+    return mix( diffuseColor, vec3(1.0), fogAmount );
 }
 
 void main() {
@@ -310,9 +344,8 @@ function DrawScene ()
         gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
     else
         gl.uniform3fv(uniformBoxColor, [0,0,0]);
-    var fogIntensity = document.getElementById("u_fogIntensity").value / 100;
-    gl.uniform1f(uniformFogIntensity, fogIntensity);
-    gl.uniform1f(uniformSurfaceThreshold, document.getElementById("u_surfaceThreshold").value);
+    gl.uniform1f(uniformFogIntensity, document.getElementById("u_fogIntensity").value / 100);
+    gl.uniform1f(uniformSurfaceThreshold, document.getElementById("u_surfaceThreshold").value / 100);
 
     // make sure gl is rendering to the the right size and has the right viewport info
     resize(gl.canvas);
@@ -510,8 +543,8 @@ Drag the mouse to rotate the volume.<br>
         </select>
         </td>
         </tr>
-        <tr><td>Fog Intensity:</td><td><input type="range" min="0" max="200" id="u_fogIntensity" value="50"></td></tr>
-        <tr><td>Surface Threshold:</td><td><input type="range" min="0" max="100" id="u_surfaceThreshold" value="0"></td></tr>
+        <tr><td>Fog Intensity:</td><td><input type="range" min="0" max="500" id="u_fogIntensity" value="50"></td></tr>
+        <tr><td>Surface Threshold:</td><td><input type="range" min="0" max="100" id="u_surfaceThreshold" value="100"></td></tr>
         <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
         </table>
         <br>
@@ -541,10 +574,14 @@ TODO: link to blog post
 <pre>
 
 TODO: 
+* need to fix surface hit estimation before threshold surface will be any good!
+
 * volumes to do:
  * bilinear / quadratic (1,1,2) -> 2x2x2 3d texture with R,G.  sample (u,v,w), lerp R and G by w.
  * (2,2,1) -> 2x2x2 3d texture with RGBA.  R,G gets 1 biquad.  B,A gets the other.  sample at (u,u,v). lerp R,G by v and B,A by v. lerp results by w.
  ? higher surfaces with multiple texture reads? (2,2,2) or (3,3,3)? Especially needed if those volumes aren't interesting enough.
+
+* make u_fogIntensity intensity exponential.
 
 * figure out how to deal with the bounding box coloring
  * maybe as we ray march we collect a fog amount, then apply it to bounding box coloring / diffuse color.
