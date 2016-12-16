@@ -52,6 +52,7 @@ in vec2 v_screenPosition;  // in [-0.5, 0.5]
 
 // uniforms
 uniform vec2 u_mouse;             // z,y:  percent of screen. z: mouse button down or not.
+uniform bool u_lit;               // false = show uv. true = do lighting.
 uniform vec3 u_boxColor;          // color of the bounding box.
 uniform float u_fogIntensity;     // how dense the fog is
 uniform float u_surfaceThreshold; // a threshold where if a fog sample is greater than this value, it's considered to be in the surface
@@ -133,12 +134,50 @@ bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir
     return time.y>time.x && time.y>0.0;
 }
 
+vec3 SurfaceNormal (vec3 uvw)
+{
+    float eps = 0.1;
+    vec3 n = vec3(
+             VolumeValue(vec3(uvw.x-eps,uvw.y,uvw.z)) - VolumeValue(vec3(uvw.x+eps,uvw.y,uvw.z)),
+             VolumeValue(vec3(uvw.x,uvw.y-eps,uvw.z)) - VolumeValue(vec3(uvw.x,uvw.y+eps,uvw.z)),
+             VolumeValue(vec3(uvw.x,uvw.y,uvw.z-eps)) - VolumeValue(vec3(uvw.x,uvw.y,uvw.z+eps))
+    );
+    return normalize( n );
+}
+
 vec3 SurfaceDiffuse (vec3 uvw)
 {
+    if (!u_lit)
+        return uvw;
+
     // volumetric checkerboard pattern
-    // TODO: anti alias with 3d halton sequence? dunno...
-    float checkerboard = mod(floor(uvw.x * 10.0) + floor(uvw.y* 10.0) + floor(uvw.z* 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
-    return vec3(checkerboard, 0.0, 0.0);
+    // 10 cells on each axis
+    const float cells = 10.0;
+
+    uvw = clamp(uvw, 0.0, 0.999);
+
+    uvw *= cells;
+
+    // Make a grid where it does half a smoothstep at the border of each cell from 1 to 0, but not the edge of the space.
+    // But make an envelope to stop the edge tiles from blending to a tile that isn't there.
+    float xaxisBorder = step(uvw.x, 0.5) + step(cells - 0.5, uvw.x);
+    float yaxisBorder = step(uvw.y, 0.5) + step(cells - 0.5, uvw.y);        
+    float zaxisBorder = step(uvw.z, 0.5) + step(cells - 0.5, uvw.z);        
+    vec3 fractuvw = fract(uvw);
+    float xaxis = clamp(smoothstep(0.0, 0.02, fractuvw.x) * smoothstep(1.0, 0.98, fractuvw.x) + xaxisBorder, 0.0, 1.0);
+    float yaxis = clamp(smoothstep(0.0, 0.02, fractuvw.y) * smoothstep(1.0, 0.98, fractuvw.y) + yaxisBorder, 0.0, 1.0);
+    float zaxis = clamp(smoothstep(0.0, 0.02, fractuvw.z) * smoothstep(1.0, 0.98, fractuvw.z) + zaxisBorder, 0.0, 1.0);
+
+    float value = (xaxis * yaxis * zaxis * 0.5) + 0.5;
+    float cellAA = mix(0.0, 1.0, value);
+
+    // figure out if this is a bright or dark cell
+    bool onoff = mod(floor(uvw.x) + floor(uvw.y) + floor(uvw.z), 2.0) < 1.0;
+
+    // colorize the checkerboard
+    float color1 = onoff ? 1.0 : 0.4;
+    float color2 = onoff ? 0.4 : 1.0;
+    return vec3(mix(color1, color2, cellAA), 0.0, 0.0);    
 }
 
 // logic
@@ -193,7 +232,10 @@ vec3 CalculateColor() {
     float value = 0.0;   
     float lastValue = 0.0;
     bool hit = false;
-    float fogIntegral = 0.0;    
+    float fogAverageDensity = 0.0;    
+    float fogSamples = 0.0;
+    float fogDistance = 0.0;
+    bool hitOnFirstSample = true;
     for (int i = 0; i < NUM_RAY_STEPS; ++i)
     {
         value = VolumeValue(rayPos);
@@ -203,46 +245,106 @@ vec3 CalculateColor() {
             break;
         }
 
-        fogIntegral += value;
         lastValue = value;
-        rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);
-        hitTime += deltaT;        
+        rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);        
+
+        fogAverageDensity += value;
+        hitTime += deltaT;     
+        fogSamples += 1.0;
+        fogDistance += deltaT;   
+
+        hitOnFirstSample = false;
     }
 
-    // estimate where the hit was linearly, if there was a hit.
-    // adjust the hit time as well as the fog integral
-    if (hit)
+    // if we hit the surface on the first step, it's touching the wall
+    if (hitOnFirstSample)
     {
-        float percent = (u_surfaceThreshold - lastValue) / (value - lastValue);
-        hitTime = hitTime + percent * deltaT;
-        fogIntegral += percent * value;
+        fogAverageDensity = 0.0;
+        fogDistance = 0.0;
     }
-    vec3 rayHitPos = cameraPos + rayDir * hitTime;    
+    else
+    {
+        // estimate where the hit was linearly, if there was a hit.
+        // adjust the hit time as well as the fog average density        
+        if (hit)
+        {
+            float percent = (u_surfaceThreshold - lastValue) / (value - lastValue);
+            fogAverageDensity += value;
+            hitTime = hitTime + percent * deltaT;
+            fogSamples += percent;
+            fogDistance += percent * deltaT;        
+        }
+        fogAverageDensity /= fogSamples;
+    }
+
+    vec3 rayHitPos = clamp(cameraPos + rayDir * hitTime, 0.0, 1.0); 
 
     // calculate diffuse color
     vec3 diffuseColor = hit ? SurfaceDiffuse(rayHitPos) : u_boxColor;
 
-    // Calculate fog amount
-    /*
-     Note:
-     The intuitive way to calculate the fog would be to divide the fogIntegral by the length of
-     the path to get average fog density and then in the fog equation below, in the exp you
-     would multiply average fog density by path length and the fog intensity.
-
-     Since we would be dividing by and then multiplying by the path length, I'm forgoing those
-     redudnant operations and just multiplying the fogintegral by the fog intensity.
-    */
-
-    float fogAmount = 1.0 - exp( -fogIntegral * u_fogIntensity );
+    // apply fog to diffuse color
+    float fogAmount = 1.0 - exp( -fogAverageDensity * fogDistance * u_fogIntensity );
 
     //-------------------------
     //------- Shading ---------
     //-------------------------
 
-    // TODO: shade the diffuse color if there was a hit! if no hit, just return the fogged box color
+    vec3 ret = vec3(0.0);
+    if (u_lit && hit)
+    {
+        vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
+
+        vec3 normal = vec3(0.0);
+        if (hitOnFirstSample)
+        {
+            vec3 absDistCenter = abs(rayHitPos - vec3(0.5));
+            if (absDistCenter.x >= absDistCenter.y)
+            {
+                if (absDistCenter.x >= absDistCenter.z)
+                {
+                    normal = vec3(1.0, 0.0, 0.0);
+                }
+                else
+                {
+                    normal = vec3(0.0, 0.0, 1.0);
+                }
+            }
+            else if (absDistCenter.z > absDistCenter.y)
+            {
+                normal = vec3(0.0, 0.0, 1.0);
+            }
+            else
+            {
+                normal = vec3(0.0, 1.0, 0.0);
+            }
+        }
+        else
+        {
+            normal = SurfaceNormal(rayHitPos);
+        }
+
+        if (dot(normal, rayDir) > 0.0)
+          normal *= -1.0;
+
+        // ambient
+        ret = diffuseColor * vec3(0.01);
+
+        // diffuse
+        float dp = clamp(dot(normal, reverseLightDir), 0.0, 1.0);
+        ret += diffuseColor * dp;
+
+        // specular
+        vec3 reflection = reflect(reverseLightDir, normal);
+        dp = clamp(dot(rayDir, reflection), 0.0, 1.0);
+        ret += pow(dp, 60.0); 
+    }
+    else
+    {
+        ret = diffuseColor;
+    }
 
     // return the fogged color
-    return mix( diffuseColor, vec3(1.0), fogAmount );
+    return mix( ret, vec3(1.0), fogAmount );
 }
 
 void main() {
@@ -255,6 +357,7 @@ void main() {
 var gl = null;
 var canvas = null;
 var uniformMouse = null;
+var uniformLit = null;
 var uniformBoxColor = null;
 var uniformFogIntensity = null;
 var uniformSurfaceThreshold = null;
@@ -361,11 +464,13 @@ function DrawScene ()
 
     // update uniforms
     gl.uniform2fv(uniformMouse, [mouse.PosX / gl.canvas.width, mouse.PosY / gl.canvas.height]);
+    var e = document.getElementById("u_lit");
+    gl.uniform1i(uniformLit, e.options[e.selectedIndex].value);    
     if (document.getElementById("u_boxColor").checked)
         gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
     else
         gl.uniform3fv(uniformBoxColor, [0,0,0]);
-    var fogIntensity = document.getElementById("u_fogIntensity").value / 100;
+    var fogIntensity = document.getElementById("u_fogIntensity").value / 10;
     gl.uniform1f(uniformFogIntensity, fogIntensity*fogIntensity);
     gl.uniform1f(uniformSurfaceThreshold, document.getElementById("u_surfaceThreshold").value / 100);
 
@@ -539,6 +644,7 @@ function SelectShaderProgram ()
 
     // get uniforms for this shader program
     uniformMouse = gl.getUniformLocation(currentShaderProgram, "u_mouse"); 
+    uniformLit = gl.getUniformLocation(currentShaderProgram, "u_lit");    
     uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
     uniformFogIntensity = gl.getUniformLocation(currentShaderProgram, "u_fogIntensity")
     uniformSurfaceThreshold = gl.getUniformLocation(currentShaderProgram, "u_surfaceThreshold");
@@ -655,6 +761,15 @@ Drag the mouse to rotate the volume.<br>
         </select>
         </td>
         </tr>
+        <tr>
+        <td>Shading Mode:</td>
+        <td>
+        <select id="u_lit">
+            <option value="0">UVW</option>
+            <option value="1" selected="true">Lit</option>
+        </select>
+        </td>
+        </tr>        
         <tr><td>Fog Intensity:</td><td><input type="range" min="0" max="500" id="u_fogIntensity" value="50"></td></tr>
         <tr><td>Surface Threshold:</td><td><input type="range" min="0" max="100" id="u_surfaceThreshold" value="100"></td></tr>
         <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
@@ -720,6 +835,8 @@ TODO: link to blog post
 <pre>
 
 TODO: 
+* figure out why hitting the box from the positive side makes the diffuse color wig out.
+
 * need to fix surface hit estimation before threshold surface will be any good!
 
 * surface hit needs fixing when the first sample is already inside the shape
@@ -737,6 +854,8 @@ TODO:
  ? higher surfaces with multiple texture reads? (2,2,2) or (3,3,3)? Especially needed if those volumes aren't interesting enough.
 
 * explain rendering of the volumes in the bottom section
+
+* uvw coloring mode might actually be useful for the surface coloring.
 
 * perf / usefulness?
  * mention the L1 cache thing still being ~100 cycles

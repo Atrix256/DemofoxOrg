@@ -342,21 +342,30 @@ vec3 SurfaceDiffuse (vec2 uv)
 {
     vec3 ret;
 
-    // checkerboard pattern if lit
+    // anti aliased (smoothstepped) checkerboard pattern if lit
     if (u_lit)
     {
-        // with halton sequence offsets for some basic/cheesy checkerboard AA
-        float scale = 0.0075;
-        vec2 offset0 = vec2(1.0 / 2.0, 1.0 / 3.0) * scale;
-        vec2 offset1 = vec2(1.0 / 4.0, 2.0 / 3.0) * scale;
-        vec2 offset2 = vec2(3.0 / 4.0, 1.0 / 9.0) * scale;
-        vec2 offset3 = vec2(1.0 / 8.0, 4.0 / 9.0) * scale;
-        float checkerboard = 0.0;
-        checkerboard += mod(floor((uv.x + offset0.x) * 10.0) + floor((uv.y + offset0.y) * 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
-        checkerboard += mod(floor((uv.x + offset1.x) * 10.0) + floor((uv.y + offset1.y) * 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
-        checkerboard += mod(floor((uv.x + offset2.x) * 10.0) + floor((uv.y + offset2.y) * 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
-        checkerboard += mod(floor((uv.x + offset3.x) * 10.0) + floor((uv.y + offset3.y) * 10.0), 2.0) < 1.0 ? 1.0 : 0.4;
-        ret = vec3(checkerboard / 4.0, 0.0, 0.0);
+        // 10 cells on each axis
+        const float cells = 10.0;
+        vec2 uvCells = uv * cells;
+
+        // Make a grid where it does half a smoothstep at the border of each cell from 1 to 0, but not the edge of the space.
+        // But make an envelope to stop the edge tiles from blending to a tile that isn't there.
+        float xaxisBorder = step(uvCells.x, 0.5) + step(cells - 0.5, uvCells.x);
+        float yaxisBorder = step(uvCells.y, 0.5) + step(cells - 0.5, uvCells.y);        
+        vec2 fractuvCells = fract(uvCells);
+        float xaxis = clamp(smoothstep(0.0, 0.025, fractuvCells.x) * smoothstep(1.0, 0.975, fractuvCells.x) + xaxisBorder, 0.0, 1.0);
+        float yaxis = clamp(smoothstep(0.0, 0.025, fractuvCells.y) * smoothstep(1.0, 0.975, fractuvCells.y) + yaxisBorder, 0.0, 1.0);
+        float value = (xaxis * yaxis * 0.5) + 0.5;
+        float cellAA = mix(0.0, 1.0, value);
+
+        // figure out if this is a bright or dark cell
+        bool onoff = mod(floor(uvCells.x) + floor(uvCells.y), 2.0) < 1.0;
+
+        // colorize the checkerboard
+        float color1 = onoff ? 1.0 : 0.4;
+        float color2 = onoff ? 0.4 : 1.0;
+        ret = vec3(mix(color1, color2, cellAA), 0.0, 0.0);
     }
     // uv coordinates if unlit 
     else
@@ -1149,7 +1158,7 @@ The 9 control points are stored in a 2x2 2d texture's RGB channels.  Each color 
 <tr><td>02</td><td>12</td></tr>
 <tr><td>12</td><td>22</td></tr>
 </table><br><br>
-For a u,v coordinate, the texture is sampled at (uv.xx + 0.5) / 2.0 to get 3 quadratic curves in R,G,B.  The R,G,B results are then combined with the quadratic Bezier equation to get the surface height.
+For a u,v coordinate, the texture is sampled at (uv.xx + 0.5) / 2.0 to get 3 quadratic curves in R,G,B.  The R,G,B results are then combined with the quadratic Bezier equation using uv.y to get the surface height.
 
 <h2>Bicubic</h2>
 
@@ -1180,7 +1189,7 @@ The 16 control points are stored in a 2x2x2 3d volume texture's RGBA channels.  
 <tr><td>13</td><td>23</td></tr>
 <tr><td>23</td><td>33</td></tr>
 </table><br><br>
-For a u,v coordinate, the texture is sampled at (uv.xxx + 0.5) / 2.0 to get 4 cubic curves across u in R,G,B,A.  The R,G,B,A results are then combined with the cubic Bezier equation to get the surface height.
+For a u,v coordinate, the texture is sampled at (uv.xxx + 0.5) / 2.0 to get 4 cubic curves across u in R,G,B,A.  The R,G,B,A results are then combined with the cubic Bezier equation using uv.y to get the surface height.
 
 <hr>
 TODO: link to blog post
