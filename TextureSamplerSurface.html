@@ -45,8 +45,6 @@ var fragmentShaderSource = `
 #define CONTROL_POINT_SIZE 0.01
 
 precision mediump float;
-precision mediump float;
-
 precision mediump sampler2D;
 precision mediump sampler3D;
 
@@ -382,7 +380,7 @@ vec3 SurfaceDiffuse (vec2 uv)
 }
 
 // logic
-void main() {
+vec3 CalculateColor() {
 
     //-------------------------
     //----- Camera Setup ------
@@ -422,10 +420,9 @@ void main() {
     {
         float maxDist = 1000.0;
         if (HitCP(cameraPos, rayDir, maxDist))
-            outColor = vec4(1.0, 0.0, 1.0, 1.0);
+            return vec3(1.0, 0.0, 1.0);
         else
-            outColor = vec4(0.0, 0.0, 0.0, 1.0);
-        return;
+            return vec3(0.0, 0.0, 0.0);
     }
 
     // test the ray against control points and remember if we hit one. Also shorten max distance if we did.
@@ -466,10 +463,9 @@ void main() {
     if (!hit)
     {
         if (hitCP)
-            outColor = vec4(1.0, 0.0, 1.0, 1.0);
+            return vec3(1.0, 0.0, 1.0);
         else
-            outColor = vec4(u_boxColor, 1.0);
-        return;    
+            return u_boxColor;
     }    
 
     // estimate where the hit was
@@ -479,15 +475,12 @@ void main() {
     //-------------------------
     //------- Shading ---------
     //-------------------------
-    outColor.w = 1.0;
+    vec3 ret = vec3(0.0);
 
     vec3 diffuseColor = SurfaceDiffuse(rayHitPos.xz);
 
     if (!u_lit)
-    {
-        outColor.xyz = diffuseColor;
-        return;
-    }
+        return diffuseColor;
 
     vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
 
@@ -496,21 +489,26 @@ void main() {
       normal *= -1.0;
 
     // ambient
-    outColor.xyz = diffuseColor * vec3(0.01);
+    ret = diffuseColor * vec3(0.01);
 
     // diffuse
     float dp = clamp(dot(normal, reverseLightDir), 0.0, 1.0);
-    outColor.xyz += diffuseColor * dp;
+    ret += diffuseColor * dp;
 
     // specular
     vec3 reflection = reflect(reverseLightDir, normal);
     dp = clamp(dot(rayDir, reflection), 0.0, 1.0);
-    outColor.xyz += pow(dp, 60.0); 
+    ret += pow(dp, 60.0); 
 
-    // gamma correct and clamp
-    outColor.xyz = sqrt(outColor.xyz);
-    outColor = clamp(outColor, 0.0, 1.0);
+    return ret;
 }
+
+void main() {
+    // get the color, gamma correct and clamp
+    outColor.rgb = clamp(sqrt(CalculateColor()), 0.0, 1.0);
+    outColor.w = 1.0;
+}
+
 `;
 
 var gl = null;
@@ -652,7 +650,7 @@ function DrawScene ()
     var e = document.getElementById("u_lit");
     gl.uniform1i(uniformLit, e.options[e.selectedIndex].value);
     if (document.getElementById("u_boxColor").checked)
-        gl.uniform3fv(uniformBoxColor, [0,0.2,0]);
+        gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
     else
         gl.uniform3fv(uniformBoxColor, [0,0,0]);
     if (document.getElementById("u_isolines").checked)

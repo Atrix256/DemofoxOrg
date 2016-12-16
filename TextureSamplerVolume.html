@@ -1,0 +1,561 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Analytical Volumes Evaluated by the GPU Texture Sampler</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas#RenderWindow {border:2px solid #00FF00;width:800px; height:800px;}
+table {
+    border-collapse: collapse;
+}
+table, td {
+    border: 1px solid #00FF00;
+}
+table.NoBorder td {
+    border: 1px solid black;
+}
+</style>
+<script>
+/*=========================================================================================
+Created by Alan Wolfe December 2016
+http://demofox.org
+http://blog.demofox.org
+https://twitter.com/Atrix256
+=========================================================================================*/
+
+//=========================================================================================
+var vertexShaderSource = ` 
+// inputs
+in vec4 a_position;
+
+// outputs
+out vec2 v_screenPosition;  // in [-0.5, 0.5]
+
+// logic 
+void main() {
+    v_screenPosition = a_position.xy / 2.0;
+    gl_Position = vec4(a_position.xy, 0.0, 1.0);
+}
+`;
+ 
+//=========================================================================================
+var fragmentShaderSource = `
+#define NUM_RAY_STEPS 20
+
+precision mediump float;
+precision mediump sampler3D;
+
+uniform sampler3D u_texture3d;
+
+// inputs
+in vec2 v_screenPosition;  // in [-0.5, 0.5]
+
+// uniforms
+uniform vec2 u_mouse;             // z,y:  percent of screen. z: mouse button down or not.
+uniform vec3 u_boxColor;          // color of the bounding box.
+uniform float u_fogIntensity;     // how dense the fog is
+uniform float u_surfaceThreshold; // a threshold where if a fog sample is greater than this value, it's considered to be in the surface
+
+// outputs
+out vec4 outColor;
+
+// ----- STATIC_BRANCH_DEGREE 0: (1,1,1) HW Interpolation -----
+#if STATIC_BRANCH_DEGREE == 0
+
+    float VolumeValue (vec3 uvw)
+    {
+        return texture(u_texture3d, (uvw + 0.5) / 2.0).r;
+    }
+
+// ----- STATIC_BRANCH_DEGREE 1: (1,1,1) SW Interpolation -----
+#elif STATIC_BRANCH_DEGREE == 1
+
+    float VolumeValue (vec3 uvw)
+    {
+        float cp000 = texture(u_texture3d, vec3(0.25, 0.25, 0.25)).r;
+        float cp100 = texture(u_texture3d, vec3(0.75, 0.25, 0.25)).r;
+        float cp010 = texture(u_texture3d, vec3(0.25, 0.75, 0.25)).r;
+        float cp110 = texture(u_texture3d, vec3(0.75, 0.75, 0.25)).r;
+        float cp001 = texture(u_texture3d, vec3(0.25, 0.25, 0.75)).r;
+        float cp101 = texture(u_texture3d, vec3(0.75, 0.25, 0.75)).r;
+        float cp011 = texture(u_texture3d, vec3(0.25, 0.75, 0.75)).r;
+        float cp111 = texture(u_texture3d, vec3(0.75, 0.75, 0.75)).r;
+
+        float cpx00 = mix(cp000, cp100, uvw.x);
+        float cpx10 = mix(cp010, cp110, uvw.x);
+        float cpx01 = mix(cp001, cp101, uvw.x);
+        float cpx11 = mix(cp011, cp111, uvw.x);
+
+        float cpxy0 = mix(cpx00, cpx10, uvw.y);
+        float cpxy1 = mix(cpx01, cpx11, uvw.y);
+
+        return mix(cpxy0, cpxy1, uvw.z);
+    }    
+
+#endif
+
+bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir, out vec2 time)
+{
+    vec3 roo = rayPos - (boxMin+boxMax)*0.5;
+    vec3 rad = (boxMax - boxMin)*0.5;
+
+    vec3 m = 1.0/rayDir;
+    vec3 n = m*roo;
+    vec3 k = abs(m)*rad;
+    
+    vec3 t1 = -n - k;
+    vec3 t2 = -n + k;
+
+    time = vec2( max( max( t1.x, t1.y ), t1.z ),
+                 min( min( t2.x, t2.y ), t2.z ) );
+    
+    return time.y>time.x && time.y>0.0;
+}
+
+// logic
+vec3 CalculateColor() {
+
+    //-------------------------
+    //----- Camera Setup ------
+    //-------------------------
+
+    vec3 cameraAt   = vec3(0.5,0.5,0.5);
+
+    float angleX = 6.28 * (u_mouse.x - 0.5) + 3.54;
+    float angleY = ((u_mouse.y - 0.5) * 6.28) + 0.5;
+    vec3 cameraPos  = (vec3(sin(angleX)*cos(angleY), sin(angleY), cos(angleX)*cos(angleY))) * 3.0;
+    cameraPos += vec3(0.5,0.5,0.5);
+
+    vec3 cameraFwd  = normalize(cameraAt - cameraPos);
+    vec3 cameraLeft  = normalize(cross(normalize(cameraAt - cameraPos), vec3(0.0,sign(cos(angleY)),0.0)));
+    vec3 cameraUp   = normalize(cross(cameraLeft, cameraFwd));
+
+    float cameraViewWidth   = 6.0;
+    float cameraViewHeight  = cameraViewWidth;
+    float cameraDistance    = 10.0;  // intuitively backwards!
+
+    //-------------------------
+    //------ Ray Setup --------
+    //-------------------------
+    
+    vec3 rayTarget = (cameraFwd * vec3(cameraDistance,cameraDistance,cameraDistance))
+                   - (cameraLeft * v_screenPosition.x * cameraViewWidth)
+                   + (cameraUp * v_screenPosition.y * cameraViewHeight);
+    vec3 rayDir = normalize(rayTarget);
+
+    //-------------------------
+    //------ Ray Trace --------
+    //-------------------------
+    
+    // if the ray misses the bounding box, bail out
+    vec2 rayMinMax;
+    if (!RayIntersectAABox(vec3(0.0, 0.0, 0.0), vec3(1.0,1.0,1.0), cameraPos, rayDir, rayMinMax))
+        return vec3(0.0, 0.0, 0.0);
+
+    //-------------------------
+    //------ Ray March --------
+    //-------------------------
+
+    vec3 rayPos = clamp(cameraPos + rayDir * rayMinMax.x, 0.0, 1.0);
+    vec3 rayStop = clamp(cameraPos + rayDir * rayMinMax.y, 0.0, 1.0);
+    vec3 rayDelta = (rayStop - rayPos) / float(NUM_RAY_STEPS-1);
+    float fogIntegral = 0.0;
+    for (int i = 0; i < NUM_RAY_STEPS; ++i)
+    {
+        float fogValue = VolumeValue(rayPos);
+
+        // TODO: if above threshold, consider it a hit, calculate diffuse color and all that :P
+
+        fogIntegral += fogValue;
+        rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);
+    }
+
+    /*
+     Note:
+     The intuitive way to calculate the fog would be to divide the fogIntegral by the length of
+     the path to get average fog density and then in the fog equation below, in the exp you
+     would multiply average fog density by path length and the fog intensity.
+
+     Since we would be dividing by and then multiplying by the path length, I'm forgoing those
+     redudnant operations and just multiplying the fogintegral by the fog intensity.
+    */
+
+    float fogAmount = 1.0 - exp( -fogIntegral * u_fogIntensity );
+    return mix( u_boxColor, vec3(1.0), fogAmount );
+
+    //-------------------------
+    //------- Shading ---------
+    //-------------------------
+
+    // TODO: later, handle a thresholded shape and fog it!
+}
+
+void main() {
+    // get the color, gamma correct and clamp
+    outColor.rgb = clamp(sqrt(CalculateColor()), 0.0, 1.0);
+    outColor.w = 1.0;
+}
+`;
+
+var gl = null;
+var canvas = null;
+var uniformMouse = null;
+var uniformBoxColor = null;
+var uniformFogIntensity = null;
+var uniformSurfaceThreshold = null;
+var uniformTexture3d = null;
+var mouse = {PosX:0, PosX:0, IsDown: false};
+var mouseClicked = false;
+var shaderPrograms = [];
+var currentShaderProgram = null;
+
+var texture3d = null;
+
+//=========================================================================================
+function createShader (gl, type, source, staticBranches) {
+  var shader = gl.createShader(type);
+  gl.shaderSource(shader, "#version 300 es\n" + staticBranches + source);
+  gl.compileShader(shader);
+  var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (success) {
+    return shader;
+  }
+ 
+  console.log(gl.getShaderInfoLog(shader));
+  gl.deleteShader(shader);
+}
+
+//=========================================================================================
+function createProgram (gl, vertexShader, fragmentShader) {
+  var program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+  if (success) {
+    return program;
+  }
+ 
+  console.log(gl.getProgramInfoLog(program));
+  gl.deleteProgram(program);
+}
+
+//=========================================================================================
+function createTexture3dRGBA (texture, byteArrayWithRGBAData, width, height, depth) {
+    if (texture == null)
+        texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_3D, texture);
+    gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA, width, height, depth, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(byteArrayWithRGBAData));
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_3D, null);
+    return texture;
+}
+
+//=========================================================================================
+function resize (canvas) {
+  // Lookup the size the browser is displaying the canvas.
+  var displayWidth  = canvas.clientWidth;
+  var displayHeight = canvas.clientHeight;
+ 
+  // Check if the canvas is not the same size.
+  if (canvas.width  !== displayWidth ||
+      canvas.height !== displayHeight) {
+ 
+    // Make the canvas the same size
+    canvas.width  = displayWidth;
+    canvas.height = displayHeight;
+  }
+}
+
+//=========================================================================================
+function SetVertexAttributeData (gl, program, name, type, count, values)
+{
+    var attributeLocation = gl.getAttribLocation(program, name);
+    if (attributeLocation == -1)
+        return;
+
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(values), gl.STATIC_DRAW);        
+
+    gl.enableVertexAttribArray(attributeLocation);
+    var size = count; 
+    var type = type;   
+    var normalize = false; 
+    var stride = 0;        
+    var offset = 0;        
+    gl.vertexAttribPointer(attributeLocation, size, type, normalize, stride, offset);      
+}
+
+//=========================================================================================
+function DrawScene ()
+{
+    // set which shader we are using
+    SelectShaderProgram();
+
+    // hacky work around for some unknown thing changing the mouse value in the first couple frames!
+    // I did a console.log at each place the mouse value is modified, and it wasn't any of them!!
+    if (!mouseClicked)
+    {
+        mouse.PosX = gl.canvas.width / 2;
+        mouse.PosY = gl.canvas.height / 2;
+    }
+
+    // update uniforms
+    gl.uniform2fv(uniformMouse, [mouse.PosX / gl.canvas.width, mouse.PosY / gl.canvas.height]);
+    if (document.getElementById("u_boxColor").checked)
+        gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
+    else
+        gl.uniform3fv(uniformBoxColor, [0,0,0]);
+    var fogIntensity = document.getElementById("u_fogIntensity").value / 100;
+    gl.uniform1f(uniformFogIntensity, fogIntensity);
+    gl.uniform1f(uniformSurfaceThreshold, document.getElementById("u_surfaceThreshold").value);
+
+    // make sure gl is rendering to the the right size and has the right viewport info
+    resize(gl.canvas);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    // draw our single full screen triangle
+    var primitiveType = gl.TRIANGLES;
+    var offset = 0;
+    var count = 3;
+    gl.drawArrays(primitiveType, offset, count);    
+
+    // request another frame to be drawn
+    requestAnimationFrame(DrawScene);
+}
+
+//=========================================================================================
+function GetPos ( obj )
+{
+    var x = 0;
+    var y = 0; 
+    do
+    {
+         x += obj.offsetLeft;
+         y += obj.offsetTop;
+    }while( obj = obj.offsetParent );
+
+    return { mX:x, mY:y };
+}
+
+//=========================================================================================
+function UpdateTexture ()
+{
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var degree = e.options[e.selectedIndex].value
+
+    if (degree == 0 || degree == 1)
+    {
+        var cp111_000 = document.getElementById("CP111_000").value;
+        var cp111_100 = document.getElementById("CP111_100").value;
+        var cp111_010 = document.getElementById("CP111_010").value;
+        var cp111_110 = document.getElementById("CP111_110").value;
+        var cp111_001 = document.getElementById("CP111_001").value;
+        var cp111_101 = document.getElementById("CP111_101").value;
+        var cp111_011 = document.getElementById("CP111_011").value;
+        var cp111_111 = document.getElementById("CP111_111").value;
+
+        var textureData = [
+            cp111_000, 0, 0, 0,
+            cp111_100, 0, 0, 0,
+            cp111_010, 0, 0, 0,
+            cp111_110, 0, 0, 0,
+
+            cp111_001, 0, 0, 0,
+            cp111_101, 0, 0, 0,
+            cp111_011, 0, 0, 0,
+            cp111_111, 0, 0, 0
+        ];
+        texture3d = createTexture3dRGBA(
+            texture3d,
+            textureData,
+            2, 2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_3D, texture3d);
+        gl.uniform1i(uniformTexture3d, 0);     
+    }
+}
+
+//=========================================================================================
+function SelectShaderProgram ()
+{
+    // if we are using the same shader program that we are supposed to be using, nothing to do
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var newShaderProgram = shaderPrograms[e.options[e.selectedIndex].value];
+    if (newShaderProgram == currentShaderProgram)
+        return;
+
+    // switch to the new shader program if we need to change
+    currentShaderProgram = newShaderProgram;
+    gl.useProgram(currentShaderProgram); 
+
+    // vertex data - a single triangle that covers the screen
+    var vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    SetVertexAttributeData(gl, currentShaderProgram, "a_position", gl.FLOAT, 2,
+        [
+            -1,  3,
+             3, -1,
+            -1, -1,
+        ]
+    );   
+
+    // get uniforms for this shader program
+    uniformMouse = gl.getUniformLocation(currentShaderProgram, "u_mouse"); 
+    uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
+    uniformFogIntensity = gl.getUniformLocation(currentShaderProgram, "u_fogIntensity")
+    uniformSurfaceThreshold = gl.getUniformLocation(currentShaderProgram, "u_surfaceThreshold");
+    uniformTexture3d = gl.getUniformLocation(currentShaderProgram, "u_texture3d");
+
+    // update the texture we are sampling from
+    UpdateTexture();
+}
+
+//=========================================================================================
+function DegreeChanged ()
+{
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var degree = e.options[e.selectedIndex].value;
+
+    document.getElementById("ControlPoints111").style.visibility = (degree == 0 || degree == 1) ? "visible" : "hidden";
+    document.getElementById("ControlPoints111").style.display  = (degree == 0 || degree == 1) ? "block" : "none";
+}
+
+//=========================================================================================
+function Initialize ()
+{
+    // make sure the UI is setup correctly
+    DegreeChanged();
+
+    // setup webgl2
+    canvas = document.getElementById("RenderWindow");
+    gl = canvas.getContext("webgl2");
+    if (!gl)
+    {
+        alert("This page requires WebGL2, which doesn't seem to be enabled ):");
+        return;
+    }
+
+    // Setup mouse input stuff
+    mouse.PosX = gl.canvas.width / 2;
+    mouse.PosY = gl.canvas.height / 2;
+    mouse.IsDown = false;
+    canvas.onmousedown = function(ev)
+    {
+        var pos = GetPos(canvas);
+        mouse.PosX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+        mouse.PosY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+        mouse.IsDown = true;
+        mouseClicked = true;
+    }
+    canvas.onmousemove = function(ev)
+    {
+        if( mouse.IsDown )
+        {
+            var pos = GetPos( canvas );
+            mouse.PosX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+            mouse.PosY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+        }
+    }
+    canvas.onmouseup = function(ev) {mouse.IsDown = false;}
+
+    // set clear color to black
+    gl.clearColor(0, 0, 0, 1);
+
+    // activate texture 0
+    gl.activeTexture(gl.TEXTURE0);
+
+    // compile all shaders
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource, "");
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 0");
+    shaderPrograms[0] = createProgram(gl, vertexShader, fragmentShader);
+
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 1");
+    shaderPrograms[1] = createProgram(gl, vertexShader, fragmentShader);
+
+    // start the render loop
+    requestAnimationFrame(DrawScene);
+}
+
+
+</script>
+</head>
+<body onLoad="Initialize()">
+<h1>Analytical Volumes Evaluated by the GPU Texture Sampler</h1>
+
+This page uses WebGL2, which will be enabled by default in chrome 56 in January 2017.<br>
+To enable WebGL2 before then, or on other browsers, see this link:
+<a href="http://webgl2fundamentals.org/webgl/lessons/webgl-getting-webgl2.html" target="_blank">How to use WebGL2</a><br>
+<br>
+Drag the mouse to rotate the volume.<br>
+<br>
+<table class="NoBorder">
+<tr>
+    <td><canvas id="RenderWindow"></canvas></td>
+    <td valign="top">
+        <br>
+        <table>
+        <tr>
+        <td>Degree:</td>
+        <td>
+        <select id="STATIC_BRANCH_DEGREE" onChange="DegreeChanged()">
+            <option value="0">(1,1,1) Trilinear</option>
+            <option value="1">(1,1,1) Trilinear (Software Interpolation)</option>
+            <option value="2">(1,1,2) Bilinear / Quadratic</option>
+            <option value="3">(2,2,2) Biquadratic / Linear</option>
+        </select>
+        </td>
+        </tr>
+        <tr><td>Fog Intensity:</td><td><input type="range" min="0" max="200" id="u_fogIntensity" value="50"></td></tr>
+        <tr><td>Surface Threshold:</td><td><input type="range" min="0" max="100" id="u_surfaceThreshold" value="0"></td></tr>
+        <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
+        </table>
+        <br>
+        Control Points:<br>        
+        <table class="NoBorder" id="ControlPoints111">
+        <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP111_000" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>100:</td><td><input type="range" min="0" max="255" id="CP111_100" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>010:</td><td><input type="range" min="0" max="255" id="CP111_010" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>110:</td><td><input type="range" min="0" max="255" id="CP111_110" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>001:</td><td><input type="range" min="0" max="255" id="CP111_001" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>101:</td><td><input type="range" min="0" max="255" id="CP111_101" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>011:</td><td><input type="range" min="0" max="255" id="CP111_011" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP111_111" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        </table>
+    </td>
+</tr>
+</table>
+
+<h2>How It's Rendered</h2>
+TODO: explain!
+
+<hr>
+TODO: link to blog post
+</body>
+</html>
+
+<pre>
+
+TODO: 
+* volumes to do:
+ * bilinear / quadratic (1,1,2) -> 2x2x2 3d texture with R,G.  sample (u,v,w), lerp R and G by w.
+ * (2,2,1) -> 2x2x2 3d texture with RGBA.  R,G gets 1 biquad.  B,A gets the other.  sample at (u,u,v). lerp R,G by v and B,A by v. lerp results by w.
+ ? higher surfaces with multiple texture reads? (2,2,2) or (3,3,3)? Especially needed if those volumes aren't interesting enough.
+
+* figure out how to deal with the bounding box coloring
+ * maybe as we ray march we collect a fog amount, then apply it to bounding box coloring / diffuse color.
+
+* display data as fog density
+ * do we need a slider for multiplier to see it better or mayke it go away? I think so.
+
+* also have a threshold for a surface
+ * compute red checkerboard color by sampling (x,y,z) of a 3d checkerboard, similar to how you do 2d
+
+* rip out all the surface stuff and replace it with volume stuff
+* explain volumes in the bottom section
+
+</pre>
