@@ -4,7 +4,7 @@
 <title>Analytical Volumes Evaluated by the GPU Texture Sampler</title>
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
-canvas#RenderWindow {border:2px solid #00FF00;width:800px; height:800px;}
+canvas#RenderWindow {border:2px solid #00FF00;width:700px; height:700px;}
 table {
     border-collapse: collapse;
 }
@@ -91,6 +91,27 @@ out vec4 outColor;
 
         return mix(cpxy0, cpxy1, uvw.z);
     }    
+
+// ----- STATIC_BRANCH_DEGREE 2: (1,1,2) -----
+#elif STATIC_BRANCH_DEGREE == 2
+
+    float VolumeValue (vec3 uvw)
+    {
+        vec2 value = texture(u_texture3d, (uvw + 0.5) / 2.0).rg;
+        return mix(value.r, value.g, uvw.z);
+    }
+
+// ----- STATIC_BRANCH_DEGREE 3: (2,2,1) -----
+#elif STATIC_BRANCH_DEGREE == 3
+
+    float VolumeValue (vec3 uvw)
+    {
+        vec4 valueuuv = texture(u_texture3d, (uvw.xxy + 0.5) / 2.0);
+        vec2 valueuuvv;
+        valueuuvv.x = mix(valueuuv.r, valueuuv.g, uvw.y);
+        valueuuvv.y = mix(valueuuv.b, valueuuv.a, uvw.y);
+        return mix(valueuuvv.x, valueuuvv.y, uvw.z);
+    }
 
 #endif
 
@@ -344,7 +365,8 @@ function DrawScene ()
         gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
     else
         gl.uniform3fv(uniformBoxColor, [0,0,0]);
-    gl.uniform1f(uniformFogIntensity, document.getElementById("u_fogIntensity").value / 100);
+    var fogIntensity = document.getElementById("u_fogIntensity").value / 100;
+    gl.uniform1f(uniformFogIntensity, fogIntensity*fogIntensity);
     gl.uniform1f(uniformSurfaceThreshold, document.getElementById("u_surfaceThreshold").value / 100);
 
     // make sure gl is rendering to the the right size and has the right viewport info
@@ -411,6 +433,84 @@ function UpdateTexture ()
         gl.bindTexture(gl.TEXTURE_3D, texture3d);
         gl.uniform1i(uniformTexture3d, 0);     
     }
+    else if (degree == 2)
+    {
+        var cp112_000 = document.getElementById("CP112_000").value;
+        var cp112_100 = document.getElementById("CP112_100").value;
+        var cp112_010 = document.getElementById("CP112_010").value;
+        var cp112_110 = document.getElementById("CP112_110").value;
+        var cp112_001 = document.getElementById("CP112_001").value;
+        var cp112_101 = document.getElementById("CP112_101").value;
+        var cp112_011 = document.getElementById("CP112_011").value;
+        var cp112_111 = document.getElementById("CP112_111").value;
+        var cp112_002 = document.getElementById("CP112_002").value;
+        var cp112_102 = document.getElementById("CP112_102").value;
+        var cp112_012 = document.getElementById("CP112_012").value;
+        var cp112_112 = document.getElementById("CP112_112").value;        
+
+        var textureData = [
+            cp112_000, cp112_001, 0, 0,
+            cp112_100, cp112_101, 0, 0,
+            cp112_010, cp112_011, 0, 0,
+            cp112_110, cp112_111, 0, 0,
+
+            cp112_001, cp112_002, 0, 0,
+            cp112_101, cp112_102, 0, 0,
+            cp112_011, cp112_012, 0, 0,
+            cp112_111, cp112_112, 0, 0
+        ];
+        texture3d = createTexture3dRGBA(
+            texture3d,
+            textureData,
+            2, 2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_3D, texture3d);
+        gl.uniform1i(uniformTexture3d, 0); 
+    }
+    else if (degree == 3)
+    {
+        //  * (2,2,1) -> 2x2x2 3d texture with RGBA.  R,G gets 1 biquad.  B,A gets the other.  sample at (u,u,v). lerp R,G by v and B,A by v. lerp results by w.
+        // TODO: this
+
+        var cp221_000 = document.getElementById("CP221_000").value;
+        var cp221_100 = document.getElementById("CP221_100").value;
+        var cp221_200 = document.getElementById("CP221_200").value;
+        var cp221_010 = document.getElementById("CP221_010").value;
+        var cp221_110 = document.getElementById("CP221_110").value;
+        var cp221_210 = document.getElementById("CP221_210").value;
+        var cp221_020 = document.getElementById("CP221_020").value;
+        var cp221_120 = document.getElementById("CP221_120").value;
+        var cp221_220 = document.getElementById("CP221_220").value;
+        var cp221_001 = document.getElementById("CP221_001").value;
+        var cp221_101 = document.getElementById("CP221_101").value;
+        var cp221_201 = document.getElementById("CP221_201").value;
+        var cp221_011 = document.getElementById("CP221_011").value;
+        var cp221_111 = document.getElementById("CP221_111").value;
+        var cp221_211 = document.getElementById("CP221_211").value;
+        var cp221_021 = document.getElementById("CP221_021").value;
+        var cp221_121 = document.getElementById("CP221_121").value;
+        var cp221_221 = document.getElementById("CP221_221").value;   
+
+        // TODO: make this right
+        var textureData = [
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0
+        ];
+        texture3d = createTexture3dRGBA(
+            texture3d,
+            textureData,
+            2, 2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_3D, texture3d);
+        gl.uniform1i(uniformTexture3d, 0);              
+    }    
 }
 
 //=========================================================================================
@@ -456,6 +556,12 @@ function DegreeChanged ()
 
     document.getElementById("ControlPoints111").style.visibility = (degree == 0 || degree == 1) ? "visible" : "hidden";
     document.getElementById("ControlPoints111").style.display  = (degree == 0 || degree == 1) ? "block" : "none";
+
+    document.getElementById("ControlPoints112").style.visibility = (degree == 2) ? "visible" : "hidden";
+    document.getElementById("ControlPoints112").style.display  = (degree == 2) ? "block" : "none";
+
+    document.getElementById("ControlPoints221").style.visibility = (degree == 3) ? "visible" : "hidden";
+    document.getElementById("ControlPoints221").style.display  = (degree == 3) ? "block" : "none";    
 }
 
 //=========================================================================================
@@ -510,6 +616,12 @@ function Initialize ()
     fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 1");
     shaderPrograms[1] = createProgram(gl, vertexShader, fragmentShader);
 
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 2");
+    shaderPrograms[2] = createProgram(gl, vertexShader, fragmentShader);    
+
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 3");
+    shaderPrograms[3] = createProgram(gl, vertexShader, fragmentShader);      
+
     // start the render loop
     requestAnimationFrame(DrawScene);
 }
@@ -539,7 +651,7 @@ Drag the mouse to rotate the volume.<br>
             <option value="0">(1,1,1) Trilinear</option>
             <option value="1">(1,1,1) Trilinear (Software Interpolation)</option>
             <option value="2">(1,1,2) Bilinear / Quadratic</option>
-            <option value="3">(2,2,2) Biquadratic / Linear</option>
+            <option value="3">(2,2,1) Biquadratic / Linear</option>
         </select>
         </td>
         </tr>
@@ -559,6 +671,40 @@ Drag the mouse to rotate the volume.<br>
         <tr><td>&nbsp;</td><td>011:</td><td><input type="range" min="0" max="255" id="CP111_011" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP111_111" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         </table>
+        <table class="NoBorder" id="ControlPoints112">
+        <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP112_000" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>100:</td><td><input type="range" min="0" max="255" id="CP112_100" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>010:</td><td><input type="range" min="0" max="255" id="CP112_010" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>110:</td><td><input type="range" min="0" max="255" id="CP112_110" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>001:</td><td><input type="range" min="0" max="255" id="CP112_001" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>101:</td><td><input type="range" min="0" max="255" id="CP112_101" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>011:</td><td><input type="range" min="0" max="255" id="CP112_011" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP112_111" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>002:</td><td><input type="range" min="0" max="255" id="CP112_002" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>102:</td><td><input type="range" min="0" max="255" id="CP112_102" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>012:</td><td><input type="range" min="0" max="255" id="CP112_012" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>112:</td><td><input type="range" min="0" max="255" id="CP112_112" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>        
+        </table>        
+        <table class="NoBorder" id="ControlPoints221">      
+        <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP221_000" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>100:</td><td><input type="range" min="0" max="255" id="CP221_100" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>200:</td><td><input type="range" min="0" max="255" id="CP221_200" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>010:</td><td><input type="range" min="0" max="255" id="CP221_010" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>110:</td><td><input type="range" min="0" max="255" id="CP221_110" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>210:</td><td><input type="range" min="0" max="255" id="CP221_210" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr> 
+        <tr><td>&nbsp;</td><td>020:</td><td><input type="range" min="0" max="255" id="CP221_020" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>120:</td><td><input type="range" min="0" max="255" id="CP221_120" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>220:</td><td><input type="range" min="0" max="255" id="CP221_220" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>001:</td><td><input type="range" min="0" max="255" id="CP221_001" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>   
+        <tr><td>&nbsp;</td><td>101:</td><td><input type="range" min="0" max="255" id="CP221_101" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>201:</td><td><input type="range" min="0" max="255" id="CP221_201" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>011:</td><td><input type="range" min="0" max="255" id="CP221_011" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP221_111" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>   
+        <tr><td>&nbsp;</td><td>211:</td><td><input type="range" min="0" max="255" id="CP221_211" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>021:</td><td><input type="range" min="0" max="255" id="CP221_021" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>121:</td><td><input type="range" min="0" max="255" id="CP221_121" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>221:</td><td><input type="range" min="0" max="255" id="CP221_221" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                                                     
+        </table>  
     </td>
 </tr>
 </table>
@@ -576,23 +722,26 @@ TODO: link to blog post
 TODO: 
 * need to fix surface hit estimation before threshold surface will be any good!
 
+* surface hit needs fixing when the first sample is already inside the shape
+
+? maybe demo resolutions should be 600x600? laptop can't fit it all on one screen at home
+
+* light threshold surface
+
+* using distance estimation to do ray step size may help accuracy. re-faimilarize with it?
+ * could write up a blog post after perhaps? or do some ray marching posts.
+ * could use it in the surface demo too if you get this working
+
 * volumes to do:
- * bilinear / quadratic (1,1,2) -> 2x2x2 3d texture with R,G.  sample (u,v,w), lerp R and G by w.
  * (2,2,1) -> 2x2x2 3d texture with RGBA.  R,G gets 1 biquad.  B,A gets the other.  sample at (u,u,v). lerp R,G by v and B,A by v. lerp results by w.
  ? higher surfaces with multiple texture reads? (2,2,2) or (3,3,3)? Especially needed if those volumes aren't interesting enough.
 
-* make u_fogIntensity intensity exponential.
+* explain rendering of the volumes in the bottom section
 
-* figure out how to deal with the bounding box coloring
- * maybe as we ray march we collect a fog amount, then apply it to bounding box coloring / diffuse color.
-
-* display data as fog density
- * do we need a slider for multiplier to see it better or mayke it go away? I think so.
-
-* also have a threshold for a surface
- * compute red checkerboard color by sampling (x,y,z) of a 3d checkerboard, similar to how you do 2d
-
-* rip out all the surface stuff and replace it with volume stuff
-* explain volumes in the bottom section
+* perf / usefulness?
+ * mention the L1 cache thing still being ~100 cycles
+ * mention that if you are already using textures, this helps the cache?
+ * or leave this as a future investigation for deeper perf stuff?
+ * curiosity / playing around with new stuff.
 
 </pre>
