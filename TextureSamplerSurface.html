@@ -1112,14 +1112,15 @@ Drag the mouse to rotate the surface.<br>
 </table>
 
 <h2>How It's Rendered</h2>
-
 The rendering is done by doing a ray trace of the bounding cube to see which rays might intersect the surface.
 <br><br>
 The rays that hit the cube then ray march from the start of the cube to the end of the cube to see if they hit the surface.  If they do hit the surface, they are shaded, else they are not.
 <br><br>
-Instead of doing the initial ray trace, the cube could be rendered with triangles so that it would become a rasterization process instead of a full screen raytrace vs a box.  The ray marching would still be done in the pixel shader like it is now.
+Instead of doing the initial ray trace, the cube could be rendered with triangles so that it would become a rasterization process instead of a full screen raytrace vs a box.  The ray marching would still be done in the pixel shader like it is now.  The ray marching could be improved by using the gradient to take varying sized steps instead of constant sized steps.
 <br><br>
-The GPU texture sampler is used to calculate the y axis value (height) of the surface at a given u,v (or x,z) value, as described below.
+There is some non smoothness of the normals (seen best in the specular highlight) and the surface positions that is due to the fact that the texture interpolator works in X.8 fixed point numbers.  You can verify this by using the software interpolated dreeg selection to see it smooth out.
+<br><br>
+The GPU texture sampler is used to calculate the y axis value (height) of the surface at a given u,v (or x,z) position, as described below.
 <h2>Bilinear</h2>
 The four control points are stored in a 2x2 2d texture's R channel in this pattern:<br><br>
 <table>

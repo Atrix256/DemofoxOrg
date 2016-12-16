@@ -292,7 +292,7 @@ vec3 CalculateColor() {
     vec3 ret = vec3(0.0);
     if (u_lit && hit)
     {
-        vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
+        vec3 reverseLightDir = normalize(vec3(-2.0, 2.0, -0.1));
 
         vec3 normal = vec3(0.0);
         if (hitOnFirstSample)
@@ -574,9 +574,6 @@ function UpdateTexture ()
     }
     else if (degree == 3)
     {
-        //  * (2,2,1) -> 2x2x2 3d texture with RGBA.  R,G gets 1 biquad.  B,A gets the other.  sample at (u,u,v). lerp R,G by v and B,A by v. lerp results by w.
-        // TODO: this
-
         var cp221_000 = document.getElementById("CP221_000").value;
         var cp221_100 = document.getElementById("CP221_100").value;
         var cp221_200 = document.getElementById("CP221_200").value;
@@ -596,17 +593,16 @@ function UpdateTexture ()
         var cp221_121 = document.getElementById("CP221_121").value;
         var cp221_221 = document.getElementById("CP221_221").value;   
 
-        // TODO: make this right
         var textureData = [
-            0, 0, 0, 0,
-            0, 0, 0, 0,
-            0, 0, 0, 0,
-            0, 0, 0, 0,
+            cp221_000, cp221_010, cp221_001, cp221_011,
+            cp221_100, cp221_110, cp221_101, cp221_111,
+            cp221_100, cp221_110, cp221_101, cp221_111,
+            cp221_200, cp221_210, cp221_201, cp221_211,
 
-            0, 0, 0, 0,
-            0, 0, 0, 0,
-            0, 0, 0, 0,
-            0, 0, 0, 0
+            cp221_010, cp221_020, cp221_011, cp221_021,
+            cp221_110, cp221_120, cp221_111, cp221_121,
+            cp221_110, cp221_120, cp221_111, cp221_121,
+            cp221_210, cp221_220, cp221_211, cp221_221
         ];
         texture3d = createTexture3dRGBA(
             texture3d,
@@ -770,25 +766,25 @@ Drag the mouse to rotate the volume.<br>
         </select>
         </td>
         </tr>        
-        <tr><td>Fog Intensity:</td><td><input type="range" min="0" max="500" id="u_fogIntensity" value="50"></td></tr>
-        <tr><td>Surface Threshold:</td><td><input type="range" min="0" max="100" id="u_surfaceThreshold" value="100"></td></tr>
+        <tr><td>Fog Intensity:</td><td><input type="range" min="0" max="500" id="u_fogIntensity" value="30"></td></tr>
+        <tr><td>Surface Threshold:</td><td><input type="range" min="0" max="100" id="u_surfaceThreshold" value="10"></td></tr>
         <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
         </table>
         <br>
         Control Points:<br>        
         <table class="NoBorder" id="ControlPoints111">
-        <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP111_000" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP111_000" value="50" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>100:</td><td><input type="range" min="0" max="255" id="CP111_100" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>010:</td><td><input type="range" min="0" max="255" id="CP111_010" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>110:</td><td><input type="range" min="0" max="255" id="CP111_110" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>001:</td><td><input type="range" min="0" max="255" id="CP111_001" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <tr><td>&nbsp;</td><td>101:</td><td><input type="range" min="0" max="255" id="CP111_101" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>101:</td><td><input type="range" min="0" max="255" id="CP111_101" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>011:</td><td><input type="range" min="0" max="255" id="CP111_011" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP111_111" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP111_111" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         </table>
         <table class="NoBorder" id="ControlPoints112">
         <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP112_000" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <tr><td>&nbsp;</td><td>100:</td><td><input type="range" min="0" max="255" id="CP112_100" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>100:</td><td><input type="range" min="0" max="255" id="CP112_100" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>010:</td><td><input type="range" min="0" max="255" id="CP112_010" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>110:</td><td><input type="range" min="0" max="255" id="CP112_110" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>001:</td><td><input type="range" min="0" max="255" id="CP112_001" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
@@ -796,17 +792,17 @@ Drag the mouse to rotate the volume.<br>
         <tr><td>&nbsp;</td><td>011:</td><td><input type="range" min="0" max="255" id="CP112_011" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP112_111" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>002:</td><td><input type="range" min="0" max="255" id="CP112_002" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <tr><td>&nbsp;</td><td>102:</td><td><input type="range" min="0" max="255" id="CP112_102" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>102:</td><td><input type="range" min="0" max="255" id="CP112_102" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>012:</td><td><input type="range" min="0" max="255" id="CP112_012" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>112:</td><td><input type="range" min="0" max="255" id="CP112_112" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>        
         </table>        
         <table class="NoBorder" id="ControlPoints221">      
-        <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP221_000" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>000:</td><td><input type="range" min="0" max="255" id="CP221_000" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>100:</td><td><input type="range" min="0" max="255" id="CP221_100" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>200:</td><td><input type="range" min="0" max="255" id="CP221_200" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>010:</td><td><input type="range" min="0" max="255" id="CP221_010" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>110:</td><td><input type="range" min="0" max="255" id="CP221_110" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <tr><td>&nbsp;</td><td>210:</td><td><input type="range" min="0" max="255" id="CP221_210" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr> 
+        <tr><td>&nbsp;</td><td>210:</td><td><input type="range" min="0" max="255" id="CP221_210" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr> 
         <tr><td>&nbsp;</td><td>020:</td><td><input type="range" min="0" max="255" id="CP221_020" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>120:</td><td><input type="range" min="0" max="255" id="CP221_120" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>220:</td><td><input type="range" min="0" max="255" id="CP221_220" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
@@ -814,53 +810,27 @@ Drag the mouse to rotate the volume.<br>
         <tr><td>&nbsp;</td><td>101:</td><td><input type="range" min="0" max="255" id="CP221_101" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>201:</td><td><input type="range" min="0" max="255" id="CP221_201" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>011:</td><td><input type="range" min="0" max="255" id="CP221_011" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP221_111" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>   
+        <tr><td>&nbsp;</td><td>111:</td><td><input type="range" min="0" max="255" id="CP221_111" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>   
         <tr><td>&nbsp;</td><td>211:</td><td><input type="range" min="0" max="255" id="CP221_211" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>021:</td><td><input type="range" min="0" max="255" id="CP221_021" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
         <tr><td>&nbsp;</td><td>121:</td><td><input type="range" min="0" max="255" id="CP221_121" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
-        <tr><td>&nbsp;</td><td>221:</td><td><input type="range" min="0" max="255" id="CP221_221" value="0" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                                                     
+        <tr><td>&nbsp;</td><td>221:</td><td><input type="range" min="0" max="255" id="CP221_221" value="50" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                                                     
         </table>  
     </td>
 </tr>
 </table>
 
 <h2>How It's Rendered</h2>
-TODO: explain!
-
+The rendering is done by doing a ray trace of the bounding cube to see which rays enter the volume.
+<br><br>
+The rays that hit the cube then ray march from the start of the cube to the end of the cube, taking samples of the values as fog density.  If a fog density value is above the surface threshold, it considers a surface hit and shades it.  The fog amount hit during the trace is applied to the color calculated for the ray.
+<br><br>
+Instead of doing the initial ray trace, the cube could be rendered with triangles so that it would become a rasterization process instead of a full screen raytrace vs a box.  The ray marching would still be done in the pixel shader like it is now.  The ray marching could be improved by using the gradient to take varying sized steps instead of constant sized steps.
+<br><br>
+There is some non smoothness of the normals (seen best in the specular highlight) and the surface positions that is due to the fact that the texture interpolator works in X.8 fixed point numbers.  You can verify this by using the software interpolated dreeg selection to see it smooth out.
+<br><br>
+The GPU texture sampler is used to calculate the fog density value of the volume at a given u,v,w (or x,y,z) position.  All volumes are stored in a 3d 2x2x2 texture using varying amounts of color channels.  See the source code or blog post for more information!
 <hr>
 TODO: link to blog post
 </body>
 </html>
-
-<pre>
-
-TODO: 
-* figure out why hitting the box from the positive side makes the diffuse color wig out.
-
-* need to fix surface hit estimation before threshold surface will be any good!
-
-* surface hit needs fixing when the first sample is already inside the shape
-
-? maybe demo resolutions should be 600x600? laptop can't fit it all on one screen at home
-
-* light threshold surface
-
-* using distance estimation to do ray step size may help accuracy. re-faimilarize with it?
- * could write up a blog post after perhaps? or do some ray marching posts.
- * could use it in the surface demo too if you get this working
-
-* volumes to do:
- * (2,2,1) -> 2x2x2 3d texture with RGBA.  R,G gets 1 biquad.  B,A gets the other.  sample at (u,u,v). lerp R,G by v and B,A by v. lerp results by w.
- ? higher surfaces with multiple texture reads? (2,2,2) or (3,3,3)? Especially needed if those volumes aren't interesting enough.
-
-* explain rendering of the volumes in the bottom section
-
-* uvw coloring mode might actually be useful for the surface coloring.
-
-* perf / usefulness?
- * mention the L1 cache thing still being ~100 cycles
- * mention that if you are already using textures, this helps the cache?
- * or leave this as a future investigation for deeper perf stuff?
- * curiosity / playing around with new stuff.
-
-</pre>
