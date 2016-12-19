@@ -980,6 +980,43 @@ function Initialize ()
     }
     canvas.onmouseup = function(ev) {mouse.IsDown = false;}
 
+    canvas.addEventListener("touchstart", function(ev)
+    {
+        ev.preventDefault();
+        var pos = GetPos(canvas);
+        if (ev.touches.length > 0)
+        {
+            mouse.PosX =                 (ev.touches[0].pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+            mouse.PosY = canvas.height - (ev.touches[0].pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+            mouse.IsDown = true;
+            mouseClicked = true;            
+        }        
+    }
+    );
+    canvas.addEventListener("touchmove", function(ev)
+    {
+        ev.preventDefault();
+        var pos = GetPos(canvas);
+        if (ev.touches.length > 0)
+        {
+            mouse.PosX =                 (ev.touches[0].pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+            mouse.PosY = canvas.height - (ev.touches[0].pageY - pos.mY)*canvas.height/canvas.offsetHeight;            
+        }
+    }
+    );
+    canvas.addEventListener("touchend", function(ev)
+    {
+        ev.preventDefault();
+        mouse.IsDown = false;
+    }
+    );
+    canvas.addEventListener("touchcancel", function(ev)
+    {
+        ev.preventDefault();
+        mouse.IsDown = false;
+    } 
+    );
+    
     // set clear color to black
     gl.clearColor(0, 0, 0, 1);
 
