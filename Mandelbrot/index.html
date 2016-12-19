@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<title>HTML5 Mandelbrot Explorer</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas#MainCanvas {width: 300px; height: 300px;}
+</style>
+<script>
+/*==================================================
+
+Created by Alan Wolfe
+mandelbrot{at}demofox.org
+http://demofox.org
+
+October 2011
+
+==================================================*/
+</script>
+<script src="commonheader.js"></script>
+<script src="webworkertest.js"></script>
+<script src="webworkertestthread.js"></script>
+<script src="commonfooter.js"></script>
+</head>
+<body>
+<canvas ID="MainCanvas" width="300" height="300">
+Your browser doesn't seem to support the necesary html5 features ):
+</canvas>
+<div ID="MainHTML"></div>
+<br>
+<b><u>For Best Results:</u></b><br>
+I've found that this works best for me when viewed in the google chrome browser.  Google chrome has shown faster javascript execution times than firefox, which shows faster execution times than IE.  Also, web workers seem to have more stable timing and faster timing on chrome than on firefox.  At the time of this writing, IE did not support web workers, which forces it to run on the main thread, making the browser less responsive during rendering.
+<br><br>
+Your mileage may vary!
+<br><br>
+<b><u>About:</u></b><br>
+This started out as an investigation into web workers, but manifested itself into something more.  I hope you enjoy it.  Feel free to use any images you generate for any purpose commercial or non commercial.
+<br><br>
+You can find more infomation about the mandelbrot set here: <a href = "http://en.wikipedia.org/wiki/Mandelbrot_set">http://en.wikipedia.org/wiki/Mandelbrot_set</a>
+<br><br>
+You can also find more information about how to render the Mandelbrot Set on my blog at: <a href="http://blog.demofox.org/2012/09/25/how-to-render-the-mandelbrot-set/">How to Render the Mandelbrot Set</a>
+<br><br>
+<b><u>Parameters:</u></b><br>
+<ul>
+<li><b><u>Resolution</u></b> - Change the resolution of the image</li>
+<li><b><u>Worker Threads</u></b> - This specifies how many threads to use when rendering.  If you have multiple cores and/or multiple CPUs this will help increase rendering times.  The threads used are "web workers" (you can google them for more information).  In my experiments, having 0 worker threads (rendering on the main thread only) gives the fastest results, but if you use worker threads, it will make it so your browser is still responsive while rendering.  So, web workers seem good for making things in the background while keeping the browser responsive, but they seem like not such a great option if you just want raw power distributed across multiple cores.  I think the thread synchronization / communication overhead is killing any multithreaded gains.</li>
+<li><b><u>Colors</u></b> - These let you change the colors that the image is rendered with.  You can change the background color (BG) and you can also change the 4 color ranges.  The mandlebrot set is made by iterating through a mathematical equation for each pixel and counting how many iterations it takes to cross a threshold.  The number of iteraions is what determins the color of the pixel.  This mandelbrot viewer does up to 1023 iterations and seperates the number of iterations into 4 color ranges. Range 1: 0-255 iterations, Range 2: 256-511 iterations, Range 3: 512 - 767 iterations, Range 4: 768 - 1023 iterations. You can specify the color (in html color codes) for the start and end of each color range, and the color of the pixel will be an interpolation between the 2 colors.  Click "Re-render" to see your changes.</li>
+<li><b><u>Color Bias</u></b> - You can specify the "bias" of each color range, with valid values between 0 and 1.  A value of 0.5 will do nothing.  A value less than 0.5 will make it so more pixels are closer to the starting color of the color range, and a value greater than 0.5 will make it so more pixels are closer to the end color of the color range.  Click "Re-render" to see your changes.</li>
+<li><b><u>Blur</u></b> - Since the images are pretty heavily aliased, I added this to help with the aliasing.  It runs on the main thread after all worker threads have completed their work and does a simple box blur.</li>
+<li><b><u>Threads send data row by row</u></b> - I added this option as a test to see if havign the threads return smaller amounts of data more often would affect performance.  It doesn't really seem like it affects performance in this application.</li>
+<li><b><u>Render data as it comes in</u></b> - If checked, it will display data as it's calculated, instead of waiting til it's completely done.</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<title>HTML5 Bias and Gain Visualizer</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas.html5 {border:2px solid #00FF00;}
+</style>
+<script>
+/*==================================================
+
+Created by Alan Wolfe
+biasgain{at}demofox.org
+http://demofox.org
+
+September 2012
+
+==================================================*/
+
+var g_graphPanel;
+var g_gradientPanel;
+var g_objectPanel;
+var g_pulsePanel;
+
+function onPageLoaded()
+{
+	g_graphPanel = setupCanvas('Graph');
+	g_gradientPanel = setupCanvas('Gradient');
+	g_objectPanel = setupCanvas('MovingObject');
+	g_pulsePanel = setupCanvas('Pulse');
+	RedrawGraph();
+	RedrawGradient();
+	RedrawMovingObject();
+	RedrawPulse();
+}
+
+function setupCanvas(name)
+{
+  // Get a reference to the element.
+  var elem = document.getElementById(name);
+
+  // Always check for properties and methods, to make sure your code doesn't break 
+  // in other browsers.
+  if (elem)
+  {
+    if(elem.getContext)
+    {
+      // Get the 2d context.
+      // Remember: you can only initialize one context per element.
+      var context = elem.getContext('2d');
+
+      if (context)
+      {
+      	return {"elem":elem, "context":context, "clear":function(){ClearImageBuffer(context)}, "fill":function(color){FillImageBuffer(context, color)}};
+      }
+      else
+      {
+      	alert("Could not get html5 2d context, your browser doesn't support it! Try firefox or chrome");
+      }
+    }
+    else
+    {
+      alert("The getContext function was missing, your browser doesn't support it! Try firefox or chrome"); 
+    }
+  }
+  else
+  {
+    alert("Could not get element 'MainCanvas'");	
+  }
+
+  return false;
+}
+
+//hook up our event listener
+window.addEventListener('load', function(){onPageLoaded();}, false);
+
+function ClearImageBuffer(context)
+{
+	context.fillStyle   = "#000000";
+	context.fillRect(0, 0, g_graphPanel.elem.width, g_graphPanel.elem.height);
+}
+
+function FillImageBuffer(context, color)
+{
+	context.fillStyle   = color;
+	context.fillRect(0, 0, g_graphPanel.elem.width, g_graphPanel.elem.height);
+}
+
+function GetBias(time,bias)
+{
+	return (time / ((((1.0/bias) - 2.0)*(1.0 - time))+1.0));
+}
+
+function GetGain(time,gain)
+{
+	if(time < 0.5)
+		return GetBias(time * 2.0,gain)/2.0;
+	else
+		return GetBias(time * 2.0 - 1.0,1.0 - gain)/2.0 + 0.5;
+}
+
+function RedrawGraph()
+{
+	g_graphPanel.clear();
+
+	var lastX = 0;
+	var lastY = 0;
+
+	var doBiasFunc = (document.getElementById("BiasGainFunc").value == "bias");
+	var biasGainParam = parseFloat(document.getElementById("BiasGainParam").value)/100.0;
+
+	for(var x = 0; x <= g_graphPanel.elem.width; ++x)
+	{
+		var percent = x / g_graphPanel.elem.width;
+
+		if(doBiasFunc)
+		{
+			percent = GetBias(percent,biasGainParam)
+		}
+		else
+		{
+			percent = GetGain(percent,biasGainParam)
+		}
+
+		//turn the percent into a y coordinate, flipping the axis
+		var y = Math.floor((1.0 - percent) * g_graphPanel.elem.height);
+
+		//draw the current section of the graph
+		if(x != 0)
+		{
+			g_graphPanel.context.strokeStyle='#FFFF00';
+			g_graphPanel.context.lineWidth = 1;
+			g_graphPanel.context.beginPath();
+			g_graphPanel.context.moveTo(lastX,lastY);
+			g_graphPanel.context.lineTo(x,y);
+			g_graphPanel.context.stroke();
+		}
+
+		//store this point for next loop
+		lastX = x;
+		lastY = y;		
+	}
+}
+
+function RedrawGradient()
+{
+	g_gradientPanel.clear();
+
+	var lastX = 0;
+	var lastY = 0;
+
+	var doBiasFunc = (document.getElementById("BiasGainFunc").value == "bias");
+	var biasGainParam = parseFloat(document.getElementById("BiasGainParam").value)/100;
+
+	for(var x = 0; x <= g_gradientPanel.elem.width; ++x)
+	{
+		var percent = x / g_gradientPanel.elem.width;
+
+		if(doBiasFunc)
+		{
+			percent = GetBias(percent,biasGainParam)
+		}
+		else
+		{
+			percent = GetGain(percent,biasGainParam)
+		}
+
+		percent = Math.floor(percent * 255);
+
+		g_gradientPanel.context.strokeStyle='rgb(' + percent + ',0,0)';
+		g_gradientPanel.context.lineWidth = 1;
+		g_gradientPanel.context.beginPath();
+		g_gradientPanel.context.moveTo(x,0);
+		g_gradientPanel.context.lineTo(x,g_gradientPanel.elem.height);
+		g_gradientPanel.context.stroke();		
+	}	
+}
+
+function RedrawPulse()
+{
+	var percent = (new Date().getTime() % 1000) / 1000;
+
+	var doBiasFunc = (document.getElementById("BiasGainFunc").value == "bias");
+	var biasGainParam = parseFloat(document.getElementById("BiasGainParam").value)/100;	
+
+	if(doBiasFunc)
+	{
+		percent = GetBias(percent,biasGainParam)
+	}
+	else
+	{
+		percent = GetGain(percent,biasGainParam)
+	}	
+
+	var pos = Math.floor(percent * 255);
+		
+	g_pulsePanel.fill("rgb(0," + pos + "," + pos + ")");
+	setTimeout(function(){RedrawPulse()},20);
+}
+
+function RedrawMovingObject()
+{
+	g_objectPanel.clear();
+
+	var percent = (new Date().getTime() % 1000) / 1000;
+
+	var doBiasFunc = (document.getElementById("BiasGainFunc").value == "bias");
+	var biasGainParam = parseFloat(document.getElementById("BiasGainParam").value)/100;	
+
+	if(doBiasFunc)
+	{
+		percent = GetBias(percent,biasGainParam)
+	}
+	else
+	{
+		percent = GetGain(percent,biasGainParam)
+	}	
+
+	var pos = Math.floor(percent * g_objectPanel.elem.width);
+
+	g_objectPanel.context.fillStyle   = "#FF8800";
+
+	//start drawing
+	g_objectPanel.context.beginPath();
+	//draw arc: arc(x, y, radius, startAngle, endAngle, anticlockwise)
+	g_objectPanel.context.arc(pos, g_objectPanel.elem.height / 2, 15, Math.PI*2, 0, true);
+	//end drawing
+	g_objectPanel.context.closePath();
+	//fill it so you could see it
+	g_objectPanel.context.fill();
+
+	setTimeout(function(){RedrawMovingObject()},30);
+}
+
+function onBiasGainFuncChange()
+{
+	//re-render the graph
+	RedrawGraph();
+	RedrawGradient();
+	return true;
+}
+
+function onBiasGainParamChange()
+{
+	document.getElementById("BiasGainParamText").innerHTML = (parseFloat(document.getElementById("BiasGainParam").value)/100).toString();
+	//re-render the graph
+	RedrawGraph();
+	RedrawGradient();
+	return true;
+}
+
+</script>
+</head>
+<body>
+<h1>Bias and Gain</h1>
+An interactive demonstration of Ken Perlin's bias and gain functions.  Implemented using Christophe Schlick's fast bias alternative function (as found in game programming gems 2). More information at my blog here: <a href="http://blog.demofox.org/2012/09/24/bias-and-gain-are-your-friend/">Bias And Gain Are Your Friend</a><br><br>
+Function: <select ID="BiasGainFunc" onChange="onBiasGainFuncChange();"><option value="bias">Bias</option><option value="gain">Gain</option></select>
+Parameter: <input type="range" min="1" max="99" id="BiasGainParam" onInput="onBiasGainParamChange();" onChange="onBiasGainParamChange();" value="50"><span id="BiasGainParamText">0.5</span><br>
+<canvas class="html5" ID="Graph" width="300" height="300">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<canvas class="html5" ID="Gradient" width="300" height="300">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<canvas class="html5" ID="MovingObject" width="300" height="300">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<canvas class="html5" ID="Pulse" width="300" height="300">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<h2>Functions (in Javascript)</h2>
+function GetBias(time,bias)<br>
+{<br>
+&nbsp;&nbsp;return (time / ((((1.0/bias) - 2.0)*(1.0 - time))+1.0));<br>
+}<br>
+<br>
+function GetGain(time,gain)<br>
+{<br>
+&nbsp;&nbsp;if(time &lt; 0.5)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return GetBias(time * 2.0,gain)/2.0;<br>
+&nbsp;&nbsp;else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return GetBias(time * 2.0 - 1.0,1.0 - gain)/2.0 + 0.5;<br>
+}<br>
+</body>
+</html>

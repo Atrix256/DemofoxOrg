@@ -1,0 +1,191 @@
+KD tree instead of regular grid.  SAH - surface area huristic.  Or dont do that, just regular grid since you rely on the cache so much.  maybe kd tree as a potential upgrade?
+
+* make light occlusion query use scene graph
+
+* get rid of planes, add triangles
+
+* dont store prims in the scene, store them only in the scene graph?
+
+* moving objects aren't having their light cache cleared.  And moving lights should clear the light cache of objects that use them for lighting (it should keep a list)
+* moving objects aren't clearing any rays in the ray cache.
+* when lights move, need to re-evaluate shadow rays.
+
+* there are ray misses and weirdness at grid boundaries since we push in an extra 0.01.  That can miss contact points directly on grid boundaries (esp of triangles on a boundary, aligned to the boundary!)
+
+* show more stats such as bounding box of grid, number of object tests, etc
+
+* since objects can exist in multiple grid squares, we might test against them multiple times per ray.  make it so each primitive caches the last ray index / collision pair it had, so it can return the already data it computed for the current ray if needed?  Careful about that though and moving objects around!  Gotta do something...
+
+* try web workers for multithreading stuffs, see if you get any increased perf or anything (http://www.codediesel.com/javascript/introducing-html5-web-workers/)
+  - even better http://www.htmlgoodies.com/html5/tutorials/introducing-html-5-web-workers-bringing-multi-threading-to-javascript.html#fbid=xzs7jFNKOD1
+
+* debug console to be able to input and output stuff
+
+* while in "dirty camera" mode, put an animated "loading" text up w/ a percent perhaps
+* after out of dirty mode, display how long it took to render the whole thing next to RPS?
+
+* did adding the check for 3d mode on / off per frame slow things down?  Could add logic outside of the camera and make it's own function for rendering this way to avoid in pixel loop if statement.  if it helps, try the same for flags for shading, shadows, etc.  also, instead of passing those arguments to the function, set them as parameters on the scene before getting pixel data.
+
+* perspective correction of rays
+
+* break the Scene.getColorForRay function up into subfunctions, just for the purpose of profiling since chrome only gives function name
+
+* setting # of ray bounces lower doesnt affect fps w/ reflection heavy scenes (colored spheres).  check out why not
+
+* invalidate cache when switching interlaced mode.
+
+* put in some protection where if a frame takes longer than some amount of time, stop updating.  Keeps a computer from locking up.
+
+* ability to set a background color or texture?  Also input boxes to change the bg color?  dont need button to commit.
+
+* input boxes for camera location and target.  a button to commit changes since commiting each time would be slow.
+
+* try and move globals (and rendering loops) into another file, hidden away from the main application
+
+* for non visible camera updates, have a "no color" mode so it doesn't bother using the cache data to create colors, it just fills in the cache data in preperation of switching to that camera later.
+
+* better FPS calculation that updates more often
+
+* technically this is wrong, fix it? "The result of the shadow test that is used for the diffuse component is also used for the specular component. "
+
+* if you ever do need to move the camera (like teleport it to another location), you could "preload" a camera cache at the new location (doing a small amount at a time... like uber-interlaced) and wait til it's done to switch over.
+
+* Portals could be implemented by assigning a scene/camera/imagebuffer as a texture to another object (like a rectangle - but could be a sphere or triangle or any other shape too).  
+
+* clearing ray cache:  have a "data" section and an "indices" section.  Data includes the cache data (and what is set to null when cache is invalidated).  Indices is the child indices of the current ray and should not be cleared out since we want rays to keep the same child indices.  Only exception is when the whole cache is destroyed when the resolution changes.
+* add a cylinder and pill shape (closest point on line to line, then compare squared distance)
+* spacial subdivision (3d grid?)
+* continue to use ray cache - get it working with the spacial subdivision stuff
+* pixel cache
+* chapter 3!
+* transparency and refraction
+* specular and emissive color
+* textures
+* option for bilinear filtering on / off
+* optional texture to control per pixel reflection ray deviation and refraction ray deviation
+* "volatile color" hint flag on an object (for scrolling textures, objects that constantly change color etc) - makes it so the game doesn't cache the color?  The color doesn't need to be invalidated then either on change because when looking through the cache, this guy is never read from the cache.  never read, never written.
+* ambient lighting?
+* bezier curve objects w/ width?  thinking they can be lights too?
+* fog - something like a volume that adds a color to the current pixel based on the distance (squared distance or whatever?).  If something goes too deep and it maxes out the color, don't keep going through the fog.
+* primitive inheritance
+* rectangle primitive
+* box primitive
+* triangle primitive
+* be able to stretch a lower res ray traced image to a higher res screen - so you can see it better without having to pay the full cost of the higher resolution.
+* coherancy?  ie pixels are likely to hit objects near neighboring rays.  Use that as a hint somehow.
+* make a "short list" of lights to help find the lights for lighting / shadow calculation?
+* on page camera controls of some kind? maybe a toggle switch to move and rotate in each direction or something.
+* spatial subdivision stuff to help w/ ray queries
+* cool effects via changing ray vectors.  Heat waves by sine wave twiddling of rays, point rays inwards, etc.  tough on the cache but could look neat.
+* texture for lights -> per pixel light coloring
+* "height map" texture (ie bumpmaps?).  wouldn't look good with shadows but it could be interesting.
+* light attenuation settings perhaps (linear, squared, and cubed distance?)
+* greyscale mode?
+* sepia mode?
+* anti aliasing on / off.  Special case when interlaced where it anti aliases against last frame image data (like how real anti aliasing works).
+  - anti aliasing with interlaced on should "deinterlace", check this page: http://en.wikipedia.org/wiki/Deinterlacing
+* if texturing off, try averaging the color of all pixels in a texture to get the color for the primitive.
+* put a copyright notice in the header comments
+* sky box? might be able to optimize skyboxes somehow, like pre-calc and cache all collisions if the skybox can't move (cache color - like a cube map type thing - if skybox can't change color)
+* seperate rendering modes into different functions, so the regular camera can avoid double for loop (just 1 longer loop), and so no if checks needed during rendering.
+* make the interface really simple (ie only one init call, package it up with an html page that has all the right includes and basic setup) so that other people can use it for stuff.
+* You could "zoom in" camera maybe?  Could cache rays for higher zoom levels (ie super sampling? maybe combine with SSAA?) and when you zoom in you just start showing more of those pixels or something.
+* move the core "engine stuff" into it's own file, away from raytracing.js
+* package this up for use by other people
+* can get around the "don't move camera" thing by moving all objects instead of moving the camera.
+   - could try and make a shooter where there's a scrolling starfield "skybox" and just have objects slowly move towards you.
+* orthographic projection has some cool properties -> you can pan the camera and just shift cache info around.
+* instead of having a max ray depth (or in addition to), could make each ray trace pass along a value specifying how much the resulting color will be used (ie if reflection is 0.3, that is passed up... and if it's reflected by another object by 0.1, it passes the multiplied result up of 0.03)  Stop when that number gets under a specified threshhold.
+* screen space effects? could also use depth info from the ray cache perhaps (would a depth buffer help? might slow down stuff to write to it but shrug..)
+
+
+Optimization ideas...
+
+* depth / object buffer that persists across frames.
+  - if the camera / objects don't move, you can use this buffer from the last frame to see where the 1st rays hit.  Useful in a static geometry scene where there are textures and lighting animating.
+
+* dirty cubes
+  -split the scene into a grid.  When you render, keep track of which rays intersected with which cubes.  when something in a cube moves (or changes?) mark the pixels that were in the affected cubes as dirty.  When rendering, only render the dirty pixels.  Use the image buffer from previous frame so that non dirty pixels are what they were last frame.
+
+* go even further?
+  -cache all ray tests... the ray (origin and vector) along with the result (primitive and distance?).  Use a grid to invalidate these rays as things move around.  While rendering, use the cache to see if the ray you are trying to test for is already in the cache.  dump ray cache items that haven't used for a couple frames?
+  -maybe have color and geometry cached.  This way, if something doesn't move, but just changes color (light moves, light changes color, texture changes etc), the color part of the cache can be invalidated but the geometry cache can stay
+
+* store ranges of rays in grid squares (ie rays 5-15, 17, 20-25 go through this square)?  This hopefully would be less storage than storing each ray.  Also, when invalidating the colors of rays, should be quick, and RLE friendly.
+
+
+
+Ray tracing scene graph thing
+
+This scene graph is great for when the camera doesn't move, and objects don't move often.  You can animate textures and change light parameters all day however!
+ 
+#0 - each primitive in a scene gets an autoincremented unique ID.
+ 
+#1 - Cache the result of every ray cast done, in a tree like fashion.  Each cache entry has a primitive index of what it hit (-1 if none), as well as the point of intersection in world space (could add it in object space or something too if that would help with texture lookups and such).  It also has an array of indices of child rays.
+ 
+#2 -  Each "primary ray" has an index into the ray cache table (it should be the pixel number).  This will have the info about the hit (if any) of the primary ray.  As child rays, it will have a reflection ray ID, a shadow ray ID, etc.  The ray cache will give out new ray ID's by request (auto incrementing number) but objects should not be wasteful of ID's (ie things should re-use IDs as possible), you want to keep the cache coherant without a lot of holes of unused indices.
+ 
+#3 - Since all the objects should be in some sort of scene graph (oct tree, grid, whatever), and rays have to traverse through it to find hits, rays should also "register" with the scene graph as having gone through each "node" (cube for instance) that it has passed through.  The scene graph stores, per node, which rays have gone through it.
+ 
+#4 - If an object moves, find out the nodes that are affected by the movement, and invalidate (mark as dirty or invalid) all rays that pass through the affected nodes.
+ 
+#5 - If a light moves, invalidate shadow rays only?
+ 
+#6 - If the camera moves, invalidate the entire ray cache (sad face!)
+ 
+#7 - when rendering, for each pixel, call into the cache with the ray you want to cast, and the ID of the ray (if there is one yet, else generate a new ID and pass that!).  The cache will silently use or re-calculate rays as appropriate.
+ 
+ 
+ 
+#8 - IMPROVED STUFF: cache the color as well as intersection stuff?
+ 
+#9 - if an object's texture or color changes but stays in the same place, or a light changes parameters but stays in the same place, invalidate any rays that currently touch that object.
+ 
+#10 - this way, if a "ray chain" is still completely valid, you can just use the pixel color already calculated!   Not sure if it would be best for a color invalidation to only invalidate the one ray, or if it should walk up the chain and tell all parents of that ray that their color is invalid as well?  Maybe all ray cache items have the index of their root (primary ray / screen pixel) so they can invalidate it at that level, so checking is quicker / easier.
+ 
+#11 - whenever the GEOMETRY cache is invalid, it also makes the color cache invalid
+
+#12 - RLE encode the color buffer on a per line basis about what pixels are dirty / clean.  per line so dirtied pixels can more easily change the RLE without having to regenerate everything etc.
+
+
+
+======================================
+              STRENGTHS
+======================================
+
+* changing lighting parameters should be pretty cheap
+
+* changing the color or texture of an object should be pretty cheap
+
+* After filling the cache, the complexity of the scene really doesn't matter.  Complex or simple scenes both are the same cost when using the cache.
+
+* Moving objects infrequently, or moving objects that don't affect much of the scene should hopefully be reasonable.
+
+* configurable to allow features and resolutions to be tweaked up and down to dial in performance and/or quality.
+
+* complex shapes, who have difficult/expensive ray collision tests are not a problem so long as they and the camera don't move.
+
+* complex scenes should be no real issue so long as the camera doesn't move and the objects don't more around too much.  Reflections in a more complex scene will be a little more expensive (more rays to follow each frame) but pixel cacheing should help that.
+
+======================================
+              WEAKNESSES
+======================================
+
+* Moving objects (have to invalidate all rays in the grid squares affected by both the source and destination position)
+
+* Moving camera (essentially have to clear the entire cache every time the camera moves, or treat it like all objects are moving instead of the camera in hopes of preserving some of the cache)
+
+======================================
+              GAME IDEAS
+======================================
+
+ideally something shown on a single screen with not much stuff moving around at once.
+possibly turn based and multiplayer w/ web backend?
+
+* break out
+* snake
+* dots
+* side scrolling shooter in orthographic mode
+* top down shooter in orthographic mode
+* a zelda 1 game -> camera is fixed for each screen so kind of a perfect fit!
+* some kinda game where you have multiple viewports (like security guard cams?).  Several smaller viewports, unrelated to eachother, could be a good way of getting perf.  having objects move around in just one frame at a time or something...

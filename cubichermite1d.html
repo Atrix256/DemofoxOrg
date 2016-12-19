@@ -1,0 +1,329 @@
+
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>One Dimensional Cubic Hermite Interpolation</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas.html5 {border:2px solid #00FF00;}
+</style>
+<script>
+/*==================================================
+
+Created by Alan Wolfe
+curvesdemo{at}demofox.org
+http://demofox.org
+
+August 2015
+
+==================================================*/
+/*
+
+TODO:
+* make control points 1d
+ * both rendering and input (up down movement only!)
+* figure out what to do about end segments?
+* next: let control points be added and removed and moved on both axis!
+
+
+*/
+
+var scale = 3.0;
+
+var g_controlPoints =
+[
+	scale * 1.0,
+	scale * 0.5,
+	scale * 0.75,
+	scale * 0.75,
+	scale * 0.85,
+	scale * 0.5,
+	scale * 0.5,
+	scale * 0.5,
+	scale * 0.8,
+	scale * 0.9,
+	scale * 0.2
+];
+
+var g_graphPanel;
+var g_canvas;
+var g_mousePos = [0,0];
+var g_pointDragged = -1;
+var g_lastDragPos = [0,0];
+
+function onPageLoaded()
+{
+	g_graphPanel = setupCanvas('Graph');
+	g_canvas = document.getElementById('Graph');
+	g_canvas.addEventListener('mousemove', function(evt) {OnMouseMove(evt);RedrawGraph();}, false);
+	g_canvas.addEventListener('mousedown', function() {OnMouseDown();RedrawGraph();}, false);
+	g_canvas.addEventListener('mouseup', function() {OnMouseUp();RedrawGraph();}, false);
+	RedrawGraph();
+}
+
+function setupCanvas(name)
+{
+  // Get a reference to the element.
+  var elem = document.getElementById(name);
+
+  // Always check for properties and methods, to make sure your code doesn't break 
+  // in other browsers.
+  if (elem)
+  {
+    if(elem.getContext)
+    {
+      // Get the 2d context.
+      // Remember: you can only initialize one context per element.
+      var context = elem.getContext('2d');
+
+      if (context)
+      {
+      	return {"elem":elem, "context":context, "clear":function(){ClearImageBuffer(context)}, "fill":function(color){FillImageBuffer(context, color)}};
+      }
+      else
+      {
+      	alert("Could not get html5 2d context, your browser doesn't support it! Try firefox or chrome");
+      }
+    }
+    else
+    {
+      alert("The getContext function was missing, your browser doesn't support it! Try firefox or chrome"); 
+    }
+  }
+  else
+  {
+    alert("Could not get element 'MainCanvas'");	
+  }
+
+  return false;
+}
+
+function GetMousePos(canvas, evt)
+{
+	var rect = g_canvas.getBoundingClientRect();
+	var pos =
+	[
+		evt.clientX - rect.left,
+		evt.clientY - rect.top
+	];
+	return pos;
+}
+
+function ScreenPointToMathPoint(x,y)
+{
+	var aspectRatio = g_graphPanel.elem.width / g_graphPanel.elem.height;
+
+	var point = [x,y];
+	point[0] *= aspectRatio;
+	point[0] = point[0] / g_graphPanel.elem.width;
+	point[1] = point[1] / g_graphPanel.elem.height;
+	point[1] = 1.0 - point[1];
+
+	//point[0] -= 0.1;
+	//point[1] -= 0.1;
+
+	point[0] /= 0.2;
+	point[1] /= 0.2;
+
+	return point;
+}
+
+function MathPointToScreenPoint(x,y)
+{
+	var aspectRatio = g_graphPanel.elem.width / g_graphPanel.elem.height;
+
+	var point = [x,y];
+
+	point[0] *= 0.2;
+	point[1] *= 0.2;	
+
+	//point[0] += 0.1;
+	//point[1] += 0.1;
+
+	point[1] = 1.0 - point[1];
+	point[0] = point[0] * g_graphPanel.elem.width;
+	point[1] = point[1] * g_graphPanel.elem.height;
+	point[0] /= aspectRatio;
+	return point;	
+}
+
+function OnMouseMove(evt)
+{
+	g_mousePos = GetMousePos(g_canvas, evt);
+	if (g_pointDragged == -1)
+		return;
+
+	var mouseMath = ScreenPointToMathPoint(g_mousePos[0], g_mousePos[1]);
+	var lastMath = ScreenPointToMathPoint(g_lastDragPos[0], g_lastDragPos[1]);
+	var delta = [mouseMath[0] - lastMath[0], mouseMath[1] - lastMath[1]];
+
+	g_lastDragPos = g_mousePos;
+
+	g_controlPoints[g_pointDragged] += delta[1];
+}
+
+function OnMouseDown()
+{
+	g_lastDragPos = g_mousePos;
+
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(i,g_controlPoints[i]);
+		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
+		if (dist < 23)
+		{
+			g_pointDragged = i;
+			return;
+		}		
+	}
+
+	g_pointDragged = -1;
+}
+
+function OnMouseUp()
+{
+	g_pointDragged = -1;
+}
+
+function clearSelection() {
+    if(document.selection && document.selection.empty) {
+        document.selection.empty();
+    } else if(window.getSelection) {
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+    }
+}
+
+//hook up our event listener
+window.addEventListener('load', function(){onPageLoaded();}, false);
+
+function ClearImageBuffer(context)
+{
+	context.fillStyle   = "#000000";
+	context.fillRect(0, 0, g_graphPanel.elem.width, g_graphPanel.elem.height);
+}
+
+function FillImageBuffer(context, color)
+{
+	context.fillStyle   = color;
+	context.fillRect(0, 0, g_graphPanel.elem.width, g_graphPanel.elem.height);
+}
+
+function DrawControlPoint(X, Y, dragging)
+{
+	var dist = Math.sqrt((Y-g_mousePos[1])*(Y-g_mousePos[1]) +  (X-g_mousePos[0])*(X-g_mousePos[0]));
+	var highlite = dist < 23;
+
+	g_graphPanel.context.beginPath();
+	g_graphPanel.context.arc(X, Y, 10, 0, 2 * Math.PI, false);
+	g_graphPanel.context.fillStyle = dragging ? '#FF8888' : (highlite ? '#FF4030' : '#FF0000');
+	g_graphPanel.context.fill();
+	g_graphPanel.context.lineWidth = 3;
+	g_graphPanel.context.strokeStyle = dragging ? '#888888' : (highlite ? '#884030' : '#880000');
+	g_graphPanel.context.stroke();	
+}
+
+function CubicHermite (A, B, C, D, t)
+{
+	var t2 = t*t;
+	var t3 = t*t*t;
+    var a = -A/2.0 + (3.0*B)/2.0 - (3.0*C)/2.0 + D/2.0;
+    var b = A - (5.0*B)/2.0 + 2.0*C - D / 2.0;
+    var c = -A/2.0 + C/2.0;
+   	var d = B;
+   	return a*t3 + b*t2 + c*t + d;
+}
+
+function F(x)
+{
+	// TODO: fix ranges, and handle edges
+	if (x < 0 || x > g_controlPoints.length-1)
+	{
+		return 0.0;
+	}
+	else if (x < 1.0)
+	{
+		var i = Math.floor(x);
+		var t = x - i;
+		
+		return CubicHermite(
+			0.0,
+			g_controlPoints[i+0],
+			g_controlPoints[i+1],
+			g_controlPoints[i+2],
+			t
+		);
+	}
+	else if (x > g_controlPoints.length - 2)
+	{
+		var i = Math.floor(x);
+		var t = x - i;
+		
+		return CubicHermite(
+			g_controlPoints[i-1],
+			g_controlPoints[i+0],
+			g_controlPoints[i+1],
+			0.0,
+			t
+		);
+	}
+	else
+	{
+		var i = Math.floor(x);
+		var t = x - i;
+		
+		return CubicHermite(
+			g_controlPoints[i-1],
+			g_controlPoints[i+0],
+			g_controlPoints[i+1],
+			g_controlPoints[i+2],
+			t
+		);
+	}
+}
+
+function RedrawGraph()
+{
+	// clear the graph panel
+	g_graphPanel.clear();
+
+	// start the drawing
+	g_graphPanel.context.strokeStyle='#FFFF00';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();
+
+	// render each horizontal pixel
+	for (var index = 0; index <= g_graphPanel.elem.width; ++index)
+	{
+		// calculate the point
+		var mathPoint = ScreenPointToMathPoint(index, 0);
+		mathPoint[1] = F(mathPoint[0]);
+		var point = MathPointToScreenPoint(mathPoint[0], mathPoint[1]);
+
+		// if it's the first point, move there
+		if (index == 0)
+			g_graphPanel.context.moveTo(point[0], point[1]);
+		// else, draw to there
+		else
+			g_graphPanel.context.lineTo(point[0], point[1]);
+	}	
+	
+	// finish the line
+	g_graphPanel.context.stroke();
+
+	// draw the control points
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(i, g_controlPoints[i]);
+		DrawControlPoint(point[0], point[1], g_pointDragged == i);
+	}
+}
+
+</script>
+</head>
+<body>
+<h1>One Dimensional Cubic Hermite Interpolation</h1>
+<b>Click and drag control points.</b><br><br>
+<canvas class="html5" id="Graph" width="1600" height="800">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<br>
+</body></html>

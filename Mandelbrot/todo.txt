@@ -1,0 +1,7 @@
+Iterative fractal system viewer!
+
+let people define parameters.
+
+you can have the 2 render modes: dot (probability) based, and the line rendering.
+
+3d w/ moveable camera?  should be pretty quick to render I hope.
