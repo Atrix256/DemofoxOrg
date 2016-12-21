@@ -1,0 +1,444 @@
+
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Incremental Curve Fitting</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas.html5 {border:2px solid #00FF00;}
+</style>
+<script>
+/*==================================================
+
+Created by Alan Wolfe
+curvesdemo{at}demofox.org
+http://demofox.org
+
+December 2016
+
+==================================================*/
+
+var g_controlPoints =
+[
+	[0.0,1.0],
+	[0.5,0.5],
+	[0.8,0.75],
+	[1.0,0.75],
+	[1.5,0.85],
+	[2.0,0.5],
+	[2.25,0.5],
+	[2.5,0.5],
+];
+
+var g_graphPanel;
+var g_canvas;
+var g_mousePos = [0,0];
+var g_pointDragged = -1;
+var g_lastDragPos = [0,0];
+
+function onPageLoaded()
+{
+	g_graphPanel = setupCanvas('Graph');
+	g_canvas = document.getElementById('Graph');
+	g_canvas.addEventListener('mousemove', function(evt) {OnMouseMove(evt);RedrawGraph();}, false);
+	g_canvas.addEventListener('mousedown', function() {OnMouseDown();RedrawGraph();}, false);
+	g_canvas.addEventListener('mouseup', function() {OnMouseUp();RedrawGraph();}, false);
+	g_canvas.addEventListener('dblclick', function() {OnDoubleClick();RedrawGraph();}, false);
+	RedrawGraph();
+}
+
+function setupCanvas(name)
+{
+  // Get a reference to the element.
+  var elem = document.getElementById(name);
+
+  // Always check for properties and methods, to make sure your code doesn't break 
+  // in other browsers.
+  if (elem)
+  {
+    if(elem.getContext)
+    {
+      // Get the 2d context.
+      // Remember: you can only initialize one context per element.
+      var context = elem.getContext('2d');
+
+      if (context)
+      {
+      	return {"elem":elem, "context":context, "clear":function(){ClearImageBuffer(context)}, "fill":function(color){FillImageBuffer(context, color)}};
+      }
+      else
+      {
+      	alert("Could not get html5 2d context, your browser doesn't support it! Try firefox or chrome");
+      }
+    }
+    else
+    {
+      alert("The getContext function was missing, your browser doesn't support it! Try firefox or chrome"); 
+    }
+  }
+  else
+  {
+    alert("Could not get element 'MainCanvas'");	
+  }
+
+  return false;
+}
+
+function GetMousePos(canvas, evt)
+{
+	var rect = g_canvas.getBoundingClientRect();
+	var pos =
+	[
+		evt.clientX - rect.left,
+		evt.clientY - rect.top
+	];
+	return pos;
+}
+
+function ScreenPointToMathPoint(x,y)
+{
+	var aspectRatio = g_graphPanel.elem.width / g_graphPanel.elem.height;
+
+	var point = [x,y];
+	point[0] *= aspectRatio;
+	point[0] = point[0] / g_graphPanel.elem.width;
+	point[1] = point[1] / g_graphPanel.elem.height;
+	point[1] = 1.0 - point[1];
+
+	point[0] -= 0.1;
+	point[1] -= 0.1;
+
+	point[0] /= 0.7;
+	point[1] /= 0.7;
+
+	return point;
+}
+
+function MathPointToScreenPoint(x,y)
+{
+	var aspectRatio = g_graphPanel.elem.width / g_graphPanel.elem.height;
+
+	var point = [x,y];
+
+	point[0] *= 0.7;
+	point[1] *= 0.7;	
+
+	point[0] += 0.1;
+	point[1] += 0.1;
+
+	point[1] = 1.0 - point[1];
+	point[0] = point[0] * g_graphPanel.elem.width;
+	point[1] = point[1] * g_graphPanel.elem.height;
+	point[0] /= aspectRatio;
+	return point;	
+}
+
+function OnMouseMove(evt)
+{
+	g_mousePos = GetMousePos(g_canvas, evt);
+	if (g_pointDragged == -1)
+		return;
+
+	var mouseMath = ScreenPointToMathPoint(g_mousePos[0], g_mousePos[1]);
+	var lastMath = ScreenPointToMathPoint(g_lastDragPos[0], g_lastDragPos[1]);
+	var delta = [mouseMath[0] - lastMath[0], mouseMath[1] - lastMath[1]];
+
+	g_lastDragPos = g_mousePos;
+
+	g_controlPoints[g_pointDragged][0] += delta[0];
+	g_controlPoints[g_pointDragged][1] += delta[1];
+}
+
+function OnMouseDown()
+{
+	g_lastDragPos = g_mousePos;
+
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(g_controlPoints[i][0],g_controlPoints[i][1]);
+		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
+		if (dist < 23)
+		{
+			g_pointDragged = i;
+			return;
+		}		
+	}
+
+	g_pointDragged = -1;
+}
+
+function OnMouseUp()
+{
+	g_pointDragged = -1;
+}
+
+function clearSelection() {
+    if(document.selection && document.selection.empty) {
+        document.selection.empty();
+    } else if(window.getSelection) {
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+    }
+}
+
+function OnDoubleClick()
+{
+	clearSelection();
+	g_pointDragged = -1;
+
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(g_controlPoints[i][0],g_controlPoints[i][1]);
+		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
+		if (dist < 23)
+		{
+			if (g_controlPoints.length > 2)
+				g_controlPoints.splice(i,1);
+			return;
+		}		
+	}
+	var mathPoint = ScreenPointToMathPoint(g_mousePos[0], g_mousePos[1]);
+	g_controlPoints.push(mathPoint);
+}
+
+//hook up our event listener
+window.addEventListener('load', function(){onPageLoaded();}, false);
+
+function ClearImageBuffer(context)
+{
+	context.fillStyle   = "#000000";
+	context.fillRect(0, 0, g_graphPanel.elem.width, g_graphPanel.elem.height);
+}
+
+function FillImageBuffer(context, color)
+{
+	context.fillStyle   = color;
+	context.fillRect(0, 0, g_graphPanel.elem.width, g_graphPanel.elem.height);
+}
+
+function DrawControlPoint(X, Y, dragging)
+{
+	var dist = Math.sqrt((Y-g_mousePos[1])*(Y-g_mousePos[1]) +  (X-g_mousePos[0])*(X-g_mousePos[0]));
+	var highlite = dist < 23;
+
+	g_graphPanel.context.beginPath();
+	g_graphPanel.context.arc(X, Y, 10, 0, 2 * Math.PI, false);
+	g_graphPanel.context.fillStyle = dragging ? '#FF8888' : (highlite ? '#FF4030' : '#FF0000');
+	g_graphPanel.context.fill();
+	g_graphPanel.context.lineWidth = 3;
+	g_graphPanel.context.strokeStyle = dragging ? '#888888' : (highlite ? '#884030' : '#880000');
+	g_graphPanel.context.stroke();	
+}
+
+// returns l_i,j of x
+function LIJ(max,current,x)
+{
+	var numerator = 1;
+	var denominator = 1;
+
+	for (var i = 0; i <= max; ++i)
+	{
+		if (i != current)
+		{
+			numerator *= (x - g_controlPoints[i][0]);
+			denominator *= (g_controlPoints[current][0] - g_controlPoints[i][0]);
+		}
+	}
+
+	return numerator / denominator;
+}
+
+function F(x)
+{
+	var max = g_controlPoints.length - 1;
+	var sum = 0;
+
+	for (var i = 0; i <= max; ++i)
+		sum += g_controlPoints[i][1] * LIJ(max,i,x);
+
+	return sum;
+}
+
+function RedrawGraph()
+{
+	// clear the graph panel
+	g_graphPanel.clear();
+
+	// draw the graph graphics
+	g_graphPanel.context.strokeStyle='#0000FF';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();
+
+	// draw Y axis
+	var min = MathPointToScreenPoint(0,-2);
+	var max = MathPointToScreenPoint(0, 2);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	// draw X axis
+	min = MathPointToScreenPoint(-2, 0);
+	max = MathPointToScreenPoint( 6, 0);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+	g_graphPanel.context.stroke();
+
+	// draw a tick mark at x = 0.25, 0.5, 0.75, 1
+	g_graphPanel.context.strokeStyle='#00FFFF';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();	
+	min = MathPointToScreenPoint(0.25, -0.02);
+	max = MathPointToScreenPoint(0.25,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.5, -0.02);
+	max = MathPointToScreenPoint(0.5,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.75, -0.02);
+	max = MathPointToScreenPoint(0.75,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(1, -0.05);
+	max = MathPointToScreenPoint(1,  0.05);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);	
+
+	min = MathPointToScreenPoint(1.25, -0.02);
+	max = MathPointToScreenPoint(1.25,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(1.5, -0.02);
+	max = MathPointToScreenPoint(1.5,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(1.75, -0.02);
+	max = MathPointToScreenPoint(1.75,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(2, -0.05);
+	max = MathPointToScreenPoint(2,  0.05);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);		
+
+	min = MathPointToScreenPoint(2.25, -0.02);
+	max = MathPointToScreenPoint(2.25,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(2.5, -0.02);
+	max = MathPointToScreenPoint(2.5,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(2.75, -0.02);
+	max = MathPointToScreenPoint(2.75,  0.02);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(3, -0.05);
+	max = MathPointToScreenPoint(3,  0.05);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	// draw a tick mark at y = 0.25, 0.5, 0.75, 1
+	min = MathPointToScreenPoint(-0.02, 0.25);
+	max = MathPointToScreenPoint( 0.02, 0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(-0.02, 0.5);
+	max = MathPointToScreenPoint( 0.02, 0.5);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(-0.02, 0.75);
+	max = MathPointToScreenPoint( 0.02, 0.75);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(-0.05, 1);
+	max = MathPointToScreenPoint( 0.05, 1);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+
+    g_graphPanel.context.stroke();
+
+	// start the drawing
+	g_graphPanel.context.strokeStyle='#FFFF00';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();
+
+	// render each horizontal pixel
+	for (var index = 0; index <= g_graphPanel.elem.width; ++index)
+	{
+		// calculate the point
+		var mathPoint = ScreenPointToMathPoint(index, 0);
+		mathPoint[1] = F(mathPoint[0]);
+		var point = MathPointToScreenPoint(mathPoint[0], mathPoint[1]);
+
+		// if it's the first point, move there
+		if (index == 0)
+			g_graphPanel.context.moveTo(point[0], point[1]);
+		// else, draw to there
+		else
+			g_graphPanel.context.lineTo(point[0], point[1]);
+	}	
+	
+	// finish the line
+	g_graphPanel.context.stroke();
+
+	// draw the control points
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(g_controlPoints[i][0], g_controlPoints[i][1]);
+		DrawControlPoint(point[0], point[1], g_pointDragged == i);
+	}
+}
+
+</script>
+</head>
+<body>
+<h1>Incremental Curve Fitting</h1>
+<canvas class="html5" id="Graph" width="1000" height="500">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<br>
+Degree:
+<select id="Degree">
+	<option value="1">1 - Linear</option>
+	<option value="2">2 - Quadratic</option>
+	<option value="3">3 - Cubic</option>
+	<option value="4">4 - Quartic</option>
+	<option value="5">5 - Quintic</option>
+</select>
+<br>
+Comma separated data values:<br>
+<textarea id="Data" rows="10" cols="80"></textarea>
+<br>
+<input type="button" value="Add Data"/>
+<hr>
+<pre>
+TODO:
+* How it should work:
+ * when change degree, clear out everything.
+ * when add data, add data points to the list.
+  * when enough total data points for degree, process the data points
+  * on additional data, incrementally adjust
+ * keep a running log on bottom of page that shows the calculations
+
+* show the equation.
+* plot the equation
+* plot data points on the graph.
+* could maybe show R / R^2, like wolfram does?
+
+* make input box work.
+
+* upload this and a new index.html
+* link to blog post from here
+</pre>
+</body></html>

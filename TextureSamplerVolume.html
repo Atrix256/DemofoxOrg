@@ -771,6 +771,8 @@ function Initialize ()
 <body onLoad="Initialize()">
 <h1>Analytical Volumes Evaluated by the GPU Texture Sampler</h1>
 
+This is a demo to go along with my blog post: <a href="http://blog.demofox.org/2016/12/16/analyticsurfacesvolumesgpu/" target="_blank">Evaluating Points on Analytical Surfaces and in Analytical Volumes Using the GPU Texture Sampler</a><br>
+<br>
 This page uses WebGL2, which will be enabled by default in chrome 56 in January 2017.<br>
 To enable WebGL2 before then, or on other browsers, see this link:
 <a href="http://webgl2fundamentals.org/webgl/lessons/webgl-getting-webgl2.html" target="_blank">How to use WebGL2</a><br>
@@ -867,7 +869,5 @@ Instead of doing the initial ray trace, the cube could be rendered with triangle
 There is some non smoothness of the normals (seen best in the specular highlight) and the surface positions that is due to the fact that the texture interpolator works in X.8 fixed point numbers.  You can verify this by using the software interpolated dreeg selection to see it smooth out.
 <br><br>
 The GPU texture sampler is used to calculate the fog density value of the volume at a given u,v,w (or x,y,z) position.  All volumes are stored in a 3d 2x2x2 texture using varying amounts of color channels.  See the source code or blog post for more information!
-<hr>
-TODO: link to blog post
 </body>
 </html>

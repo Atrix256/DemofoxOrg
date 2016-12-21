@@ -1050,6 +1050,8 @@ function Initialize ()
 <body onLoad="Initialize()">
 <h1>Analytical Surfaces Evaluated by the GPU Texture Sampler</h1>
 
+This is a demo to go along with my blog post: <a href="http://blog.demofox.org/2016/12/16/analyticsurfacesvolumesgpu/" target="_blank">Evaluating Points on Analytical Surfaces and in Analytical Volumes Using the GPU Texture Sampler</a><br>
+<br>
 This page uses WebGL2, which will be enabled by default in chrome 56 in January 2017.<br>
 To enable WebGL2 before then, or on other browsers, see this link:
 <a href="http://webgl2fundamentals.org/webgl/lessons/webgl-getting-webgl2.html" target="_blank">How to use WebGL2</a><br>
@@ -1228,8 +1230,5 @@ The 16 control points are stored in a 2x2x2 3d volume texture's RGBA channels.  
 <tr><td>23</td><td>33</td></tr>
 </table><br><br>
 For a u,v coordinate, the texture is sampled at (uv.xxx + 0.5) / 2.0 to get 4 cubic curves across u in R,G,B,A.  The R,G,B,A results are then combined with the cubic Bezier equation using uv.y to get the surface height.
-
-<hr>
-TODO: link to blog post
 </body>
 </html>
