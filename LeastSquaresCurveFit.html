@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-<title>Incremental Curve Fitting</title>
+<title>Least Squares Curve Fitting</title>
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
 canvas.html5 {border:2px solid #00FF00;}
@@ -20,14 +20,12 @@ December 2016
 
 var g_controlPoints =
 [
-	[0.0,1.0],
-	[0.5,0.5],
-	[0.8,0.75],
-	[1.0,0.75],
-	[1.5,0.85],
-	[2.0,0.5],
-	[2.25,0.5],
-	[2.5,0.5],
+	[0.1,0.2],
+	[0.5,0.6],
+	[0.6,0.4],
+	[1.0,0.3],
+	[1.4,0.9],
+	[1.6,0.8]	
 ];
 
 var g_graphPanel;
@@ -35,15 +33,262 @@ var g_canvas;
 var g_mousePos = [0,0];
 var g_pointDragged = -1;
 var g_lastDragPos = [0,0];
+var g_degreeSelection;
+var g_coefficients = [];
+var g_functionOutput;
+
+function VectorToString(vector)
+{
+	var s = "[";
+	for (var i = 0; i < vector.length; ++i)
+	{
+		if (i > 0)
+			s+= ", ";
+		s += String(vector[i]);
+	}	
+	s += "]";
+	return s;
+}
+
+function MatrixToString(matrix)
+{
+	var s = "[\n";
+
+	for (var i = 0; i < matrix.length; ++i)
+	{
+		s += "  " + VectorToString(matrix[i]);
+
+		if (i < matrix.length - 1)
+			s += ",\n";
+		else
+			s += "\n";
+	}
+
+	s += "]";
+	return s;
+}
+
+function TransposeMatrix(matrix)
+{
+	var ret;
+	ret = [];
+	for (var j = 0; j < matrix[0].length; ++j)
+		ret[j] = [];
+
+	for (var j = 0; j < matrix.length; ++j)
+	{
+		for (var k = 0; k < matrix[j].length; ++k)
+		{
+			ret[k][j] = matrix[j][k];
+		}
+	}
+	return ret;
+}
+
+function DotProduct(vectorA, vectorB)
+{
+	var ret = 0;
+	for (var i = 0; i < vectorA.length; ++i)
+		ret += Number(vectorA[i])*Number(vectorB[i]);
+	return ret;
+}
+
+function MinorMatrix(matrix, excludeI, excludeJ)
+{
+	var ret = [];
+	var destI = 0;
+	for (var i = 0; i < matrix.length; ++i)
+	{
+		if (i != excludeI)
+		{
+			ret[destI] = [];
+			var destJ = 0;
+			for (var j = 0; j < matrix[i].length; ++j)
+			{
+				if (j != excludeJ)
+				{
+					ret[destI][destJ] = matrix[i][j];
+					++destJ;
+				}
+			}
+			++destI;
+		}
+	}
+	return ret;
+}
+
+function Determinant (matrix)
+{
+	if (matrix.length == 1)
+		return matrix[0][0];
+
+	var determinant = 0;
+	for (var i = 0; i < matrix.length; ++i)
+	{
+		var minor = MinorMatrix(matrix, 0, i);
+
+		var minorDeterminant = Determinant(minor);
+		if (i % 2 == 1)
+			minorDeterminant *= -1;
+
+		determinant += matrix[0][i] * minorDeterminant;
+	}
+
+	return determinant;
+}
+
+function InvertMatrix2x2(matrix)
+{
+    var determinant = Determinant(matrix);
+    if (determinant == 0.0)
+    {
+    	alert("could not invert matrix! (1)");
+        return null;
+    }
+
+	var out = [];
+	out[0] = [];
+	out[1] = [];
+
+    var oneOverDeterminant = 1.0 / determinant;
+    out[0][0] =  matrix[1][1] * oneOverDeterminant;
+    out[0][1] = -matrix[0][1] * oneOverDeterminant;
+    out[1][0] = -matrix[1][0] * oneOverDeterminant;
+    out[1][1] =  matrix[0][0] * oneOverDeterminant;
+    return out;	
+}
+
+function InvertMatrix(matrix)
+{
+	if (matrix.length == 2)
+		return InvertMatrix2x2(matrix);
+
+	// calculate the cofactor matrix and determinant
+	var determinant = 0;
+	var cofactors = [];
+	for (var i = 0; i < matrix.length; ++i)
+	{
+		cofactors[i] = [];
+		for (var j = 0; j < matrix.length; ++j)
+		{
+			var minor = MinorMatrix(matrix, i, j);
+
+			cofactors[i][j] = Determinant(minor);
+			if ((i + j) % 2 == 1)
+				cofactors[i][j] *= -1;
+
+			if (i == 0)
+				determinant += matrix[i][j] * cofactors[i][j];
+		}
+	}
+
+    // matrix cant be inverted if determinant is zero
+    if (determinant == 0.0)
+    {
+    	alert("could not invert matrix! (2)");
+        return null;
+    }
+
+	// calculate the adjoint matrix into the return value
+    var ret = TransposeMatrix(cofactors);
+
+    // divide by determinant
+    var oneOverDeterminant = 1 / determinant;
+    for (var i = 0; i < matrix.length; ++i)
+        for (var j = 0; j < matrix.length; ++j)
+            ret[i][j] *= oneOverDeterminant;
+	return ret;
+}
+
+function FitCurve()
+{
+	var numControlPoints = g_controlPoints.length;
+	var degree = Number(g_degreeSelection.value);
+	if (numControlPoints <= degree)
+	{
+		var missing = ((degree+1)-numControlPoints);
+		if (missing == 1)
+			g_functionOutput.innerHTML = "Please add 1 more data point to fit a curve of the specified degree.";
+		else
+			g_functionOutput.innerHTML = "Please add " + missing + " more data points to fit a curve of the specified degree.";
+		return;
+	}
+
+	// Calculate matrix "A"
+	// // A_jk = x_j ^ k
+	var A = [];	
+	for (var j = 0; j < numControlPoints; ++j)
+	{
+		A[j] = [];
+		for (var k = 0; k < degree + 1; ++k)
+			A[j][k] = Math.pow(g_controlPoints[j][0], k);
+	}
+
+	// calculate matrix "ATA"  - A transposed times A
+	var AT = TransposeMatrix(A);
+	var ATA = [];
+	for (var j = 0; j < degree + 1; ++j)
+	{
+		ATA[j] = [];
+		for (var k = 0; k < degree + 1; ++k)
+			ATA[j][k] = DotProduct(AT[j], AT[k]);
+	}
+
+	// Calculate vector "ATY" - A transposed times the Y values of the input data
+	var initialDataTransposed = TransposeMatrix(g_controlPoints);
+	var ATY = [];
+	for (var i = 0; i < degree + 1; ++i)
+		ATY[i] = DotProduct(AT[i], initialDataTransposed[1]);
+
+	// invert ATA matrix
+	var ATAInverse = InvertMatrix(ATA);
+
+	// calculate coefficients
+	g_coefficients = [];
+	for (var i = 0; i < degree + 1; ++i)
+		g_coefficients[i] = DotProduct(ATAInverse[i], ATY);
+
+	// show formula
+	var firstTerm = true;
+	g_functionOutput.innerHTML = "y = ";
+	for (var i = g_coefficients.length - 1; i >= 0; --i)
+	{
+		// don't show terms with 0 coefficients
+		if (Math.abs(g_coefficients[i]) < 0.0001)
+			continue;
+
+		// show an add or subtract between terms
+		var coefficient = g_coefficients[i];
+		if (firstTerm)
+			firstTerm = false;
+		else if (coefficient >= 0.0)
+			g_functionOutput.innerHTML += " + ";
+		else
+		{
+			g_functionOutput.innerHTML += " - ";
+			coefficient *= -1;
+		}
+
+		g_functionOutput.innerHTML += coefficient.toFixed(2);
+
+		if (i > 0)
+			g_functionOutput.innerHTML += "x";
+
+		if (i > 1)
+			g_functionOutput.innerHTML += "^" + i;
+	}
+}
 
 function onPageLoaded()
 {
 	g_graphPanel = setupCanvas('Graph');
 	g_canvas = document.getElementById('Graph');
-	g_canvas.addEventListener('mousemove', function(evt) {OnMouseMove(evt);RedrawGraph();}, false);
-	g_canvas.addEventListener('mousedown', function() {OnMouseDown();RedrawGraph();}, false);
-	g_canvas.addEventListener('mouseup', function() {OnMouseUp();RedrawGraph();}, false);
-	g_canvas.addEventListener('dblclick', function() {OnDoubleClick();RedrawGraph();}, false);
+	g_degreeSelection = document.getElementById('Degree');
+	g_functionOutput = document.getElementById('FunctionOutput');
+	g_canvas.addEventListener('mousemove', function(evt) {if(OnMouseMove(evt))RedrawGraph();}, false);
+	g_canvas.addEventListener('mousedown', function() {if(OnMouseDown())RedrawGraph();}, false);
+	g_canvas.addEventListener('mouseup', function() {if(OnMouseUp())RedrawGraph();}, false);
+	g_canvas.addEventListener('dblclick', function() {if(OnDoubleClick())RedrawGraph();}, false);
 	RedrawGraph();
 }
 
@@ -137,7 +382,7 @@ function OnMouseMove(evt)
 {
 	g_mousePos = GetMousePos(g_canvas, evt);
 	if (g_pointDragged == -1)
-		return;
+		return false;
 
 	var mouseMath = ScreenPointToMathPoint(g_mousePos[0], g_mousePos[1]);
 	var lastMath = ScreenPointToMathPoint(g_lastDragPos[0], g_lastDragPos[1]);
@@ -147,29 +392,32 @@ function OnMouseMove(evt)
 
 	g_controlPoints[g_pointDragged][0] += delta[0];
 	g_controlPoints[g_pointDragged][1] += delta[1];
+	return true;
 }
 
 function OnMouseDown()
 {
 	g_lastDragPos = g_mousePos;
 
-	for (i = 0; i < g_controlPoints.length; ++i)
+	for (var i = 0; i < g_controlPoints.length; ++i)
 	{
 		var point = MathPointToScreenPoint(g_controlPoints[i][0],g_controlPoints[i][1]);
 		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
 		if (dist < 23)
 		{
 			g_pointDragged = i;
-			return;
+			return false;
 		}		
 	}
 
 	g_pointDragged = -1;
+	return false;
 }
 
 function OnMouseUp()
 {
 	g_pointDragged = -1;
+	return false;
 }
 
 function clearSelection() {
@@ -186,19 +434,19 @@ function OnDoubleClick()
 	clearSelection();
 	g_pointDragged = -1;
 
-	for (i = 0; i < g_controlPoints.length; ++i)
+	for (var i = 0; i < g_controlPoints.length; ++i)
 	{
 		var point = MathPointToScreenPoint(g_controlPoints[i][0],g_controlPoints[i][1]);
 		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
 		if (dist < 23)
 		{
-			if (g_controlPoints.length > 2)
-				g_controlPoints.splice(i,1);
-			return;
+			g_controlPoints.splice(i,1);
+			return true;
 		}		
 	}
 	var mathPoint = ScreenPointToMathPoint(g_mousePos[0], g_mousePos[1]);
 	g_controlPoints.push(mathPoint);
+	return true;
 }
 
 //hook up our event listener
@@ -230,37 +478,30 @@ function DrawControlPoint(X, Y, dragging)
 	g_graphPanel.context.stroke();	
 }
 
-// returns l_i,j of x
-function LIJ(max,current,x)
-{
-	var numerator = 1;
-	var denominator = 1;
-
-	for (var i = 0; i <= max; ++i)
-	{
-		if (i != current)
-		{
-			numerator *= (x - g_controlPoints[i][0]);
-			denominator *= (g_controlPoints[current][0] - g_controlPoints[i][0]);
-		}
-	}
-
-	return numerator / denominator;
-}
-
 function F(x)
 {
-	var max = g_controlPoints.length - 1;
-	var sum = 0;
-
-	for (var i = 0; i <= max; ++i)
-		sum += g_controlPoints[i][1] * LIJ(max,i,x);
-
-	return sum;
+	var ret = 0.0;
+	for (var i = 0; i < g_coefficients.length; ++i)
+		ret += g_coefficients[i] * Math.pow(x, i);
+	return ret;
 }
 
+function AddData()
+{
+	var values = String(document.getElementById('Data').value).split(/[\s,]+/);
+
+	for (var i = 0; i < Math.floor(values.length/2); ++i)
+		g_controlPoints.push([values[i*2], values[i*2+1]]);
+
+	RedrawGraph();
+}
+
+// called when something changes that would affect the graph
 function RedrawGraph()
 {
+	// fit a curve to our data points
+	FitCurve();
+
 	// clear the graph panel
 	g_graphPanel.clear();
 
@@ -367,78 +608,75 @@ function RedrawGraph()
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-
     g_graphPanel.context.stroke();
 
-	// start the drawing
-	g_graphPanel.context.strokeStyle='#FFFF00';	
-	g_graphPanel.context.lineWidth = 1;
-	g_graphPanel.context.beginPath();
+    // draw the graph if we have enough data points
+    if (g_controlPoints.length > g_degreeSelection.value)
+    {
+		// start the drawing
+		g_graphPanel.context.strokeStyle='#FFFF00';	
+		g_graphPanel.context.lineWidth = 1;
+		g_graphPanel.context.beginPath();
 
-	// render each horizontal pixel
-	for (var index = 0; index <= g_graphPanel.elem.width; ++index)
-	{
-		// calculate the point
-		var mathPoint = ScreenPointToMathPoint(index, 0);
-		mathPoint[1] = F(mathPoint[0]);
-		var point = MathPointToScreenPoint(mathPoint[0], mathPoint[1]);
+		// render each horizontal pixel
+		for (var index = 0; index <= g_graphPanel.elem.width; ++index)
+		{
+			// calculate the point
+			var mathPoint = ScreenPointToMathPoint(index, 0);
+			mathPoint[1] = F(mathPoint[0]);
+			var point = MathPointToScreenPoint(mathPoint[0], mathPoint[1]);
 
-		// if it's the first point, move there
-		if (index == 0)
-			g_graphPanel.context.moveTo(point[0], point[1]);
-		// else, draw to there
-		else
-			g_graphPanel.context.lineTo(point[0], point[1]);
-	}	
-	
-	// finish the line
-	g_graphPanel.context.stroke();
+			// if it's the first point, move there
+			if (index == 0)
+				g_graphPanel.context.moveTo(point[0], point[1]);
+			// else, draw to there
+			else
+				g_graphPanel.context.lineTo(point[0], point[1]);
+		}	
+		
+		// finish the line
+		g_graphPanel.context.stroke();
+	}
 
 	// draw the control points
-	for (i = 0; i < g_controlPoints.length; ++i)
+	for (var i = 0; i < g_controlPoints.length; ++i)
 	{
 		var point = MathPointToScreenPoint(g_controlPoints[i][0], g_controlPoints[i][1]);
 		DrawControlPoint(point[0], point[1], g_pointDragged == i);
 	}
+
+	// write out what the control points are
+	document.getElementById('DataPoints').innerHTML = "";
+	for (var i = 0; i < g_controlPoints.length; ++i)
+		document.getElementById('DataPoints').innerHTML += String(g_controlPoints[i][0].toFixed(2)) + ", " + String(g_controlPoints[i][1].toFixed(2)) + "<br>";
 }
 
 </script>
 </head>
 <body>
-<h1>Incremental Curve Fitting</h1>
+<h1>Least Squares Curve Fitting</h1>
+<b>Click and drag control points. Double click on a control point to remove it. Double click on an empty space to add a control point. Change curve degree, add comma separated data.</b><br><br>
 <canvas class="html5" id="Graph" width="1000" height="500">Your browser doesn't seem to support the necesary html5 features ):</canvas>
 <br>
+Function: <b><div id="FunctionOutput"></div></b>
+<br>
+<input type="button" value="Clear Data" onClick="g_controlPoints=[];RedrawGraph();"/><br>
+<br>
 Degree:
-<select id="Degree">
+<select id="Degree" onChange="RedrawGraph();">
 	<option value="1">1 - Linear</option>
 	<option value="2">2 - Quadratic</option>
-	<option value="3">3 - Cubic</option>
+	<option value="3" selected="true">3 - Cubic</option>
 	<option value="4">4 - Quartic</option>
 	<option value="5">5 - Quintic</option>
+	<option value="6">6</option>
+	<option value="7">7</option>
 </select>
-<br>
-Comma separated data values:<br>
+<br><br>
+Add comma separated 2d data values:<br>
 <textarea id="Data" rows="10" cols="80"></textarea>
 <br>
-<input type="button" value="Add Data"/>
-<hr>
-<pre>
-TODO:
-* How it should work:
- * when change degree, clear out everything.
- * when add data, add data points to the list.
-  * when enough total data points for degree, process the data points
-  * on additional data, incrementally adjust
- * keep a running log on bottom of page that shows the calculations
-
-* show the equation.
-* plot the equation
-* plot data points on the graph.
-* could maybe show R / R^2, like wolfram does?
-
-* make input box work.
-
-* upload this and a new index.html
-* link to blog post from here
-</pre>
+<input type="button" value="Add Data" onclick="AddData();" />
+<br><br>
+Data Points: <b><div id="DataPoints"></div></b>
 </body></html>
