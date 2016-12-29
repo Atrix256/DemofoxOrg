@@ -38,6 +38,7 @@ var g_lastDragPos = [0,0];
 var g_degreeSelection;
 var g_coefficients = [];
 var g_functionOutput;
+var g_rsquared;
 
 function VectorToString(vector)
 {
@@ -202,6 +203,18 @@ function InvertMatrix(matrix)
 	return ret;
 }
 
+function EvaluateFitFunction(x)
+{
+	var ret = 0.0;
+	var xpow = 1.0;
+	for (var i = 0; i < g_coefficients.length; ++i)
+	{
+		ret += g_coefficients[i] * xpow;
+		xpow *= x;
+	}
+	return ret;
+}
+
 function FitCurve()
 {
 	var numControlPoints = g_controlPoints.length;
@@ -279,6 +292,23 @@ function FitCurve()
 		if (i > 1)
 			g_functionOutput.innerHTML += "^" + i;
 	}
+
+	// calculate and show R^2
+	var ymean = 0.0;
+	for (var i = 0; i < g_controlPoints.length; ++i)
+		ymean += g_controlPoints[i][1];
+	ymean /= g_controlPoints.length;
+	var SSTot = 0.0;
+	var SSRes = 0.0;
+	for (var i = 0; i < g_controlPoints.length; ++i)
+	{
+		var value = g_controlPoints[i][1] - ymean;
+		SSTot += value*value;
+
+		value = g_controlPoints[i][1] - EvaluateFitFunction(g_controlPoints[i][0]);
+		SSRes += value*value;
+	}
+	g_rsquared.innerHTML = (1.0 - SSRes/SSTot).toFixed(4);
 }
 
 function onPageLoaded()
@@ -287,6 +317,7 @@ function onPageLoaded()
 	g_canvas = document.getElementById('Graph');
 	g_degreeSelection = document.getElementById('Degree');
 	g_functionOutput = document.getElementById('FunctionOutput');
+	g_rsquared = document.getElementById('RSquared');
 	g_canvas.addEventListener('mousemove', function(evt) {if(OnMouseMove(evt))RedrawGraph();}, false);
 	g_canvas.addEventListener('mousedown', function() {if(OnMouseDown())RedrawGraph();}, false);
 	g_canvas.addEventListener('mouseup', function() {if(OnMouseUp())RedrawGraph();}, false);
@@ -661,6 +692,7 @@ function RedrawGraph()
 <canvas class="html5" id="Graph" width="1000" height="500">Your browser doesn't seem to support the necesary html5 features ):</canvas>
 <br>
 Function: <b><div id="FunctionOutput"></div></b>
+R^2 = <b><span id="RSquared"></span></b><br>
 <br>
 <input type="button" value="Clear Data" onClick="g_controlPoints=[];RedrawGraph();"/><br>
 <br>
