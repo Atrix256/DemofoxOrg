@@ -16,8 +16,6 @@ http://demofox.org
 
 December 2016
 
-NOTE: for a better / simpler implementation, please see the related blog post.
-
 ==================================================*/
 
 var g_controlPoints =
@@ -96,113 +94,6 @@ function DotProduct(vectorA, vectorB)
 	return ret;
 }
 
-function MinorMatrix(matrix, excludeI, excludeJ)
-{
-	var ret = [];
-	var destI = 0;
-	for (var i = 0; i < matrix.length; ++i)
-	{
-		if (i != excludeI)
-		{
-			ret[destI] = [];
-			var destJ = 0;
-			for (var j = 0; j < matrix[i].length; ++j)
-			{
-				if (j != excludeJ)
-				{
-					ret[destI][destJ] = matrix[i][j];
-					++destJ;
-				}
-			}
-			++destI;
-		}
-	}
-	return ret;
-}
-
-function Determinant (matrix)
-{
-	if (matrix.length == 1)
-		return matrix[0][0];
-
-	var determinant = 0;
-	for (var i = 0; i < matrix.length; ++i)
-	{
-		var minor = MinorMatrix(matrix, 0, i);
-
-		var minorDeterminant = Determinant(minor);
-		if (i % 2 == 1)
-			minorDeterminant *= -1;
-
-		determinant += matrix[0][i] * minorDeterminant;
-	}
-
-	return determinant;
-}
-
-function InvertMatrix2x2(matrix)
-{
-    var determinant = Determinant(matrix);
-    if (determinant == 0.0)
-    {
-    	alert("could not invert matrix! (1)");
-        return null;
-    }
-
-	var out = [];
-	out[0] = [];
-	out[1] = [];
-
-    var oneOverDeterminant = 1.0 / determinant;
-    out[0][0] =  matrix[1][1] * oneOverDeterminant;
-    out[0][1] = -matrix[0][1] * oneOverDeterminant;
-    out[1][0] = -matrix[1][0] * oneOverDeterminant;
-    out[1][1] =  matrix[0][0] * oneOverDeterminant;
-    return out;	
-}
-
-function InvertMatrix(matrix)
-{
-	if (matrix.length == 2)
-		return InvertMatrix2x2(matrix);
-
-	// calculate the cofactor matrix and determinant
-	var determinant = 0;
-	var cofactors = [];
-	for (var i = 0; i < matrix.length; ++i)
-	{
-		cofactors[i] = [];
-		for (var j = 0; j < matrix.length; ++j)
-		{
-			var minor = MinorMatrix(matrix, i, j);
-
-			cofactors[i][j] = Determinant(minor);
-			if ((i + j) % 2 == 1)
-				cofactors[i][j] *= -1;
-
-			if (i == 0)
-				determinant += matrix[i][j] * cofactors[i][j];
-		}
-	}
-
-    // matrix cant be inverted if determinant is zero
-    if (determinant == 0.0)
-    {
-    	alert("could not invert matrix! (2)");
-        return null;
-    }
-
-	// calculate the adjoint matrix into the return value
-    var ret = TransposeMatrix(cofactors);
-
-    // divide by determinant
-    var oneOverDeterminant = 1 / determinant;
-    for (var i = 0; i < matrix.length; ++i)
-        for (var j = 0; j < matrix.length; ++j)
-            ret[i][j] *= oneOverDeterminant;
-	return ret;
-}
-
 function EvaluateFitFunction(x)
 {
 	var ret = 0.0;
@@ -255,13 +146,22 @@ function FitCurve()
 	for (var i = 0; i < degree + 1; ++i)
 		ATY[i] = DotProduct(AT[i], initialDataTransposed[1]);
 
-	// invert ATA matrix
-	var ATAInverse = InvertMatrix(ATA);
+	// solve: ATA * coefficients = m_SummedPowers
+	// for the coefficients vector, using Gaussian elimination.
+	g_coefficients = ATY;
+	for (var i = 0; i < degree+1; ++i)
+	{
+		for (var j = 0; j < degree+1; ++j)
+		{
+			if (ATA[i][i] == 0.0)
+				return false;
 
-	// calculate coefficients
-	g_coefficients = [];
-	for (var i = 0; i < degree + 1; ++i)
-		g_coefficients[i] = DotProduct(ATAInverse[i], ATY);
+			var c = ((i == j) - ATA[j][i]) / ATA[i][i];
+			g_coefficients[j] += c*g_coefficients[i];
+			for (var k = 0; k < degree+1; ++k)
+				ATA[j][k] += c*ATA[i][k];
+		}
+	}	
 
 	// show formula
 	var firstTerm = true;
@@ -689,6 +589,7 @@ function RedrawGraph()
 <body>
 <h1>Least Squares Curve Fitting</h1>
 <b>Click and drag control points. Double click on a control point to remove it. Double click on an empty space to add a control point. Change curve degree, add comma separated data.</b><br><br>
+For more information, check out the accompanying post: <a href="http://blog.demofox.org/2016/12/22/incremental-least-squares-curve-fitting/" target="_blank">Incremental Least Squares Curve Fitting</a><br><br>
 <canvas class="html5" id="Graph" width="1000" height="500">Your browser doesn't seem to support the necesary html5 features ):</canvas>
 <br>
 Function: <b><div id="FunctionOutput"></div></b>
@@ -703,6 +604,11 @@ Degree:
 	<option value="3" selected="true">3 - Cubic</option>
 	<option value="4">4 - Quartic</option>
 	<option value="5">5 - Quintic</option>
+	<option value="6">6 - Sextic</option>
+	<option value="7">7 - Septic</option>
+	<option value="8">8 - Octic</option>
+	<option value="9">9 - Nonic</option>
+	<option value="10">10 - Decic</option>
 </select>
 <br><br>
 Add comma separated 2d data values:<br>
