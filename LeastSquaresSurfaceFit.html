@@ -61,9 +61,10 @@ in vec2 v_screenPosition;  // in [-0.5, 0.5]
 
 // uniforms
 uniform vec2 u_mouse;          // z,y:  percent of screen. z: mouse button down or not.
+uniform vec3 u_boxColor;          // color of the bounding box.
 
-uniform float  u_coefficients[16];  // the coefficients for the equation.  max is degree (3,3) which uses 16 coefficients.
-uniform vec3   u_dataPoints[16];    // the data points that were fit 
+uniform float  u_coefficients[(STATIC_BRANCH_DEGREE_X+1)*(STATIC_BRANCH_DEGREE_Y+1)];
+uniform vec3   u_dataPoints[16];    // the data points that were fit. 16 max seems reasonable. allows minimum # of data points for bicubic.
 uniform int    u_numDataPoints;
 
 // outputs
@@ -102,11 +103,16 @@ float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
 
 float SurfaceHeight (vec2 uv)
 {
+    // TODO: maybe javascript generates this code?
+    #if STATIC_BRANCH_DEGREE_X == 1 && STATIC_BRANCH_DEGREE_Y == 1
     return
         u_coefficients[0] +               //x^0y^0
         u_coefficients[1] * uv.y +        //x^0y^1
         u_coefficients[2] * uv.x +        //x^1y^0
         u_coefficients[3] * uv.x * uv.y;  //x^1y^1
+    #else
+    return 0.0;
+    #endif
 }
 
 bool HitDP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
@@ -147,6 +153,7 @@ bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir
 
 vec3 SurfaceNormal (vec2 uv)
 {
+    // Note that we could calculate the normal analytically instead of using finite differences!
     float eps = 0.1;
     vec3 n = vec3( SurfaceHeight(vec2(uv.x-eps,uv.y)) - SurfaceHeight(vec2(uv.x+eps,uv.y)),
              2.0*eps,
@@ -225,10 +232,6 @@ vec3 CalculateColor() {
         else
             return vec3(0.0, 0.0, 0.0);
     }
-
-    // TODO: something fishy is going on here.  I think maybe it goes wrong when the ray starts lower than the surface? dunno though...
-    //vec2 rayMinMax = vec2(0.0, 100.0);
-
     // test the ray against data points and remember if we hit one. Also shorten max distance if we did.
     bool hitDP = HitDP(cameraPos, rayDir, rayMinMax.y);
 
@@ -269,7 +272,7 @@ vec3 CalculateColor() {
         if (hitDP)
             return vec3(1.0, 0.0, 1.0);
         else
-            return vec3(0.0);
+            return u_boxColor;
     }    
 
     // estimate where the hit was
@@ -315,6 +318,7 @@ void main() {
 var gl = null;
 var canvas = null;
 var uniformMouse = null;
+var uniformBoxColor = null;
 var uniformCoefficients = null;
 var uniformDataPoints = null;
 var uniformNumDataPoints = null;
@@ -325,8 +329,10 @@ var currentShaderProgram = null;
 
 //=========================================================================================
 function createShader (gl, type, source, staticBranches) {
+  var fullSource = "#version 300 es\n" + staticBranches + source;
+
   var shader = gl.createShader(type);
-  gl.shaderSource(shader, "#version 300 es\n" + staticBranches + source);
+  gl.shaderSource(shader, fullSource);
   gl.compileShader(shader);
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
   if (success) {
@@ -334,6 +340,7 @@ function createShader (gl, type, source, staticBranches) {
   }
  
   console.log(gl.getShaderInfoLog(shader));
+  console.log(fullSource);
   gl.deleteShader(shader);
 }
 
@@ -405,6 +412,11 @@ function DrawScene ()
     // update uniforms
     gl.uniform2fv(uniformMouse, [mouse.PosX / gl.canvas.width, mouse.PosY / gl.canvas.height]);
 
+    if (document.getElementById("u_boxColor").checked)
+        gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
+    else
+        gl.uniform3fv(uniformBoxColor, [0,0,0]);    
+
     var coefficients = [0.5,-0.2,0.3,-0.4];
     gl.uniform1fv(uniformCoefficients, coefficients);
 
@@ -420,6 +432,11 @@ function DrawScene ()
     var offset = 0;
     var count = 3;
     gl.drawArrays(primitiveType, offset, count);    
+
+    // write out what the control points are
+    document.getElementById('DataPoints').innerHTML = "";
+    for (var i = 0; i < g_dataPoints.length; i+=3)
+        document.getElementById('DataPoints').innerHTML += String(g_dataPoints[i+0].toFixed(2)) + ", " + String(g_dataPoints[i+1].toFixed(2)) + ", " + String(g_dataPoints[i+2].toFixed(2)) + "<br>";    
 
     // request another frame to be drawn
     requestAnimationFrame(DrawScene);
@@ -444,7 +461,7 @@ function SelectShaderProgram ()
 {
     // if we are using the same shader program that we are supposed to be using, nothing to do
     var degreeX = document.getElementById("STATIC_BRANCH_DEGREE_X").selectedIndex;
-    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_X").selectedIndex;
+    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex;
     var newShaderProgram = shaderPrograms[degreeY*4+degreeX];
     if (newShaderProgram == currentShaderProgram)
         return;
@@ -466,6 +483,7 @@ function SelectShaderProgram ()
 
     // get uniforms for this shader program
     uniformMouse = gl.getUniformLocation(currentShaderProgram, "u_mouse");
+    uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
     uniformCoefficients = gl.getUniformLocation(currentShaderProgram, "u_coefficients");
     uniformDataPoints = gl.getUniformLocation(currentShaderProgram, "u_dataPoints");
     uniformNumDataPoints = gl.getUniformLocation(currentShaderProgram, "u_numDataPoints");
@@ -587,7 +605,7 @@ Drag the mouse to rotate the surface. Change degree per axis, add and remove dat
         <td>
         <select id="STATIC_BRANCH_DEGREE_X">
             <option value="0">0 - Point</option>
-            <option value="1">1 - Linear</option>
+            <option value="1" selected="true">1 - Linear</option>
             <option value="2">2 - Quadratic</option>
             <option value="3">3 - Cubic</option>
         </select>
@@ -598,21 +616,36 @@ Drag the mouse to rotate the surface. Change degree per axis, add and remove dat
         <td>
         <select id="STATIC_BRANCH_DEGREE_Y">
             <option value="0">0 - Point</option>
-            <option value="1">1 - Linear</option>
+            <option value="1" selected="true">1 - Linear</option>
             <option value="2">2 - Quadratic</option>
             <option value="3">3 - Cubic</option>
         </select>
         </td>
         </tr>        
+        <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
+        <tr><td colspan=2>
+        Add comma separated 2d data values:<br>
+        <textarea id="Data" rows="10" cols="80"></textarea>
+        <br>
+        <input type="button" value="Add Data" onclick="AddData();"/>
+        <input type="button" value="Clear Data" onClick="ClearData();"/>
+        <br><br>
+        Data Points: <b><div id="DataPoints"></div></b>
+        </td></tr>        
         </table>
     </td>
 </tr>
 </table>
-
 </body>
 </html>
 <pre>
 TODO:
+
+? should we make it so that Y is up instead of Z? maybe not actually.  Z is the "height" of the surface, so i think it's correct as is actually.
+
+* Make AddData() and ClearData() functions exist and work!
+
+* Make it display function and R^2
 
 * don't limit raymarching to the [0,1] space.  It can't be infinite though so... ?? maybe fog in the distance or something?
 ? maybe we need to limit to be within the x,y of the data points given though? or maybe we adjust camera so that it has all (x,y,z) data points in view? i dunno...
@@ -630,8 +663,10 @@ TODO:
 * how many data points can we send max?
  ? i guess we could static branch on how many data points there are instead of having a max? maybe?
 
-* make shader take polynomial degree on each axis and the coefficients
-* make shader ray march the surface (maybe we can calculate normal from coefficients instead of doing it numerically!)
+? how can the user edit data points?
+! only re-fit curve when a data point is added, removed, or modified
+
+
 * make it so people can enter data points and display them like the curve fitting demo
 * solve equation
 * show equation
@@ -653,4 +688,5 @@ This Post:
  * talk about how you could decrease degrees, or dimensions until the minimum points required are met.
  * The sample code doesn't do it though.
 * mention how you do gauss elimination instead of matrix inversion which is more numerically stable, and faster. point out that the examples are slightly different, but this is more correct.
+* Note that in the demo i calculate the surface normal with a finite difference method, but you could do it analytically as well since we know the polynomial!
 </pre>
