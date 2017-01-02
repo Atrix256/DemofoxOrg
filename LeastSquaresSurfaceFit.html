@@ -23,13 +23,10 @@ http://blog.demofox.org
 https://twitter.com/Atrix256
 =========================================================================================*/
 
-var g_dataPoints =
-[
-    0.0, 0.0, 0.5,
-    0.0, 1.0, 0.3,
-    1.0, 0.0, 0.8,
-    1.0, 1.0, 0.2,
-];
+var g_dataPoints = null;
+
+var g_coefficients;
+var g_dataScale;
 
 //=========================================================================================
 var vertexShaderSource = ` 
@@ -47,8 +44,8 @@ void main() {
 `;
  
 //=========================================================================================
-var fragmentShaderSource = `
-#define NUM_RAY_STEPS 100
+var fragmentShaderSource1 = `
+#define NUM_RAY_STEPS 75
 
 #define DATA_POINT_SIZE 0.01
 
@@ -66,6 +63,7 @@ uniform vec3 u_boxColor;          // color of the bounding box.
 uniform float  u_coefficients[(STATIC_BRANCH_DEGREE_X+1)*(STATIC_BRANCH_DEGREE_Y+1)];
 uniform vec3   u_dataPoints[16];    // the data points that were fit. 16 max seems reasonable. allows minimum # of data points for bicubic.
 uniform int    u_numDataPoints;
+uniform float  u_dataScale;  // the largest absolute value component of any of the data points. used for scaling everything to the [0,1] range
 
 // outputs
 out vec4 outColor;
@@ -100,29 +98,17 @@ float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
     
     return collisionTime;
 }
+`;
 
-float SurfaceHeight (vec2 uv)
-{
-    // TODO: maybe javascript generates this code?
-    #if STATIC_BRANCH_DEGREE_X == 1 && STATIC_BRANCH_DEGREE_Y == 1
-    return
-        u_coefficients[0] +               //x^0y^0
-        u_coefficients[1] * uv.y +        //x^0y^1
-        u_coefficients[2] * uv.x +        //x^1y^0
-        u_coefficients[3] * uv.x * uv.y;  //x^1y^1
-    #else
-    return 0.0;
-    #endif
-}
-
+var fragmentShaderSource2 = `
 bool HitDP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
 {
     if (u_numDataPoints <= 0)
         return false;
 
-    float time = RayIntersectSphere(vec4(u_dataPoints[0].xzy, DATA_POINT_SIZE), rayPos, rayDir);
+    float time = RayIntersectSphere(vec4(u_dataPoints[0].xzy * u_dataScale, DATA_POINT_SIZE), rayPos, rayDir);
     for (int i = 1; i < u_numDataPoints; ++i)
-        time = max(time, RayIntersectSphere(vec4(u_dataPoints[i].xzy, DATA_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(u_dataPoints[i].xzy * u_dataScale, DATA_POINT_SIZE), rayPos, rayDir));
 
     if (time >= 0.0)
     {
@@ -322,6 +308,7 @@ var uniformBoxColor = null;
 var uniformCoefficients = null;
 var uniformDataPoints = null;
 var uniformNumDataPoints = null;
+var uniformDataScale = null;
 var mouse = {PosX:0, PosX:0, IsDown: false};
 var mouseClicked = false;
 var shaderPrograms = [];
@@ -396,10 +383,274 @@ function SetVertexAttributeData (gl, program, name, type, count, values)
 }
 
 //=========================================================================================
+function VectorToString(vector)
+{
+    var s = "[";
+    for (var i = 0; i < vector.length; ++i)
+    {
+        if (i > 0)
+            s+= ", ";
+        s += String(vector[i]);
+    }   
+    s += "]";
+    return s;
+}
+
+//=========================================================================================
+function MatrixToString(matrix)
+{
+    var s = "[\n";
+
+    for (var i = 0; i < matrix.length; ++i)
+    {
+        s += "  " + VectorToString(matrix[i]);
+
+        if (i < matrix.length - 1)
+            s += ",\n";
+        else
+            s += "\n";
+    }
+
+    s += "]";
+    return s;
+}
+
+//=========================================================================================
+function IndexToPowersManual (index, maxDegreeMultiply, maxDegreeAdd, degreeX, degreeY)
+{
+    degreeX = degreeX * maxDegreeMultiply + maxDegreeAdd;
+    degreeY = degreeY * maxDegreeMultiply + maxDegreeAdd;
+    var powers = [];
+    powers[1] = index % degreeY;
+    powers[0] = Math.floor(index / degreeY) % degreeX;
+    return powers;    
+}
+
+//=========================================================================================
+function IndexToPowers(index, maxDegreeMultiply, maxDegreeAdd)
+{
+    var degreeX = document.getElementById("STATIC_BRANCH_DEGREE_X").selectedIndex;
+    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex;
+    return IndexToPowersManual(index, maxDegreeMultiply, maxDegreeAdd, degreeX, degreeY);
+}
+
+//=========================================================================================
+function PowersToIndex (powers, maxDegreeMultiply, maxDegreeAdd)
+{
+    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex * maxDegreeMultiply + maxDegreeAdd;    
+    var ret = powers[0];
+    ret *= degreeY;
+    ret += powers[1];
+    return ret;
+}
+
+//=========================================================================================
+function EvaluateFitFunction(x, y)
+{
+    var ret = 0.0;
+    var xpow = 1.0;
+    for (var i = 0; i < g_coefficients.length; ++i)
+    {
+        var powers = IndexToPowers(i, 1, 1);
+        var term = g_coefficients[i];
+        term *= Math.pow(x, powers[0]);
+        term *= Math.pow(y, powers[1]);
+        ret += term;
+    }
+    return ret;
+}
+
+//=========================================================================================
+function FitSurface()
+{
+    document.getElementById("FunctionOutput").innerHTML = "";
+    document.getElementById("RSquared").innerHTML = "";
+
+    g_coefficients = null;
+    g_dataPoints = document.getElementById("Data").value.split(/[\s,]+/);
+    for (var i = 0; i < g_dataPoints.length; ++i)
+        g_dataPoints[i] = Number(g_dataPoints[i]);
+    if (g_dataPoints.length % 3 != 0 || g_dataPoints.length == 0)
+    {
+        document.getElementById("FunctionOutput").innerHTML = "Error Parsing Data";
+        return;
+    }
+
+    g_dataScale = Math.abs(g_dataPoints[0]);
+    for (var i = 0; i < g_dataPoints.length; ++i)
+    {
+        var value = Math.abs(g_dataPoints[i]);
+        if (value > g_dataScale)
+            g_dataScale = value;
+    }
+    g_dataScale = g_dataScale * 1.1; // grow the data scale slightly to move the maximal points away from the edge of the cube
+    g_dataScale = 1.0 / g_dataScale;
+
+    var degreeX = document.getElementById("STATIC_BRANCH_DEGREE_X").selectedIndex;
+    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex;
+
+    var numSummedPowers = (degreeX*2+1)*(degreeY*2+1);
+    var numCoefficients = (degreeX+1)*(degreeY+1);
+
+    // calculate the summed powers
+    var summedPowers = [];
+    for (var pointIndex = 0; pointIndex < g_dataPoints.length; pointIndex += 3)
+    {
+        for (var i = 0; i < numSummedPowers; ++i)
+        {
+            if(pointIndex == 0)
+                summedPowers[i] = 0.0;
+
+            var powers = IndexToPowers(i, 2, 1);
+            var valueAdd = 1.0;
+            for (var j = 0; j < 2; ++j)
+                valueAdd *= Math.pow(g_dataPoints[pointIndex+j], powers[j]);
+            summedPowers[i] += valueAdd;
+        }
+    }
+
+    if (summedPowers[0] < numCoefficients)
+    {
+        document.getElementById("FunctionOutput").innerHTML = "Please add " + (numCoefficients - summedPowers[0]) + " more data points to fit a surface of the specified degree.";
+        return;
+    }
+
+    // calculate the summed powers multiplied by the output value
+    var summedPowersTimesValues = [];
+    for (var pointIndex = 0; pointIndex < g_dataPoints.length; pointIndex += 3)
+    {    
+        for (var i = 0; i < numCoefficients; ++i)
+        {
+            if(pointIndex == 0)
+                summedPowersTimesValues[i] = 0.0;
+
+            var powers = IndexToPowers(i, 1, 1);
+            var valueAdd = g_dataPoints[pointIndex+2];
+            for (var j = 0; j < 2; ++j)
+                valueAdd *= Math.pow(g_dataPoints[pointIndex+j], powers[j]);
+            summedPowersTimesValues[i] += valueAdd;
+        }    
+    }
+
+    // make the ATA matrix
+    var powersij = [];
+    var ATA = [];
+    for (var j = 0; j < numCoefficients; ++j)
+    {
+        ATA[j] = [];        
+        var powersj = IndexToPowers(j, 1, 1);
+
+        for (var i = 0; i < numCoefficients; ++i)
+        {
+            var powersi = IndexToPowers(i, 1, 1);
+
+            for (var k = 0; k < 2; ++k)
+                powersij[k] = powersi[k] + powersj[k];
+
+            var summedPowersIndex = PowersToIndex(powersij, 2, 1);
+            ATA[j][i] = summedPowers[summedPowersIndex];
+        }
+    }   
+
+    // solve: ATA * coefficients = m_SummedPowers
+    // for the coefficients vector, using Gaussian elimination.
+    g_coefficients = summedPowersTimesValues;
+    for (var i = 0; i < numCoefficients; ++i)
+    {
+        for (var j = 0; j < numCoefficients; ++j)
+        {
+            // set g_coefficients to null if we couldn't solve the equation
+            if (ATA[i][i] == 0.0)
+            {
+                g_coefficients = null;
+                document.getElementById("FunctionOutput").innerHTML += "Could not solve equation for some reason";
+                return;
+            }
+
+            var c = ((i == j) - ATA[j][i]) / ATA[i][i];
+            g_coefficients[j] += c*g_coefficients[i];
+            for (var k = 0; k < numCoefficients; ++k)
+                ATA[j][k] += c*ATA[i][k];
+        }
+    }    
+
+    // show the formula
+    // show formula
+    var firstTerm = true;
+    var showedATerm = false;
+    document.getElementById("FunctionOutput").innerHTML = "z = ";
+    for (var i = g_coefficients.length - 1; i >= 0; --i)
+    {
+        // don't show terms with 0 coefficients
+        if (Math.abs(g_coefficients[i]) < 0.0001)
+            continue;
+
+        var powers = IndexToPowers(i, 1, 1);
+
+        // show an add or subtract between terms
+        var coefficient = g_coefficients[i];
+        if (firstTerm)
+            firstTerm = false;
+        else if (coefficient >= 0.0)
+            document.getElementById("FunctionOutput").innerHTML += " + ";
+        else
+        {
+            document.getElementById("FunctionOutput").innerHTML += " - ";
+            coefficient *= -1;
+        }
+
+        document.getElementById("FunctionOutput").innerHTML += coefficient.toFixed(2);
+
+        if (powers[0] > 0)
+            document.getElementById("FunctionOutput").innerHTML += "x";
+        if (powers[0] > 1)
+            document.getElementById("FunctionOutput").innerHTML += "^" + powers[0];
+
+        if (powers[1] > 0)
+            document.getElementById("FunctionOutput").innerHTML += "y";
+        if (powers[1] > 1)
+            document.getElementById("FunctionOutput").innerHTML += "^" + powers[1];     
+        showedATerm = true;   
+    }
+    if (!showedATerm)
+    {
+        document.getElementById("FunctionOutput").innerHTML += "0";
+    }
+
+    // calculate and show R^2
+    var mean = 0.0;
+    for (var i = 0; i < g_dataPoints.length; i+=3)
+        mean += g_dataPoints[i+2];
+    mean /= Math.floor(g_dataPoints.length/3);
+    var SSTot = 0.0;
+    var SSRes = 0.0;
+    for (var i = 0; i < g_dataPoints.length; i+=3)
+    {
+        var value = g_dataPoints[i+2] - mean;
+        SSTot += value*value;
+
+        value = g_dataPoints[i+2] - EvaluateFitFunction(g_dataPoints[i+0], g_dataPoints[i+1]);
+        SSRes += value*value;
+    }
+    document.getElementById("RSquared").innerHTML = (1.0 - SSRes/SSTot).toFixed(4);    
+}
+
+//=========================================================================================
 function DrawScene ()
 {
-    // set which shader we are using
-    SelectShaderProgram();
+    // only change shader / update coefficients and data points if we have a valid fit
+    if (g_coefficients != null)
+    {
+        // set which shader we are using
+        SelectShaderProgram();
+
+        gl.uniform1fv(uniformCoefficients, g_coefficients);
+
+        gl.uniform1i(uniformNumDataPoints, g_dataPoints.length / 3);
+        gl.uniform3fv(uniformDataPoints, g_dataPoints);
+
+        gl.uniform1f(uniformDataScale, g_dataScale);
+    }
 
     // hacky work around for some unknown thing changing the mouse value in the first couple frames!
     // I did a console.log at each place the mouse value is modified, and it wasn't any of them!!
@@ -415,13 +666,7 @@ function DrawScene ()
     if (document.getElementById("u_boxColor").checked)
         gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
     else
-        gl.uniform3fv(uniformBoxColor, [0,0,0]);    
-
-    var coefficients = [0.5,-0.2,0.3,-0.4];
-    gl.uniform1fv(uniformCoefficients, coefficients);
-
-    gl.uniform1i(uniformNumDataPoints, g_dataPoints.length / 3);
-    gl.uniform3fv(uniformDataPoints, g_dataPoints);
+        gl.uniform3fv(uniformBoxColor, [0,0,0]);        
 
     // make sure gl is rendering to the the right size and has the right viewport info
     resize(gl.canvas);
@@ -432,11 +677,6 @@ function DrawScene ()
     var offset = 0;
     var count = 3;
     gl.drawArrays(primitiveType, offset, count);    
-
-    // write out what the control points are
-    document.getElementById('DataPoints').innerHTML = "";
-    for (var i = 0; i < g_dataPoints.length; i+=3)
-        document.getElementById('DataPoints').innerHTML += String(g_dataPoints[i+0].toFixed(2)) + ", " + String(g_dataPoints[i+1].toFixed(2)) + ", " + String(g_dataPoints[i+2].toFixed(2)) + "<br>";    
 
     // request another frame to be drawn
     requestAnimationFrame(DrawScene);
@@ -487,6 +727,7 @@ function SelectShaderProgram ()
     uniformCoefficients = gl.getUniformLocation(currentShaderProgram, "u_coefficients");
     uniformDataPoints = gl.getUniformLocation(currentShaderProgram, "u_dataPoints");
     uniformNumDataPoints = gl.getUniformLocation(currentShaderProgram, "u_numDataPoints");
+    uniformDataScale = gl.getUniformLocation(currentShaderProgram, "u_dataScale");
 }
 
 //=========================================================================================
@@ -571,22 +812,47 @@ function Initialize ()
     {
         for (var y = 0; y <= 3; ++y)
         {
-            var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE_X " + x + "\n#define STATIC_BRANCH_DEGREE_Y " + y + "\n");
+            // make the shader surface height function
+            var shaderSurfaceHeightFunction = "\nfloat SurfaceHeight (vec2 uv)\n{\n    uv /= u_dataScale;\n    return (\n";
+            var numCoefficients = (x+1)*(y+1);
+            for (var i = 0; i < numCoefficients; ++i)
+            {
+                shaderSurfaceHeightFunction += "         u_coefficients[" + i + "]";
+
+                var powers = IndexToPowersManual(i, 1, 1, x, y);
+
+                for (var j = 0; j < powers[0]; ++j)
+                    shaderSurfaceHeightFunction += "*uv.x";
+
+                for (var j = 0; j < powers[1]; ++j)
+                    shaderSurfaceHeightFunction += "*uv.y";
+
+                if (i < numCoefficients - 1)
+                    shaderSurfaceHeightFunction += " +\n";  
+                else
+                    shaderSurfaceHeightFunction += ") * u_dataScale;\n";    
+            }
+            shaderSurfaceHeightFunction += "}\n\n";
+
+            // compile the shader
+            var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource1 + shaderSurfaceHeightFunction + fragmentShaderSource2, "#define STATIC_BRANCH_DEGREE_X " + x + "\n#define STATIC_BRANCH_DEGREE_Y " + y + "\n");
             shaderPrograms[y*4+x] = createProgram(gl, vertexShader, fragmentShader);
         }
     }
 
+    // calculate the coefficients of the data points
+    FitSurface();    
+
     // start the render loop
     requestAnimationFrame(DrawScene);
 }
-
 
 </script>
 </head>
 <body onLoad="Initialize()">
 <h1>Least Squares Surface Fitting</h1>
 
-This is a demo to go along with my blog post: TODO: link!<br>
+This is a demo to go along with my blog post: TODO: link after written<br>
 <br>
 This page uses WebGL2, which should be enabled by default in chrome 56 in January 2017 (subject to change of course!).<br>
 To enable WebGL2 before then, or on other browsers, see this link:
@@ -598,15 +864,14 @@ Drag the mouse to rotate the surface. Change degree per axis, add and remove dat
 <tr>
     <td><canvas id="RenderWindow"></canvas></td>
     <td valign="top">
-        <br>
         <table>
         <tr>
         <td>Degree X:</td>
         <td>
-        <select id="STATIC_BRANCH_DEGREE_X">
+        <select id="STATIC_BRANCH_DEGREE_X" onChange="FitSurface();">
             <option value="0">0 - Point</option>
-            <option value="1" selected="true">1 - Linear</option>
-            <option value="2">2 - Quadratic</option>
+            <option value="1">1 - Linear</option>
+            <option value="2" selected="true">2 - Quadratic</option>
             <option value="3">3 - Cubic</option>
         </select>
         </td>
@@ -614,23 +879,32 @@ Drag the mouse to rotate the surface. Change degree per axis, add and remove dat
         <tr>
         <td>Degree Y:</td>
         <td>
-        <select id="STATIC_BRANCH_DEGREE_Y">
+        <select id="STATIC_BRANCH_DEGREE_Y" onChange="FitSurface();">
             <option value="0">0 - Point</option>
-            <option value="1" selected="true">1 - Linear</option>
-            <option value="2">2 - Quadratic</option>
+            <option value="1">1 - Linear</option>
+            <option value="2" selected="true">2 - Quadratic</option>
             <option value="3">3 - Cubic</option>
         </select>
         </td>
         </tr>        
         <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
         <tr><td colspan=2>
-        Add comma separated 2d data values:<br>
-        <textarea id="Data" rows="10" cols="80"></textarea>
         <br>
-        <input type="button" value="Add Data" onclick="AddData();"/>
-        <input type="button" value="Clear Data" onClick="ClearData();"/>
+        3d Data Points:<br>
+        <textarea id="Data" rows="10" cols="80">2.0, 3.0, 5.0
+1.0, 5.0, 4.0
+8.0, 4.0, 6.0
+6.0, 2.0, 4.0
+9.0, 1.0, 5.0
+4.0, 9.0, 6.0
+3.0, 8.0, 3.0
+5.0, 6.0, 7.0
+7.0, 7.0, 2.0</textarea>
+        <br>
+        <input type="button" value="Update Data" onclick="FitSurface();"/>
         <br><br>
-        Data Points: <b><div id="DataPoints"></div></b>
+        Function: <b><div id="FunctionOutput"></div></b><br>
+        R^2 = <b><span id="RSquared"></span></b><br>        
         </td></tr>        
         </table>
     </td>
@@ -638,55 +912,3 @@ Drag the mouse to rotate the surface. Change degree per axis, add and remove dat
 </table>
 </body>
 </html>
-<pre>
-TODO:
-
-? should we make it so that Y is up instead of Z? maybe not actually.  Z is the "height" of the surface, so i think it's correct as is actually.
-
-* Make AddData() and ClearData() functions exist and work!
-
-* Make it display function and R^2
-
-* don't limit raymarching to the [0,1] space.  It can't be infinite though so... ?? maybe fog in the distance or something?
-? maybe we need to limit to be within the x,y of the data points given though? or maybe we adjust camera so that it has all (x,y,z) data points in view? i dunno...
-? maybe we need to show an x,y,z axis widget so people have a sense of direction?
-? maybe we could draw the "isolines" at the [0,1] space or something? or isoline the bounding box of the data points?
-? maybe we put the clamping back, but scale the rendering so that all x,y are in [0,1]? we find the maximum abs x or y value and use that as a uniform scale for the x,y,z / whatever else needs to be scaled
-? maybe we do the scaling but shrink a little extra to show people what it looks like outside?
-? could have an option to not clamp it to that space too!
-? maybe we need to clamp rendering on each axis independantly? i dunno
- * that would make some sense, the AA box can be different on each axis.
- * reinstate having a colored background for the box!
- * then also allow it to be toggled on / off
-
-* make good default data points and surface degrees.
-* how many data points can we send max?
- ? i guess we could static branch on how many data points there are instead of having a max? maybe?
-
-? how can the user edit data points?
-! only re-fit curve when a data point is added, removed, or modified
-
-
-* make it so people can enter data points and display them like the curve fitting demo
-* solve equation
-* show equation
-* show R^2
-* show equation of normal
-* do a draw per data point, to render control points. 2d rendering? do we need to be able to show which are in front or behind? could ray march the surface for the ray to see if it hits the curve first or not.
- * i guess we could also just transform data points to 2d screen space + depth coordinates, and deal with them after ray marching?
-* make sure all non relevant stuff goes away / is renamed. page title etc!
-
-* test on mobile?
-
-* link to post after it's written!
-
-* upload index.html too when you upload this, and least squares curve fit to get the "0-point" option
-
-This Post:
-* talk about R^2 calculation
-* Mention that this code doesn't fall back if it doesn't have enough points.
- * talk about how you could decrease degrees, or dimensions until the minimum points required are met.
- * The sample code doesn't do it though.
-* mention how you do gauss elimination instead of matrix inversion which is more numerically stable, and faster. point out that the examples are slightly different, but this is more correct.
-* Note that in the demo i calculate the surface normal with a finite difference method, but you could do it analytically as well since we know the polynomial!
-</pre>
