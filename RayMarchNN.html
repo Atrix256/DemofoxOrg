@@ -53,6 +53,8 @@ in vec2 v_screenPosition;  // in [-0.5, 0.5]
 uniform vec2 u_mouse;          // z,y:  percent of screen. z: mouse button down or not.
 uniform vec3 u_boxColor;          // color of the bounding box.
 
+uniform float u_scale;
+
 // outputs
 out vec4 outColor;
 
@@ -76,11 +78,13 @@ float NeuronActivate (float value)
 
 float F (vec3 pos)
 {
+    pos -= 0.5;
+    pos *= u_scale;
+
     // a bilinear surface
     //return (1.0 - pos.x*pos.z) - pos.y;
 
     // A sphere
-    //pos -= 0.5;
     //return sqrt(pos.x*pos.x+pos.y*pos.y+pos.z*pos.z) - 0.5;
 
     // a plane
@@ -88,9 +92,6 @@ float F (vec3 pos)
 
     // single layer neural network. Take three inputs, spit out a single output
     //return Neuron(pos, vec3(0.1, 0.3, 0.2), -0.3);
-
-    // TODO: temp!
-    //pos -= 0.5;
 
     // Double layer neural network. Take three inputs, make three outputs.  Activation function for each, then use those as input the last layer.
     // TODO: NOTE: this is step activation!
@@ -141,6 +142,8 @@ vec3 SurfaceNormal (vec3 pos)
 
 vec3 SurfaceDiffuse (vec2 uv)
 {
+    uv *= u_scale;
+
     // anti aliased (smoothstepped) checkerboard pattern
     // 10 cells on each axis
     const float cells = 10.0;
@@ -288,6 +291,7 @@ var gl = null;
 var canvas = null;
 var uniformMouse = null;
 var uniformBoxColor = null;
+var uniformScale = null;
 var mouse = {PosX:0, PosX:0, IsDown: false};
 var mouseClicked = false;
 var shaderProgram = null;
@@ -383,6 +387,8 @@ function DrawScene ()
     else
         gl.uniform3fv(uniformBoxColor, [0,0,0]);        
 
+    gl.uniform1f(uniformScale, document.getElementById("u_scale").value);
+
     // make sure gl is rendering to the the right size and has the right viewport info
     resize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -437,6 +443,7 @@ function SelectShaderProgram ()
     // get uniforms for this shader program
     uniformMouse = gl.getUniformLocation(currentShaderProgram, "u_mouse");
     uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
+    uniformScale = gl.getUniformLocation(currentShaderProgram, "u_scale");
 }
 
 //=========================================================================================
@@ -540,6 +547,7 @@ Drag the mouse to rotate the surface. Change network topology, layer visualized,
     <td valign="top">
         <table>
         <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
+        <tr><td>Scale:</td><td><input type="range" min="0.1" max="10.0" id="u_scale" value="1.0" step="0.01"/></td></tr>
         </table>
     </td>
 </tr>
