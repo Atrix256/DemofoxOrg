@@ -23,11 +23,6 @@ http://blog.demofox.org
 https://twitter.com/Atrix256
 =========================================================================================*/
 
-var g_dataPoints = null;
-
-var g_coefficients;
-var g_dataScale;
-
 //=========================================================================================
 var vertexShaderSource = ` 
 // inputs
@@ -44,10 +39,8 @@ void main() {
 `;
  
 //=========================================================================================
-var fragmentShaderSource1 = `
+var fragmentShaderSource = `
 #define NUM_RAY_STEPS 75
-
-#define DATA_POINT_SIZE 0.01
 
 precision mediump float;
 precision mediump sampler2D;
@@ -60,63 +53,58 @@ in vec2 v_screenPosition;  // in [-0.5, 0.5]
 uniform vec2 u_mouse;          // z,y:  percent of screen. z: mouse button down or not.
 uniform vec3 u_boxColor;          // color of the bounding box.
 
-uniform float  u_coefficients[(STATIC_BRANCH_DEGREE_X+1)*(STATIC_BRANCH_DEGREE_Y+1)];
-uniform vec3   u_dataPoints[16];    // the data points that were fit. 16 max seems reasonable. allows minimum # of data points for bicubic.
-uniform int    u_numDataPoints;
-uniform float  u_dataScale;  // the largest absolute value component of any of the data points. used for scaling everything to the [0,1] range
-
 // outputs
 out vec4 outColor;
 
-float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
+float Neuron (vec3 neuronInput, vec3 weights, float bias)
 {
-    //get the vector from the center of this circle to where the ray begins.
-    vec3 m = rayPos - sphere.xyz;
-
-    //get the dot product of the above vector and the ray's vector
-    float b = dot(m, rayDir);
-
-    float c = dot(m, m) - sphere.w * sphere.w;
-
-    //exit if r's origin outside s (c > 0) and r pointing away from s (b > 0)
-    if(c > 0.0 && b > 0.0)
-        return -1.0;
-
-    //calculate discriminant
-    float discr = b * b - c;
-
-    //a negative discriminant corresponds to ray missing sphere
-    if(discr < 0.0)
-        return -1.0;
-
-    //ray now found to intersect sphere, compute smallest t value of intersection
-    float collisionTime = -b - sqrt(discr);
-
-    //if t is negative, ray started inside sphere so clamp t to zero and remember that we hit from the inside
-    if(collisionTime < 0.0)
-        collisionTime = -b + sqrt(discr);
-    
-    return collisionTime;
+    return dot(vec4(neuronInput, 1.0), vec4(weights, bias));
 }
-`;
 
-var fragmentShaderSource2 = `
-bool HitDP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+float NeuronActivate (float value)
 {
-    if (u_numDataPoints <= 0)
-        return false;
+    // Step
+    return value > 0.0 ? 1.0 : 0.0;
 
-    float time = RayIntersectSphere(vec4(u_dataPoints[0].xzy * u_dataScale, DATA_POINT_SIZE), rayPos, rayDir);
-    for (int i = 1; i < u_numDataPoints; ++i)
-        time = max(time, RayIntersectSphere(vec4(u_dataPoints[i].xzy * u_dataScale, DATA_POINT_SIZE), rayPos, rayDir));
+    // Sigmoid
+    //return 1.0 / (1.0 + exp(-value));
 
-    if (time >= 0.0)
-    {
-        rayMaxTime = time;
-        return true;
-    }    
+    //return mix(stepValue, sigmoidValue, 0.6);
 
-    return false;
+    // TODO: relu!
+}
+
+float F (vec3 pos)
+{
+    // a bilinear surface
+    //return (1.0 - pos.x*pos.z) - pos.y;
+
+    // A sphere
+    //pos -= 0.5;
+    //return sqrt(pos.x*pos.x+pos.y*pos.y+pos.z*pos.z) - 0.5;
+
+    // a plane
+    //return dot(pos, normalize(vec3(0.0, 1.0, 1.0))) - 0.5;
+
+    // single layer neural network. Take three inputs, spit out a single output
+    //return Neuron(pos, vec3(0.1, 0.3, 0.2), -0.3);
+
+    // TODO: temp!
+    //pos -= 0.5;
+
+    // Double layer neural network. Take three inputs, make three outputs.  Activation function for each, then use those as input the last layer.
+    // TODO: NOTE: this is step activation!
+    float H1 = Neuron(pos, vec3(0.1, 0.3, 0.2), -0.3);
+    float H2 = Neuron(pos, vec3(0.2, 0.3, 0.1), -0.2);
+    float H3 = Neuron(pos, vec3(0.3, 0.2, 0.2), -0.1);
+
+    //return H3;
+
+    H1 = NeuronActivate(H1);
+    H2 = NeuronActivate(H2);
+    H3 = NeuronActivate(H3);
+
+    return Neuron(vec3(H1, H2, H3), vec3(0.6, 0.1, 0.2), -0.2);
 }
 
 bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir, out vec2 time)
@@ -137,13 +125,17 @@ bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir
     return time.y>time.x && time.y>0.0;
 }
 
-vec3 SurfaceNormal (vec2 uv)
+vec3 SurfaceNormal (vec3 pos)
 {
-    // Note that we could calculate the normal analytically instead of using finite differences!
+    // TODO: i think this gives the wrong normal. not sure how to properly get normal though.
+
+    // Get gradient via central differences method.
     float eps = 0.1;
-    vec3 n = vec3( SurfaceHeight(vec2(uv.x-eps,uv.y)) - SurfaceHeight(vec2(uv.x+eps,uv.y)),
-             2.0*eps,
-             SurfaceHeight(vec2(uv.x,uv.y-eps)) - SurfaceHeight(vec2(uv.x,uv.y+eps)));
+    vec3 n = vec3(
+        F(vec3(pos.x-eps, pos.y, pos.z)) - F(vec3(pos.x+eps, pos.y, pos.z)),
+        F(vec3(pos.x, pos.y-eps, pos.z)) - F(vec3(pos.x, pos.y+eps, pos.z)),
+        F(vec3(pos.x, pos.y, pos.z-eps)) - F(vec3(pos.x, pos.y, pos.z+eps))        
+    );
     return normalize( n );
 }
 
@@ -211,15 +203,7 @@ vec3 CalculateColor() {
     // if the ray misses the bounding box, bail out
     vec2 rayMinMax;
     if (!RayIntersectAABox(vec3(0.0, 0.0, 0.0), vec3(1.0,1.0,1.0), cameraPos, rayDir, rayMinMax))
-    {
-        float maxDist = 1000.0;
-        if (HitDP(cameraPos, rayDir, maxDist))
-            return vec3(1.0, 0.0, 1.0);
-        else
-            return vec3(0.0, 0.0, 0.0);
-    }
-    // test the ray against data points and remember if we hit one. Also shorten max distance if we did.
-    bool hitDP = HitDP(cameraPos, rayDir, rayMinMax.y);
+        return vec3(0.0, 0.0, 0.0);
 
     //-------------------------
     //------ Ray March --------
@@ -234,13 +218,16 @@ vec3 CalculateColor() {
     float lastY = 0.0;
     float height = 0.0;
 
-    bool startedAbove = rayPos.y > SurfaceHeight(rayPos.xz);
+// TODO: rename height / lastHeight to value / lastValue?
+// TODO: what is lastY and such? review vars!
+
+    bool startedAbove = F(rayPos) > 0.0;
     bool hit = false;
     for (int i = 0; i < NUM_RAY_STEPS; ++i)
     {
-        height = SurfaceHeight(rayPos.xz);
+        height = F(rayPos);
 
-        bool isAbove = rayPos.y > height;
+        bool isAbove = height > 0.0;
         hit = (startedAbove != isAbove);
         if (hit)
           break;
@@ -254,15 +241,11 @@ vec3 CalculateColor() {
     // If the surface in the box is missed, set to dark green to show where the box is.
     // If we previously hit a data point, set it to the data point color though.
     if (!hit)
-    {
-        if (hitDP)
-            return vec3(1.0, 0.0, 1.0);
-        else
-            return u_boxColor;
-    }    
+        return u_boxColor;
 
     // estimate where the hit was
-    hitTime = hitTime - deltaT + deltaT*(lastHeight-lastY)/(rayPos.y-lastY-height+lastHeight);
+    // TODO: fix hitTime estimation code! Maybe look at lastValue and value, and lerp to find the zero?
+    //hitTime = hitTime - deltaT + deltaT*(lastHeight-lastY)/(rayPos.y-lastY-height+lastHeight);
     vec3 rayHitPos = cameraPos + rayDir * hitTime;
 
     //-------------------------
@@ -274,7 +257,7 @@ vec3 CalculateColor() {
 
     vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
 
-    vec3 normal = SurfaceNormal(rayHitPos.xz);
+    vec3 normal = SurfaceNormal(rayHitPos);
     if (dot(normal, rayDir) > 0.0)
       normal *= -1.0;
 
@@ -305,13 +288,9 @@ var gl = null;
 var canvas = null;
 var uniformMouse = null;
 var uniformBoxColor = null;
-var uniformCoefficients = null;
-var uniformDataPoints = null;
-var uniformNumDataPoints = null;
-var uniformDataScale = null;
 var mouse = {PosX:0, PosX:0, IsDown: false};
 var mouseClicked = false;
-var shaderPrograms = [];
+var shaderProgram = null;
 var currentShaderProgram = null;
 
 //=========================================================================================
@@ -383,274 +362,10 @@ function SetVertexAttributeData (gl, program, name, type, count, values)
 }
 
 //=========================================================================================
-function VectorToString(vector)
-{
-    var s = "[";
-    for (var i = 0; i < vector.length; ++i)
-    {
-        if (i > 0)
-            s+= ", ";
-        s += String(vector[i]);
-    }   
-    s += "]";
-    return s;
-}
-
-//=========================================================================================
-function MatrixToString(matrix)
-{
-    var s = "[\n";
-
-    for (var i = 0; i < matrix.length; ++i)
-    {
-        s += "  " + VectorToString(matrix[i]);
-
-        if (i < matrix.length - 1)
-            s += ",\n";
-        else
-            s += "\n";
-    }
-
-    s += "]";
-    return s;
-}
-
-//=========================================================================================
-function IndexToPowersManual (index, maxDegreeMultiply, maxDegreeAdd, degreeX, degreeY)
-{
-    degreeX = degreeX * maxDegreeMultiply + maxDegreeAdd;
-    degreeY = degreeY * maxDegreeMultiply + maxDegreeAdd;
-    var powers = [];
-    powers[1] = index % degreeY;
-    powers[0] = Math.floor(index / degreeY) % degreeX;
-    return powers;    
-}
-
-//=========================================================================================
-function IndexToPowers(index, maxDegreeMultiply, maxDegreeAdd)
-{
-    var degreeX = document.getElementById("STATIC_BRANCH_DEGREE_X").selectedIndex;
-    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex;
-    return IndexToPowersManual(index, maxDegreeMultiply, maxDegreeAdd, degreeX, degreeY);
-}
-
-//=========================================================================================
-function PowersToIndex (powers, maxDegreeMultiply, maxDegreeAdd)
-{
-    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex * maxDegreeMultiply + maxDegreeAdd;    
-    var ret = powers[0];
-    ret *= degreeY;
-    ret += powers[1];
-    return ret;
-}
-
-//=========================================================================================
-function EvaluateFitFunction(x, y)
-{
-    var ret = 0.0;
-    var xpow = 1.0;
-    for (var i = 0; i < g_coefficients.length; ++i)
-    {
-        var powers = IndexToPowers(i, 1, 1);
-        var term = g_coefficients[i];
-        term *= Math.pow(x, powers[0]);
-        term *= Math.pow(y, powers[1]);
-        ret += term;
-    }
-    return ret;
-}
-
-//=========================================================================================
-function FitSurface()
-{
-    document.getElementById("FunctionOutput").innerHTML = "";
-    document.getElementById("RSquared").innerHTML = "";
-
-    g_coefficients = null;
-    g_dataPoints = document.getElementById("Data").value.split(/[\s,]+/);
-    for (var i = 0; i < g_dataPoints.length; ++i)
-        g_dataPoints[i] = Number(g_dataPoints[i]);
-    if (g_dataPoints.length % 3 != 0 || g_dataPoints.length == 0)
-    {
-        document.getElementById("FunctionOutput").innerHTML = "Error Parsing Data";
-        return;
-    }
-
-    g_dataScale = Math.abs(g_dataPoints[0]);
-    for (var i = 0; i < g_dataPoints.length; ++i)
-    {
-        var value = Math.abs(g_dataPoints[i]);
-        if (value > g_dataScale)
-            g_dataScale = value;
-    }
-    g_dataScale = g_dataScale * 1.1; // grow the data scale slightly to move the maximal points away from the edge of the cube
-    g_dataScale = 1.0 / g_dataScale;
-
-    var degreeX = document.getElementById("STATIC_BRANCH_DEGREE_X").selectedIndex;
-    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex;
-
-    var numSummedPowers = (degreeX*2+1)*(degreeY*2+1);
-    var numCoefficients = (degreeX+1)*(degreeY+1);
-
-    // calculate the summed powers
-    var summedPowers = [];
-    for (var pointIndex = 0; pointIndex < g_dataPoints.length; pointIndex += 3)
-    {
-        for (var i = 0; i < numSummedPowers; ++i)
-        {
-            if(pointIndex == 0)
-                summedPowers[i] = 0.0;
-
-            var powers = IndexToPowers(i, 2, 1);
-            var valueAdd = 1.0;
-            for (var j = 0; j < 2; ++j)
-                valueAdd *= Math.pow(g_dataPoints[pointIndex+j], powers[j]);
-            summedPowers[i] += valueAdd;
-        }
-    }
-
-    if (summedPowers[0] < numCoefficients)
-    {
-        document.getElementById("FunctionOutput").innerHTML = "Please add " + (numCoefficients - summedPowers[0]) + " more data points to fit a surface of the specified degree.";
-        return;
-    }
-
-    // calculate the summed powers multiplied by the output value
-    var summedPowersTimesValues = [];
-    for (var pointIndex = 0; pointIndex < g_dataPoints.length; pointIndex += 3)
-    {    
-        for (var i = 0; i < numCoefficients; ++i)
-        {
-            if(pointIndex == 0)
-                summedPowersTimesValues[i] = 0.0;
-
-            var powers = IndexToPowers(i, 1, 1);
-            var valueAdd = g_dataPoints[pointIndex+2];
-            for (var j = 0; j < 2; ++j)
-                valueAdd *= Math.pow(g_dataPoints[pointIndex+j], powers[j]);
-            summedPowersTimesValues[i] += valueAdd;
-        }    
-    }
-
-    // make the ATA matrix
-    var powersij = [];
-    var ATA = [];
-    for (var j = 0; j < numCoefficients; ++j)
-    {
-        ATA[j] = [];        
-        var powersj = IndexToPowers(j, 1, 1);
-
-        for (var i = 0; i < numCoefficients; ++i)
-        {
-            var powersi = IndexToPowers(i, 1, 1);
-
-            for (var k = 0; k < 2; ++k)
-                powersij[k] = powersi[k] + powersj[k];
-
-            var summedPowersIndex = PowersToIndex(powersij, 2, 1);
-            ATA[j][i] = summedPowers[summedPowersIndex];
-        }
-    }   
-
-    // solve: ATA * coefficients = m_SummedPowers
-    // for the coefficients vector, using Gaussian elimination.
-    g_coefficients = summedPowersTimesValues;
-    for (var i = 0; i < numCoefficients; ++i)
-    {
-        for (var j = 0; j < numCoefficients; ++j)
-        {
-            // set g_coefficients to null if we couldn't solve the equation
-            if (ATA[i][i] == 0.0)
-            {
-                g_coefficients = null;
-                document.getElementById("FunctionOutput").innerHTML += "Could not solve equation for some reason";
-                return;
-            }
-
-            var c = ((i == j) - ATA[j][i]) / ATA[i][i];
-            g_coefficients[j] += c*g_coefficients[i];
-            for (var k = 0; k < numCoefficients; ++k)
-                ATA[j][k] += c*ATA[i][k];
-        }
-    }    
-
-    // show the formula
-    // show formula
-    var firstTerm = true;
-    var showedATerm = false;
-    document.getElementById("FunctionOutput").innerHTML = "z = ";
-    for (var i = g_coefficients.length - 1; i >= 0; --i)
-    {
-        // don't show terms with 0 coefficients
-        if (Math.abs(g_coefficients[i]) < 0.0001)
-            continue;
-
-        var powers = IndexToPowers(i, 1, 1);
-
-        // show an add or subtract between terms
-        var coefficient = g_coefficients[i];
-        if (firstTerm)
-            firstTerm = false;
-        else if (coefficient >= 0.0)
-            document.getElementById("FunctionOutput").innerHTML += " + ";
-        else
-        {
-            document.getElementById("FunctionOutput").innerHTML += " - ";
-            coefficient *= -1;
-        }
-
-        document.getElementById("FunctionOutput").innerHTML += coefficient.toFixed(2);
-
-        if (powers[0] > 0)
-            document.getElementById("FunctionOutput").innerHTML += "x";
-        if (powers[0] > 1)
-            document.getElementById("FunctionOutput").innerHTML += "^" + powers[0];
-
-        if (powers[1] > 0)
-            document.getElementById("FunctionOutput").innerHTML += "y";
-        if (powers[1] > 1)
-            document.getElementById("FunctionOutput").innerHTML += "^" + powers[1];     
-        showedATerm = true;   
-    }
-    if (!showedATerm)
-    {
-        document.getElementById("FunctionOutput").innerHTML += "0";
-    }
-
-    // calculate and show R^2
-    var mean = 0.0;
-    for (var i = 0; i < g_dataPoints.length; i+=3)
-        mean += g_dataPoints[i+2];
-    mean /= Math.floor(g_dataPoints.length/3);
-    var SSTot = 0.0;
-    var SSRes = 0.0;
-    for (var i = 0; i < g_dataPoints.length; i+=3)
-    {
-        var value = g_dataPoints[i+2] - mean;
-        SSTot += value*value;
-
-        value = g_dataPoints[i+2] - EvaluateFitFunction(g_dataPoints[i+0], g_dataPoints[i+1]);
-        SSRes += value*value;
-    }
-    document.getElementById("RSquared").innerHTML = (1.0 - SSRes/SSTot).toFixed(4);    
-}
-
-//=========================================================================================
 function DrawScene ()
 {
-    // only change shader / update coefficients and data points if we have a valid fit
-    if (g_coefficients != null)
-    {
-        // set which shader we are using
-        SelectShaderProgram();
-
-        gl.uniform1fv(uniformCoefficients, g_coefficients);
-
-        gl.uniform1i(uniformNumDataPoints, g_dataPoints.length / 3);
-        gl.uniform3fv(uniformDataPoints, g_dataPoints);
-
-        gl.uniform1f(uniformDataScale, g_dataScale);
-    }
+    // set which shader we are using
+    SelectShaderProgram();
 
     // hacky work around for some unknown thing changing the mouse value in the first couple frames!
     // I did a console.log at each place the mouse value is modified, and it wasn't any of them!!
@@ -700,9 +415,7 @@ function GetPos ( obj )
 function SelectShaderProgram ()
 {
     // if we are using the same shader program that we are supposed to be using, nothing to do
-    var degreeX = document.getElementById("STATIC_BRANCH_DEGREE_X").selectedIndex;
-    var degreeY = document.getElementById("STATIC_BRANCH_DEGREE_Y").selectedIndex;
-    var newShaderProgram = shaderPrograms[degreeY*4+degreeX];
+    var newShaderProgram = shaderProgram;
     if (newShaderProgram == currentShaderProgram)
         return;
 
@@ -724,10 +437,6 @@ function SelectShaderProgram ()
     // get uniforms for this shader program
     uniformMouse = gl.getUniformLocation(currentShaderProgram, "u_mouse");
     uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
-    uniformCoefficients = gl.getUniformLocation(currentShaderProgram, "u_coefficients");
-    uniformDataPoints = gl.getUniformLocation(currentShaderProgram, "u_dataPoints");
-    uniformNumDataPoints = gl.getUniformLocation(currentShaderProgram, "u_numDataPoints");
-    uniformDataScale = gl.getUniformLocation(currentShaderProgram, "u_dataScale");
 }
 
 //=========================================================================================
@@ -807,41 +516,8 @@ function Initialize ()
 
     // compile all shaders
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource, "");
-
-    for (var x = 0; x <= 3; ++x)
-    {
-        for (var y = 0; y <= 3; ++y)
-        {
-            // make the shader surface height function
-            var shaderSurfaceHeightFunction = "\nfloat SurfaceHeight (vec2 uv)\n{\n    uv /= u_dataScale;\n    return (\n";
-            var numCoefficients = (x+1)*(y+1);
-            for (var i = 0; i < numCoefficients; ++i)
-            {
-                shaderSurfaceHeightFunction += "         u_coefficients[" + i + "]";
-
-                var powers = IndexToPowersManual(i, 1, 1, x, y);
-
-                for (var j = 0; j < powers[0]; ++j)
-                    shaderSurfaceHeightFunction += "*uv.x";
-
-                for (var j = 0; j < powers[1]; ++j)
-                    shaderSurfaceHeightFunction += "*uv.y";
-
-                if (i < numCoefficients - 1)
-                    shaderSurfaceHeightFunction += " +\n";  
-                else
-                    shaderSurfaceHeightFunction += ") * u_dataScale;\n";    
-            }
-            shaderSurfaceHeightFunction += "}\n\n";
-
-            // compile the shader
-            var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource1 + shaderSurfaceHeightFunction + fragmentShaderSource2, "#define STATIC_BRANCH_DEGREE_X " + x + "\n#define STATIC_BRANCH_DEGREE_Y " + y + "\n");
-            shaderPrograms[y*4+x] = createProgram(gl, vertexShader, fragmentShader);
-        }
-    }
-
-    // calculate the coefficients of the data points
-    FitSurface();    
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "");
+    shaderProgram = createProgram(gl, vertexShader, fragmentShader);    
 
     // start the render loop
     requestAnimationFrame(DrawScene);
@@ -854,7 +530,7 @@ function Initialize ()
 
 This is a demo to go along with my blog post: TODO: link to blog post<br>
 <br>
-This page uses WebGL2, which is enabled by default in firefox and chrome.<br>
+This page uses WebGL2, which is enabled in firefox and chrome.<br>
 <br>
 Drag the mouse to rotate the surface. Change network topology, layer visualized, and modify weights,biases.<br>
 <br>
@@ -863,47 +539,7 @@ Drag the mouse to rotate the surface. Change network topology, layer visualized,
     <td><canvas id="RenderWindow"></canvas></td>
     <td valign="top">
         <table>
-        <tr>
-        <td>Degree X:</td>
-        <td>
-        <select id="STATIC_BRANCH_DEGREE_X" onChange="FitSurface();">
-            <option value="0">0 - Point</option>
-            <option value="1">1 - Linear</option>
-            <option value="2" selected="true">2 - Quadratic</option>
-            <option value="3">3 - Cubic</option>
-        </select>
-        </td>
-        </tr>
-        <tr>
-        <td>Degree Y:</td>
-        <td>
-        <select id="STATIC_BRANCH_DEGREE_Y" onChange="FitSurface();">
-            <option value="0">0 - Point</option>
-            <option value="1">1 - Linear</option>
-            <option value="2" selected="true">2 - Quadratic</option>
-            <option value="3">3 - Cubic</option>
-        </select>
-        </td>
-        </tr>        
         <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
-        <tr><td colspan=2>
-        <br>
-        3d Data Points:<br>
-        <textarea id="Data" rows="10" cols="80">2.0, 3.0, 5.0
-1.0, 5.0, 4.0
-8.0, 4.0, 6.0
-6.0, 2.0, 4.0
-9.0, 1.0, 5.0
-4.0, 9.0, 6.0
-3.0, 8.0, 3.0
-5.0, 6.0, 7.0
-7.0, 7.0, 2.0</textarea>
-        <br>
-        <input type="button" value="Update Data" onclick="FitSurface();"/>
-        <br><br>
-        Function: <b><div id="FunctionOutput"></div></b><br>
-        R^2 = <b><span id="RSquared"></span></b><br>        
-        </td></tr>        
         </table>
     </td>
 </tr>
@@ -928,7 +564,6 @@ TODO:
  * Each neuron in each layer needs as editable data: bias, weights.
 
 
-
 * each layer takes vector of [1, input] and dot products by [bias, weights], then applies the activation function
 
 * the 3 input values are what we use to render:
@@ -946,10 +581,38 @@ TODO:
 * should internal layers be able to have variable number of neurons? I think so!
 * let user edit topology and values in neural network.
 * let user select neuron activation function: step, sigma, relu. (others?)
+ * could also try something based on smoothstep!
+ * also check out softplus maybe?  https://en.wikipedia.org/wiki/Rectifier_(neural_networks)
 * let user edit weights and bias for each neuron.
 * come up with some interesting default values.
 * let user choose which layer to visualize!
 * ray march the thing.
+
+? do we need to scale things to handle values outside unit cube?
+ * maybe also make the center be (0,0,0)
+ * maybe make a slider to let users zoom in and out.
+
+? do we need the option "Draw Bounding Box"?
+? is there anything worth visualizing as a data point?
+
+* write explanation of how it works.
+ * like how the network has three inputs.
+ * those inputs are a point in 3d space.
+ * the network ultimately says "inside" or "outside"
+ * this is the visualization of that space
+
+* clean up the code, get rid of stuff not needed anymore
+
+* find TODO's above
+
 * blog post later!
 * link to blog post
+
+* add this to index.html and upload both to website
+
+
+Blog Notes:
+* Step function not differentiable.
+ * does it matter?
+ * i think it prevents analytical derivatives (gradient), but numeric one is fine.
 </pre>
