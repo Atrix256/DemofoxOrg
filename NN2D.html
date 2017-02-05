@@ -4,7 +4,7 @@
 <title>Neural Network Visualization 2D</title>
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
-canvas#RenderWindow {border:2px solid #00FF00;width:200px; height:200px;}
+canvas#RenderWindow {border:2px solid #00FF00;width:400px; height:400px;}
 table {
     border-collapse: collapse;
 }
@@ -39,14 +39,14 @@ void main() {
 `;
  
 //=========================================================================================
-var fragmentShaderSource = `
+var fragmentShaderSource1 = `
 
 precision mediump float;
 precision mediump sampler2D;
 precision mediump sampler3D;
 
 // inputs
-in vec2 v_screenPosition;  // in [-0.5, 0.5]
+in vec2 v_screenPosition;  // in [-1.0, 1.0]
 
 // uniforms
 uniform float u_scale;
@@ -55,82 +55,44 @@ uniform bool u_discreteOutput;
 // outputs
 out vec4 outColor;
 
-float NeuronActivate (float value)
+float Activate_identity (float value)
 {
-    // linear (identity)
-    //return value;
+    return value;
+}
 
-    // Step
+float Activate_relu (float value)
+{
+    return max(0.0, value);
+}
+
+float Activate_tanh (float value)
+{
+    float eposz = exp(value);
+    float enegz = exp(-value);
+    return (eposz - enegz) / (eposz + enegz);
+}
+
+float Activate_sigmoid (float value)
+{
+    return 1.0 / (1.0 + exp(-value));
+}
+
+float Activate_step (float value)
+{
     return value > 0.0 ? 1.0 : 0.0;
-
-    // Sigmoid
-    //return 1.0 / (1.0 + exp(-value));
-
-    // hyperbolic tangent
-    //float eposz = exp(value);
-    //float enegz = exp(-value);
-    //return (eposz - enegz) / (eposz + enegz);
-
-    // Relu
-    //return max(0.0, value);
 }
 
-float Neuron (vec2 neuronInput, vec2 weights, float bias)
-{
-    float neuronValue = dot(vec3(neuronInput, 1.0), vec3(weights, bias));
-    return NeuronActivate(neuronValue);
-}
+`;
 
-float F (vec2 pos)
-{
-    pos *= u_scale;
-
-    // x axis
-    //return pos.x;
-
-    // bilinear
-    //return pos.x*pos.y;
-
-    // Circle
-    //return sqrt(pos.x*pos.x+pos.y*pos.y) - 0.5;
-
-    // Line
-    //return dot(pos, normalize(vec2(1.0, 1.0)));
-
-    // single layer neural network. Take three inputs, spit out a single output
-    //return NeuronActivate(Neuron(pos, vec3(0.1, 0.3, 0.2), -0.3));
-
-
-    // a simpler multi layer network?
-    float H1A = Neuron(pos, vec2(1.0, 0.0), 0.0);
-    float H1B = Neuron(pos, vec2(0.0, 1.0), 0.0);
-
-    float H2 = Neuron(vec2(H1A,H1B), vec2(1.0, 1.0), 0.0);
-
-    return H1A;
-
-
-#if 0
-    // Double layer neural network. Take three inputs, make three outputs.  Activation function for each, then use those as input the last layer.
-    float H1 = Neuron(pos, vec3(0.1, 0.3, 0.2), -0.3);
-    float H2 = Neuron(pos, vec3(0.2, 0.3, 0.1), -0.2);
-    float H3 = Neuron(pos, vec3(0.3, 0.2, 0.2), -0.1);
-
-    return Neuron(vec3(H1, H2, H3), vec3(0.6, 0.1, 0.2), -0.2);
-#endif
-}
+var fragmentShaderSource2 = `
 
 void main() {
     // evaluate the network at this pixel's location.
-    float value = F(v_screenPosition * u_scale);
+    float value = EvaluateNetwork(v_screenPosition * u_scale);
 
     // show blue for negative, orange for positive
     if (u_discreteOutput)
     {
-        // TODO: may need a small region of white!
-        // TODO: discretizing the output may just push it towards 0, 1, -1
-        if (value == 0.0)
-            outColor.rgb = vec3(1.0, 1.0, 1.0);
         if (value > 0.0)
             outColor.rgb = vec3(1.0, 0.5, 0.0);
         else
@@ -138,8 +100,12 @@ void main() {
     }
     else
     {
-        // TODO: make white be at 0.0
-        outColor.rgb = mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.5, 0.0), clamp(value*0.5+0.5, 0.0, 1.0));
+        if (value > 0.0)
+            outColor.rgb = mix(vec3(1.0, 1.0, 1.0), vec3(1.0, 0.5, 0.0), clamp(value, 0.0, 1.0));
+        else
+            outColor.rgb = mix(vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 1.0), clamp(-value, 0.0, 1.0));
+
+        //outColor.rgb = mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.5, 0.0), clamp(value*0.5+0.5, 0.0, 1.0));
     }
     outColor.w = 1.0;
 }
@@ -155,8 +121,8 @@ var shaderProgram = null;
 var currentShaderProgram = null;
 
 //=========================================================================================
-function createShader (gl, type, source, staticBranches) {
-  var fullSource = "#version 300 es\n" + staticBranches + source;
+function createShader (gl, type, source) {
+  var fullSource = "#version 300 es\n" + source;
 
   var shader = gl.createShader(type);
   gl.shaderSource(shader, fullSource);
@@ -165,8 +131,11 @@ function createShader (gl, type, source, staticBranches) {
   if (success) {
     return shader;
   }
- 
-  console.log(gl.getShaderInfoLog(shader));
+
+  var shaderErrorInfo = gl.getShaderInfoLog(shader);
+  alert(shaderErrorInfo + "\n" + fullSource);
+
+  console.log(shaderErrorInfo);
   console.log(fullSource);
   gl.deleteShader(shader);
 }
@@ -289,8 +258,260 @@ function SelectShaderProgram ()
 }
 
 //=========================================================================================
+function UpdateURL ()
+{
+    history.replaceState(null, null, "NN2D.html?scale="+document.getElementById("u_scale").value+"&discrete="+document.getElementById("u_discreteOutput").checked+"&network="+escape(document.getElementById("networkjson").value));
+}
+
+//=========================================================================================
+function UpdateNetwork ()
+{
+    UpdateURL();
+    Initialize();
+}
+
+//=========================================================================================
+function ResetNetwork ()
+{
+    document.getElementById("networkjson").value = "";
+    history.replaceState(null, null, "NN2D.html");
+    Initialize();
+}
+
+//=========================================================================================
+function IsValidActivationType (activationType)
+{
+    var ret =
+        activationType == "identity" ||
+        activationType == "relu" ||
+        activationType == "tanh" ||
+        activationType == "sigmoid" ||
+        activationType == "step";
+
+    return ret;
+}
+
+//=========================================================================================
+function IsValidNeuron (neuron, lastLayerOutputs, neuronName)
+{
+    if (neuron.weights == null || neuron.weights.length == null)
+    {
+        alert(neuronName + " missing weights array");
+        return false;
+    }
+    if (neuron.weights.length != lastLayerOutputs)
+    {
+        alert(neuronName + " was expected to have " + lastLayerOutputs + " weights, but had " + neuron.weights.length);
+        return false;
+    }
+    if(neuron.bias == null || parseFloat(neuron.bias) == NaN)
+    {
+        alert(neuronName + " missing bias value");
+        return false;
+    }
+    if (neuron.activation == null)
+    {
+        alert(neuronName + " missing activation");
+        return false;
+    }
+    if (IsValidActivationType(neuron.activation) == false)
+    {
+        alert(neuronName + " has an invalid activation type");
+        return false;
+    }              
+
+    return true;
+}
+
+//=========================================================================================
+function ParseAndVerifyJSON ()
+{
+    // parse the json if we can
+    var network = null;
+    var networkSource = document.getElementById("networkjson").value;
+    try
+    {
+        network = JSON.parse(networkSource);
+    }
+    catch(ex)
+    {
+        alert("Could not parse json: \"" + networkSource + " \" : " + ex);
+        return null;
+    }
+
+    // store off the total number of layers
+    network.numLayers = Object.keys(network).length;  // number of layers, including input and output layers
+
+    // verify input layer
+    if (network["input"] == null)
+    {
+        alert("input layer not found");
+        return null;
+    }
+    if (network["input"].length == null || network["input"].length == 0)
+    {
+        alert("input layer is not an array or is empty")
+        return null;
+    }
+
+    // verify middle layers
+    var lastLayerOutputs = network["input"].length;
+    for (var layerIndex = 0; layerIndex < network.numLayers - 2; ++layerIndex)
+    {
+        // get the current layer and store the number of neurons in it
+        var layer = network["layer"+layerIndex];
+        if (layer == null)
+        {
+            alert("layer" + layerIndex+" not found");
+            return null;
+        }
+        layer.numNeurons = Object.keys(layer).length;
+
+        // Validate the neurons
+        for (var neuronIndex = 0; neuronIndex < layer.numNeurons; ++neuronIndex)
+        {
+            var neuron = layer["neuron"+neuronIndex];
+            if (neuron == null)
+            {
+                alert("neuron" + layerIndex+" not found");
+                return null;
+            }
+            if (!IsValidNeuron(neuron, lastLayerOutputs, "layer"+layerIndex + " " + "neuron"+neuronIndex))
+                return null;
+        }
+
+        // the next layer neurons will need as many weights as there are neurons in this layer.
+        lastLayerOutputs = layer.numNeurons;
+    }
+
+    // validate output layer as a neuron
+    if (network["output"] == null)
+    {
+        alert("output layer not found");
+        return null;
+    }    
+    if (!IsValidNeuron(network["output"], lastLayerOutputs, "output"))
+        return null;
+
+    return network;
+}
+
+//=========================================================================================
+function MakeNetworkShaderCode (network)
+{
+    var shaderCode = "";
+
+    shaderCode += "float EvaluateNetwork (vec2 pos) {\n\n";
+
+    // input layer
+    shaderCode += "  // input layer\n";
+    for (var i = 0; i < network["input"].length; ++i)
+        shaderCode += "  float input" + i + " = " + network["input"][i] + ";\n";
+    shaderCode += "\n";
+
+    // middle layers
+    for (var layerIndex = 0; layerIndex < network.numLayers-2; ++layerIndex)
+    {
+        var layer = network["layer"+layerIndex];
+
+        var lastLayerOutputPrefix = (layerIndex == 0) ? "input" : "layer"+(layerIndex-1)+"output";
+        var thisLayerOutputPrefix = "layer"+layerIndex+"output";
+
+        shaderCode += "  // layer" + layerIndex + "\n";
+
+        for (var neuronIndex = 0; neuronIndex < layer.numNeurons; ++neuronIndex)
+        {
+            var neuron = layer["neuron"+neuronIndex];
+
+            shaderCode += "  float "+thisLayerOutputPrefix+neuronIndex+" = Activate_" + neuron.activation + "(\n";
+
+            for (var weightIndex = 0; weightIndex < neuron.weights.length; ++weightIndex)
+                shaderCode += "    " + lastLayerOutputPrefix + weightIndex + " * " + neuron.weights[weightIndex].toFixed(4) + " +\n";
+            shaderCode += "    " + neuron.bias.toFixed(4) + ");\n";
+        }
+
+        shaderCode += "\n";
+    }
+
+    // output layer
+    shaderCode += "  // output layer\n";    
+    var neuron = network["output"];
+    var lastLayerOutputPrefix = (network.numLayers <= 2) ? "input" : "layer"+(layerIndex-1)+"output";
+    shaderCode += "  return Activate_" + neuron.activation + "(\n";
+    for (var weightIndex = 0; weightIndex < neuron.weights.length; ++weightIndex)
+        shaderCode += "    " + lastLayerOutputPrefix + weightIndex + " * " + neuron.weights[weightIndex].toFixed(4) + " +\n";
+    shaderCode += "    " + neuron.bias.toFixed(4) + ");\n";    
+
+    shaderCode += "}\n\n";
+
+    return shaderCode;
+}
+
+//=========================================================================================
 function Initialize ()
 {
+    var QueryString = function () {
+      // This function is anonymous, is executed immediately and 
+      // the return value is assigned to QueryString!
+      var query_string = {};
+      var query = window.location.search.substring(1);
+      var vars = query.split("&");
+      for (var i=0;i<vars.length;i++) {
+        var pair = vars[i].split("=");
+            // If first entry with this name
+        if (typeof query_string[pair[0]] === "undefined") {
+          query_string[pair[0]] = decodeURIComponent(pair[1]);
+            // If second entry with this name
+        } else if (typeof query_string[pair[0]] === "string") {
+          var arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+          query_string[pair[0]] = arr;
+            // If third or later entry with this name
+        } else {
+          query_string[pair[0]].push(decodeURIComponent(pair[1]));
+        }
+      } 
+      return query_string;
+    }();
+
+    // set params if they are on the query string
+    if (QueryString.scale != null)
+        document.getElementById("u_scale").value = QueryString.scale;
+    if (QueryString.discrete != null)
+        document.getElementById("u_discreteOutput").checked = (QueryString.discrete == "true");
+
+    // make a default network if none provided
+    var networkjson = unescape(QueryString.network);
+    if (QueryString.network == null || networkjson.length == 0)
+    {
+        networkjson =  "{\n";
+
+        // input
+        networkjson += "  \"input\": [\"pos.x\", \"pos.y\"],\n\n";
+
+        // layer 0
+        networkjson += "  \"layer0\" : {\n";
+        networkjson += "    \"neuron0\" : { \"weights\": [0, 1], \"bias\": 0, \"activation\": \"identity\"},\n";
+        networkjson += "    \"neuron1\" : { \"weights\": [1, 0], \"bias\": 0, \"activation\": \"identity\"}\n";
+        networkjson += "  },\n\n";
+
+        // layer 1
+        networkjson += "  \"layer1\" : {\n";
+        networkjson += "    \"neuron0\" : { \"weights\": [0, 1], \"bias\": 0, \"activation\": \"identity\"},\n";
+        networkjson += "    \"neuron1\" : { \"weights\": [1, 0], \"bias\": 0, \"activation\": \"identity\"}\n";
+        networkjson += "  },\n\n";        
+
+        // output
+        networkjson += "  \"output\" : { \"weights\": [0, 1], \"bias\": 0, \"activation\": \"identity\"}\n";
+
+        networkjson += "}";
+    }
+    document.getElementById("networkjson").value = networkjson;
+
+    // parse the json and make a network object
+    var network = ParseAndVerifyJSON();
+    if (network == null)
+        return;
+
     // setup webgl2
     canvas = document.getElementById("RenderWindow");
     gl = canvas.getContext("webgl2");
@@ -303,9 +524,13 @@ function Initialize ()
     // set clear color to black
     gl.clearColor(0, 0, 0, 1);
 
+    // make the shader code visible to the end user
+    var networkShaderCode = MakeNetworkShaderCode(network);
+    document.getElementById("glsl").innerText = networkShaderCode;
+
     // compile all shaders
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource, "");
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "");
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource1 + networkShaderCode + fragmentShaderSource2);
     shaderProgram = createProgram(gl, vertexShader, fragmentShader);    
 
     // start the render loop
@@ -317,57 +542,58 @@ function Initialize ()
 <body onLoad="Initialize()">
 <h1>Neural Network Visualization 2D</h1>
 
-This is a demo to go along with my blog post: TODO: link to blog post<br>
-<br>
-This page uses WebGL2, which is enabled in firefox and chrome.<br>
-<br>
-Drag the mouse to rotate the surface. Change network topology, layer visualized, and modify weights,biases.<br>
+This is a demo to go along with my blog post. (WIP, will put link when finished)<br>
 <br>
 <table class="NoBorder">
 <tr>
     <td><canvas id="RenderWindow"></canvas></td>
     <td valign="top">
         <table>
-        <tr><td>Discrete Output:</td><td><input type="checkbox" id="u_discreteOutput"/></td></tr>
-        <tr><td>Scale:</td><td><input type="range" min="1" max="10.0" id="u_scale" value="1.0" step="0.01"/></td></tr>
+        <tr><td>Discrete Output:</td><td><input type="checkbox" id="u_discreteOutput" onChange="UpdateURL();"/></td></tr>
+        <tr><td>Scale:</td><td><input type="range" min="1" max="20.0" id="u_scale" value="1.0" step="0.01" onChange="UpdateURL()"/></td></tr>
         </table>
     </td>
 </tr>
 </table>
+<table class="NoBorder">
+<tr>
+    <td>
+        <br>Network JSON:<br>
+        <textarea id="networkjson" style="width:600px; height:300px"></textarea><br>
+        <input type="button" value="Update Network" OnClick="UpdateNetwork()"/><input type="button" value="Reset Network" OnClick="ResetNetwork()"/>
+    </td>
+    <td>
+        Generated GLSL:<br>
+        <textarea id="glsl" style="width:600px; height:300px" readonly="true"></textarea>
+    </td>
+</tr>
+</table>
+
+<h2>Documentation</h2>
+<ul>
+<li>Orange is positive values, blue is negative values</li>
+<li>There must be an input and output layer at minimum.</li>
+<li>There can be any number of hidden layers, but they must be named with increasing numbers: layer0, layer1, layer2, etc.</li>
+<li>Each layer can have any number of neurons, but they must be named with increasing numbers: neuron0, neuron1, neuron2, etc.</li>
+<li>The number of weights a neuron must have is equal to the number of neurons in the previous layer.</li>
+<li>The output layer is defined as a single neuron.</li>
+<li>The input layer is an array that can have any number of values.  The values are strings that are used in the GLSL. You have access to a vec2 named "pos" that gives the 2d coordinate of the pixel, but can do any operations to those values like square them, add a constant, put them through sin, pow, etc.</li>
+<li>You can share the URL to have someone see exactly what you are seeing.</li>
+</ul>
+
+<h2>Activation Functions</h2>
+<ul>
+    <li>"identity" - does nothing</li>
+    <li>"relu" - max(0.0, value)</li>
+    <li>"tanh" - (exp(value) - exp(-value)) / (exp(value) + exp(-value))</li>
+    <li>"sigmoid" - 1.0 / (1.0 + exp(-value))</li>
+    <li>"step" - 1 if the value is greater than 0, else 0</li>
+</ul>
+
 </body>
 </html>
 
 <pre>
 TODO:
-* make 0 value be a different color? like white maybe
- * both for analog and binary output?
-
-* not sure point of this yet
-
-? I think position from vertex shader should go -1/+1
-
-? make a UI, make multiple windows?
-
-* write explanation of how it works.
-
-* update instructions
-
-* clean up the code, get rid of stuff not needed anymore
-
-* find TODO's above
-
-* blog post later!
-* link to blog post
-
-* add this to index.html and upload both to website
-
-* Note:
- * based on http://playground.tensorflow.org/
- * but meant to let you play with weights to get desired shapes, instead of being used for learning
-
-
-Blog Notes:
-* Step function not differentiable.
- * does it matter?
- * i think it prevents analytical derivatives (gradient), but numeric one is fine.
+* need an interesting default NN thing.
 </pre>
