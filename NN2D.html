@@ -23,6 +23,26 @@ http://blog.demofox.org
 https://twitter.com/Atrix256
 =========================================================================================*/
 
+var defaultNN = `{
+  "input": ["pos.x", "pos.y"],
+
+  "layer0" : [
+    { "weights": [1, 0.1], "bias": 0, "activation": "step"},
+    { "weights": [0.1, 1], "bias": 0, "activation": "step"},
+    { "weights": [-1,-1], "bias": -0.8, "activation": "step"}
+  ],
+
+  "output" : { "weights": [1,1,1], "bias": 0, "activation": "step"}
+}
+`;
+
+var presetCircle = `{
+  "input": ["pos.x*pos.x+pos.y*pos.y"],
+
+  "output" : { "weights": [1], "bias": -0.25, "activation": "identity"}
+}
+`;
+
 //=========================================================================================
 var vertexShaderSource = ` 
 // inputs
@@ -258,6 +278,19 @@ function SelectShaderProgram ()
 }
 
 //=========================================================================================
+function OnPresetChange ()
+{
+    var index = document.getElementById("preset").selectedIndex;
+
+    if (index == 0)
+        document.getElementById("networkjson").value = defaultNN;
+    else if (index == 1)
+        document.getElementById("networkjson").value = presetCircle;
+    
+    UpdateNetwork();
+}
+
+//=========================================================================================
 function UpdateURL ()
 {
     history.replaceState(null, null, "NN2D.html?scale="+document.getElementById("u_scale").value+"&discrete="+document.getElementById("u_discreteOutput").checked+"&network="+escape(document.getElementById("networkjson").value));
@@ -350,7 +383,7 @@ function ParseAndVerifyJSON ()
     }
     if (network["input"].length == null || network["input"].length == 0)
     {
-        alert("input layer is not an array or is empty")
+        alert("input layer is not an array or is empty");
         return null;
     }
 
@@ -365,12 +398,17 @@ function ParseAndVerifyJSON ()
             alert("layer" + layerIndex+" not found");
             return null;
         }
-        layer.numNeurons = Object.keys(layer).length;
+
+        if (layer.length == null || layer.length == 0)
+        {
+            alert("layer" + layerIndex+" is not an array or is empty");
+            return null;
+        }
 
         // Validate the neurons
-        for (var neuronIndex = 0; neuronIndex < layer.numNeurons; ++neuronIndex)
+        for (var neuronIndex = 0; neuronIndex < layer.length; ++neuronIndex)
         {
-            var neuron = layer["neuron"+neuronIndex];
+            var neuron = layer[neuronIndex];
             if (neuron == null)
             {
                 alert("neuron" + layerIndex+" not found");
@@ -381,7 +419,7 @@ function ParseAndVerifyJSON ()
         }
 
         // the next layer neurons will need as many weights as there are neurons in this layer.
-        lastLayerOutputs = layer.numNeurons;
+        lastLayerOutputs = layer.length;
     }
 
     // validate output layer as a neuron
@@ -419,9 +457,9 @@ function MakeNetworkShaderCode (network)
 
         shaderCode += "  // layer" + layerIndex + "\n";
 
-        for (var neuronIndex = 0; neuronIndex < layer.numNeurons; ++neuronIndex)
+        for (var neuronIndex = 0; neuronIndex < layer.length; ++neuronIndex)
         {
-            var neuron = layer["neuron"+neuronIndex];
+            var neuron = layer[neuronIndex];
 
             shaderCode += "  float "+thisLayerOutputPrefix+neuronIndex+" = Activate_" + neuron.activation + "(\n";
 
@@ -483,27 +521,7 @@ function Initialize ()
     var networkjson = unescape(QueryString.network);
     if (QueryString.network == null || networkjson.length == 0)
     {
-        networkjson =  "{\n";
-
-        // input
-        networkjson += "  \"input\": [\"pos.x\", \"pos.y\"],\n\n";
-
-        // layer 0
-        networkjson += "  \"layer0\" : {\n";
-        networkjson += "    \"neuron0\" : { \"weights\": [0, 1], \"bias\": 0, \"activation\": \"identity\"},\n";
-        networkjson += "    \"neuron1\" : { \"weights\": [1, 0], \"bias\": 0, \"activation\": \"identity\"}\n";
-        networkjson += "  },\n\n";
-
-        // layer 1
-        networkjson += "  \"layer1\" : {\n";
-        networkjson += "    \"neuron0\" : { \"weights\": [0, 1], \"bias\": 0, \"activation\": \"identity\"},\n";
-        networkjson += "    \"neuron1\" : { \"weights\": [1, 0], \"bias\": 0, \"activation\": \"identity\"}\n";
-        networkjson += "  },\n\n";        
-
-        // output
-        networkjson += "  \"output\" : { \"weights\": [0, 1], \"bias\": 0, \"activation\": \"identity\"}\n";
-
-        networkjson += "}";
+        networkjson =  defaultNN;
     }
     document.getElementById("networkjson").value = networkjson;
 
@@ -551,6 +569,15 @@ This is a demo to go along with my blog post. (WIP, will put link when finished)
         <table>
         <tr><td>Discrete Output:</td><td><input type="checkbox" id="u_discreteOutput" onChange="UpdateURL();"/></td></tr>
         <tr><td>Scale:</td><td><input type="range" min="1" max="20.0" id="u_scale" value="1.0" step="0.01" onChange="UpdateURL()"/></td></tr>
+        <tr>
+        <td>Presets:</td>
+        <td>
+            <select id="preset" onChange="OnPresetChange()">
+                <option>Triangle - Step Function (Default Network)</option>
+                <option>Circle - Non Linear Input</option>
+            </select>
+        </td>
+        </tr>
         </table>
     </td>
 </tr>
@@ -571,10 +598,11 @@ This is a demo to go along with my blog post. (WIP, will put link when finished)
 
 <h2>Documentation</h2>
 <ul>
-<li>Orange is positive values, blue is negative values</li>
+<li>Positive values are orange, negative values are blue, zero is white.</li>
 <li>There must be an input and output layer at minimum.</li>
 <li>There can be any number of hidden layers, but they must be named with increasing numbers: layer0, layer1, layer2, etc.</li>
-<li>Each layer can have any number of neurons, but they must be named with increasing numbers: neuron0, neuron1, neuron2, etc.</li>
+<li>Each layer is an array of any number of neurons.</li>
+<li>Each neuron must have a set of weights, a bias, and an activation function.</li>
 <li>The number of weights a neuron must have is equal to the number of neurons in the previous layer.</li>
 <li>The output layer is defined as a single neuron.</li>
 <li>The input layer is an array that can have any number of values.  The values are strings that are used in the GLSL. You have access to a vec2 named "pos" that gives the 2d coordinate of the pixel, but can do any operations to those values like square them, add a constant, put them through sin, pow, etc.</li>
@@ -583,11 +611,11 @@ This is a demo to go along with my blog post. (WIP, will put link when finished)
 
 <h2>Activation Functions</h2>
 <ul>
-    <li>"identity" - does nothing</li>
-    <li>"relu" - max(0.0, value)</li>
-    <li>"tanh" - (exp(value) - exp(-value)) / (exp(value) + exp(-value))</li>
-    <li>"sigmoid" - 1.0 / (1.0 + exp(-value))</li>
-    <li>"step" - 1 if the value is greater than 0, else 0</li>
+    <li>"identity": does nothing</li>
+    <li>"step": 1 if the value is greater than 0, else 0</li>    
+    <li>"relu": max(0.0, value)</li>
+    <li>"tanh": (exp(value) - exp(-value)) / (exp(value) + exp(-value))</li>
+    <li>"sigmoid": 1.0 / (1.0 + exp(-value))</li>
 </ul>
 
 </body>
@@ -595,5 +623,5 @@ This is a demo to go along with my blog post. (WIP, will put link when finished)
 
 <pre>
 TODO:
-* need an interesting default NN thing.
+* Make some more presets
 </pre>
