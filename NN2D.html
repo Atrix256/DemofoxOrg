@@ -36,6 +36,46 @@ var defaultNN = `{
 }
 `;
 
+var presetTriangleInverse = `{
+  "input": ["pos.x", "pos.y"],
+
+  "layer0" : [
+    { "weights": [1, 0.1], "bias": 0, "activation": "step"},
+    { "weights": [0.1, 1], "bias": 0, "activation": "step"},
+    { "weights": [-1,-1], "bias": -0.8, "activation": "step"}
+  ],
+
+  "output" : { "weights": [-1,-1,-1], "bias": 0.1, "activation": "step"}
+}
+`;
+
+var presetTriangleOutline = `{
+  "input": ["pos.x", "pos.y"],
+
+  "layer0" : [
+    { "weights": [1, 0.1], "bias": 0, "activation": "step"},
+    { "weights": [0.1, 1], "bias": 0, "activation": "step"},
+    { "weights": [-1,-1], "bias": -0.8, "activation": "step"},
+
+    { "weights": [1, 0.1], "bias": 0.05, "activation": "step"},
+    { "weights": [0.1, 1], "bias": 0.05, "activation": "step"},
+    { "weights": [-1,-1], "bias": -0.75, "activation": "step"}
+  ],
+
+  "layer1" : [
+    { "weights": [1,1,1,0,0,0], "bias": 0, "activation": "step"},
+    { "weights": [0,0,0,1,1,1], "bias": 0, "activation": "step"}
+  ],
+
+  "layer2" : [
+    { "weights": [-1,0], "bias": 0.1, "activation": "step"},
+    { "weights": [0,-1], "bias": 0.1, "activation": "step"}
+  ],
+
+  "output" : { "weights": [1,-1], "bias": 0, "activation": "step"}
+}
+`;
+
 var presetCircle = `{
   "input": ["pos.x*pos.x+pos.y*pos.y"],
 
@@ -124,9 +164,11 @@ void main() {
             outColor.rgb = mix(vec3(1.0, 1.0, 1.0), vec3(1.0, 0.5, 0.0), clamp(value, 0.0, 1.0));
         else
             outColor.rgb = mix(vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 1.0), clamp(-value, 0.0, 1.0));
-
-        //outColor.rgb = mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.5, 0.0), clamp(value*0.5+0.5, 0.0, 1.0));
     }
+
+    //outColor.rg = (v_screenPosition.xy * 0.5 + 0.5);
+    //outColor.b = 0.0;
+
     outColor.w = 1.0;
 }
 
@@ -285,6 +327,10 @@ function OnPresetChange ()
     if (index == 0)
         document.getElementById("networkjson").value = defaultNN;
     else if (index == 1)
+        document.getElementById("networkjson").value = presetTriangleInverse;    
+    else if (index == 2)
+        document.getElementById("networkjson").value = presetTriangleOutline;        
+    else if (index == 3)
         document.getElementById("networkjson").value = presetCircle;
     
     UpdateNetwork();
@@ -574,7 +620,9 @@ This is a demo to go along with my blog post. (WIP, will put link when finished)
         <td>
             <select id="preset" onChange="OnPresetChange()">
                 <option>Triangle - Step Function (Default Network)</option>
-                <option>Circle - Non Linear Input</option>
+                <option>Triangle Inversed</option>
+                <option>Triangle Outline</option>
+                <option>Circle - Non Linear Input / Identity Function</option>
             </select>
         </td>
         </tr>
