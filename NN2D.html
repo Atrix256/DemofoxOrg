@@ -27,9 +27,9 @@ var defaultNN = `{
   "input": ["pos.x", "pos.y"],
 
   "layer0" : [
-    { "weights": [1, 0.1], "bias": 0, "activation": "step"},
-    { "weights": [0.1, 1], "bias": 0, "activation": "step"},
-    { "weights": [-1,-1], "bias": -0.8, "activation": "step"}
+    { "weights": [0.995, 0.099], "bias": 0, "activation": "step"},
+    { "weights": [0.099, 0.995], "bias": 0, "activation": "step"},
+    { "weights": [-0.707,-0.707], "bias": -0.6, "activation": "step"}
   ],
 
   "output" : { "weights": [1,1,1], "bias": 0, "activation": "step"}
@@ -40,9 +40,9 @@ var presetTriangleInverse = `{
   "input": ["pos.x", "pos.y"],
 
   "layer0" : [
-    { "weights": [1, 0.1], "bias": 0, "activation": "step"},
-    { "weights": [0.1, 1], "bias": 0, "activation": "step"},
-    { "weights": [-1,-1], "bias": -0.8, "activation": "step"}
+    { "weights": [0.995, 0.099], "bias": 0, "activation": "step"},
+    { "weights": [0.099, 0.995], "bias": 0, "activation": "step"},
+    { "weights": [-0.707,-0.707], "bias": -0.6, "activation": "step"}
   ],
 
   "output" : { "weights": [-1,-1,-1], "bias": 0.1, "activation": "step"}
@@ -53,13 +53,13 @@ var presetTriangleOutline = `{
   "input": ["pos.x", "pos.y"],
 
   "layer0" : [
-    { "weights": [1, 0.1], "bias": 0, "activation": "step"},
-    { "weights": [0.1, 1], "bias": 0, "activation": "step"},
-    { "weights": [-1,-1], "bias": -0.8, "activation": "step"},
+    { "weights": [0.995, 0.099], "bias": 0, "activation": "step"},
+    { "weights": [0.099, 0.995], "bias": 0, "activation": "step"},
+    { "weights": [-0.707,-0.707], "bias": -0.6, "activation": "step"},
 
-    { "weights": [1, 0.1], "bias": 0.05, "activation": "step"},
-    { "weights": [0.1, 1], "bias": 0.05, "activation": "step"},
-    { "weights": [-1,-1], "bias": -0.75, "activation": "step"}
+    { "weights": [0.995, 0.099], "bias": 0.025, "activation": "step"},
+    { "weights": [0.099, 0.995], "bias": 0.025, "activation": "step"},
+    { "weights": [-0.707,-0.707], "bias": -0.575, "activation": "step"}
   ],
 
   "layer1" : [
@@ -337,9 +337,30 @@ function OnPresetChange ()
 }
 
 //=========================================================================================
+function OnResolutionChange (updateURL)
+{
+    if (updateURL)
+        UpdateURL();
+
+    var e = document.getElementById("resolution");
+    var resolution = e.options[e.selectedIndex].value;       
+
+    document.getElementById("RenderWindow").style.width = resolution;
+    document.getElementById("RenderWindow").style.height = resolution;
+}
+
+//=========================================================================================
 function UpdateURL ()
 {
-    history.replaceState(null, null, "NN2D.html?scale="+document.getElementById("u_scale").value+"&discrete="+document.getElementById("u_discreteOutput").checked+"&network="+escape(document.getElementById("networkjson").value));
+    var e = document.getElementById("resolution");
+    var resolution = e.options[e.selectedIndex].value;    
+
+    history.replaceState(null, null,
+        "NN2D.html?scale="+document.getElementById("u_scale").value+
+        "&discrete="+document.getElementById("u_discreteOutput").checked+
+        "&resolution="+resolution+
+        "&network="+escape(document.getElementById("networkjson").value)
+    );
 }
 
 //=========================================================================================
@@ -562,6 +583,12 @@ function Initialize ()
         document.getElementById("u_scale").value = QueryString.scale;
     if (QueryString.discrete != null)
         document.getElementById("u_discreteOutput").checked = (QueryString.discrete == "true");
+    
+    if (QueryString.resolution != null)
+        document.getElementById("resolution").value = parseInt(QueryString.resolution);
+    else
+        document.getElementById("resolution").value = parseInt(400);
+    OnResolutionChange(false);    
 
     // make a default network if none provided
     var networkjson = unescape(QueryString.network);
@@ -623,6 +650,16 @@ This is a demo to go along with my blog post. (WIP, will put link when finished)
                 <option>Triangle Inversed</option>
                 <option>Triangle Outline</option>
                 <option>Circle - Non Linear Input / Identity Function</option>
+            </select>
+        </td>
+        </tr>
+        <tr>
+        <td>Resolution</td>
+        <td>
+            <select id="resolution" onChange="OnResolutionChange(true)">
+                <option value="200">200x200</option>
+                <option value="400">400x400</option>
+                <option value="600">600x600</option>
             </select>
         </td>
         </tr>
