@@ -77,9 +77,9 @@ var presetTriangleOutline = `{
 `;
 
 var presetCircle = `{
-  "input": ["pos.x*pos.x+pos.y*pos.y"],
+  "input": ["sqrt(pos.x*pos.x+pos.y*pos.y)"],
 
-  "output" : { "weights": [1], "bias": -0.25, "activation": "identity"}
+  "output" : { "weights": [1], "bias": -0.5, "activation": "identity"}
 }
 `;
 
@@ -705,8 +705,3 @@ This is a demo to go along with my blog post. (WIP, will put link when finished)
 
 </body>
 </html>
-
-<pre>
-TODO:
-* Make some more presets
-</pre>
