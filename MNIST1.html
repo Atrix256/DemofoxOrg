@@ -23978,7 +23978,7 @@ function onPageLoaded()
 	g_graphPanel = setupCanvas('Graph');
 	g_scaledPanel = setupCanvas('Scaled');
 
-	g_graphPanel.context.lineWidth = 16;
+	g_graphPanel.context.lineWidth = 12;
 	g_graphPanel.context.lineJoin = 'round';
 	g_graphPanel.context.lineCap = 'round';
 	g_graphPanel.context.strokeStyle = '#FFFFFF';
@@ -24003,34 +24003,137 @@ function onPageLoaded()
 	var onPaint = function() {
 	    g_graphPanel.context.lineTo(mouse.x, mouse.y);
 	    g_graphPanel.context.stroke();
-	    DrawScaled();
+	    OnScaledNeedsUpdate();
 	};	
+}
+
+// repeatedly cut image size in half to minimize aliasing
+// NOTE: assumes square source and destination
+function GetResizedCanvas (sourceCanvas, targetSize)
+{
+    var canvas1 = sourceCanvas;
+
+    while (1)
+    {
+        if (canvas1.width > targetSize * 2)
+        {
+            var canvas2 = document.createElement('canvas');
+            canvas2.width = canvas1.width * 0.5;
+            canvas2.height = canvas1.height * 0.5;
+
+            var canvas2Context = canvas2.getContext('2d');
+            canvas2Context.drawImage(canvas1, 0, 0, canvas2.width, canvas2.height); 
+
+            canvas1 = canvas2;
+        }
+        else
+        {
+            var canvas2 = document.createElement('canvas');
+            canvas2.width = targetSize;
+            canvas2.height = targetSize;
+
+            var canvas2Context = canvas2.getContext('2d');
+            canvas2Context.drawImage(canvas1, 0, 0, canvas2.width, canvas2.height); 
+
+            return canvas2;
+        }
+    }
+}
+
+var g_scaledNeedsUpdate = null;
+function OnScaledNeedsUpdate ()
+{
+    clearTimeout(g_scaledNeedsUpdate);
+    g_scaledNeedsUpdate = setTimeout(DrawScaled, 250);
 }
 
 // Better downscale method, cutting the image in half each time, instead of scaling to target in one go.
 // Assumes that g_scaledPanel and g_graphPanel are both squares
 function DrawScaled() {
-	//g_scaledPanel.context.drawImage(g_graphPanel.elem, 0,0, g_scaledPanel.elem.width, g_scaledPanel.elem.height);
 
-	var oc1   = document.createElement('canvas');
-	oc1.width  = g_graphPanel.elem.width  * 0.5;
-	oc1.height = g_graphPanel.elem.height * 0.5;
-	var oc1tx = oc1.getContext('2d');
-	oc1tx.drawImage(g_graphPanel.elem, 0, 0, oc1.width, oc1.height);
+    // find bounding box of source image
+    var minx = g_graphPanel.elem.width;
+    var miny = g_graphPanel.elem.height;
+    var maxx = 0;
+    var maxy = 0;
+    for (var iy = 0; iy < g_graphPanel.elem.height; ++iy)
+    {
+        for (var ix = 0; ix < g_graphPanel.elem.width; ++ix)
+        {
+            var pixel = parseFloat(g_graphPanel.context.getImageData(ix, iy, 1, 1).data[0]); 
 
-	while (oc1.width > g_scaledPanel.elem.width * 2)
-	{
-		var oc2 = document.createElement('canvas');
-		oc2.width = oc1.width * 0.5;
-		oc2.height = oc1.height * 0.5;
-		var oc2tx = oc2.getContext('2d');
-		oc2tx.drawImage(oc1, 0, 0, oc2.width, oc2.height);
+            if (pixel > 0)
+            {
+                if (ix < minx)
+                    minx = ix;
+                if (ix > maxx)
+                    maxx = ix;
 
-		oc1 = oc2;
-		oc1tx = oc2tx;
-	}
+                if (iy < miny)
+                    miny = iy;
+                if (iy > maxy)
+                    maxy = iy;                
+            }
+        }
+    }
 
-	g_scaledPanel.context.drawImage(oc1, 0,0, g_scaledPanel.elem.width, g_scaledPanel.elem.height);
+    // increase the smaller side of the bounding box to make it a square
+    var width = maxx-minx;
+    var height = maxy-miny;
+    if (width < height)
+    {
+        var diff = (height - width) / 2;
+        minx -= diff;
+        maxx += diff;
+        width = height;
+    }
+    else
+    {
+        var diff = (width - height) / 2;
+        miny -= diff;
+        maxy += diff;
+        height = width;
+    }
+
+    // make an image of the square bounding box
+    var canvas1 = document.createElement('canvas');
+    canvas1.width = width;
+    canvas1.height = height;
+    var canvas1Context = canvas1.getContext('2d');
+    canvas1Context.drawImage(g_graphPanel.elem, -minx, -miny);
+
+    // bring the bounding box image down to 20x20
+    var image20x20 = GetResizedCanvas(canvas1, 20, 20);
+    var image20x20Context = image20x20.getContext('2d');
+
+    // calculate image center of mass so we can center on that instead of bounding box
+    // since that is how the training data was made
+    var sumx = 0;
+    var sumy = 0;
+    var div = 0;
+    for (var iy = 0; iy < image20x20.height; ++iy)
+    {
+        for (var ix = 0; ix < image20x20.width; ++ix)
+        {
+            var pixel = parseFloat(image20x20Context.getImageData(ix, iy, 1, 1).data[0]); 
+
+            sumx += ix * pixel;
+            sumy += iy * pixel;
+            
+            div += pixel;
+        }
+    }
+    var centerOfMassX = sumx / div;
+    var centerOfMassY = sumy / div;
+    var offsetX = 10 - centerOfMassX;
+    var offsetY = 10 - centerOfMassY;
+
+    // clear the scaled panel, and draw the 20x20 image into it, centering on center of mass
+    FillImageBuffer(g_scaledPanel.context, g_scaledPanel.elem, '#000000');
+	g_scaledPanel.context.drawImage(image20x20, 4 + offsetX, 4 + offsetY, 20 + offsetX, 20 + offsetY);
+
+    // now recognize the digit
+    Recognize();
 }
 
 function setupCanvas(name)
@@ -24085,7 +24188,9 @@ function FillImageBuffer(context, elem, color)
 <h1>Recognize Handwritten Digit 95% Accuracy</h1>
 An interactive demonstration of a feedforward sigmoid neural network which can recognize hand written numeric digits using a network structure of 784, 30, 10 neurons.<br><br>
 See this blog post for more information: <a href="http://blog.demofox.org/2017/03/15/neural-network-recipe-recognize-handwritten-digits-with-95-accuracy/" target="_blank">Neural Network Recipe: Recognize Handwritten Digits With 95% Accuracy</a><br><br>
-NOTE: This demo is actually quite a bit less accurate than 95%.  The reason is because the MNIST data is centered and padded, and drawing with a mouse is different than drawing with a pen or pencil.  I'm debating whether or not this demo does more harm than good, and also seeing if there's anything I can do easily to make it have higher accuracy for this usage case, which is a different usage case than the network was trained for.<br><br>
+NOTE: this demo is a bit less accurate than 95% due to the fact that drawing with a mouse isn't quite the same as drawing wiht a pen or pencil (constant line thickness etc).  It's just a different usage case than the network was trained for, but it's still fun to play around with. 
+<br><br>
+Following the instructions for how the MNIST training data was made, the bounding box of the drawing is scaled down to 20x20 and centered on the center of mass of the pixels in a 28x28 image which is then fed into the already trained neural network..<br><br>
 <table>
 	<tr>
 		<td><canvas class="html5" ID="Graph" width="300" height="300">Your browser doesn't seem to support the necesary html5 features ):</canvas></td>
@@ -24137,16 +24242,11 @@ NOTE: This demo is actually quite a bit less accurate than 95%.  The reason is b
 				</tr>																											
 			</table>
 		</td>		
-		<td>
-
-		</td>		
 	</tr>
 </table>
 
 28x28 Network Input: <canvas class="html5" ID="Scaled" width="28" height="28">Your browser doesn't seem to support the necesary html5 features ):</canvas>
 <br><br>
-<input type="button" value="Clear" onClick="FillImageBuffer(g_graphPanel.context, g_graphPanel.elem, '#000000');DrawScaled();"/>
-<input type="button" value="Recognize Digit!" onClick="Recognize()"/>		
-
+<input type="button" value="Clear" onClick="FillImageBuffer(g_graphPanel.context, g_graphPanel.elem, '#000000');OnScaledNeedsUpdate();"/>
 </body>
 </html>
