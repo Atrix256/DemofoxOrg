@@ -24044,7 +24044,7 @@ var g_scaledNeedsUpdate = null;
 function OnScaledNeedsUpdate ()
 {
     clearTimeout(g_scaledNeedsUpdate);
-    g_scaledNeedsUpdate = setTimeout(DrawScaled, 250);
+    g_scaledNeedsUpdate = setTimeout(DrawScaled, 750);
 }
 
 // Better downscale method, cutting the image in half each time, instead of scaling to target in one go.
@@ -24130,7 +24130,7 @@ function DrawScaled() {
 
     // clear the scaled panel, and draw the 20x20 image into it, centering on center of mass
     FillImageBuffer(g_scaledPanel.context, g_scaledPanel.elem, '#000000');
-	g_scaledPanel.context.drawImage(image20x20, 4 + offsetX, 4 + offsetY, 20 + offsetX, 20 + offsetY);
+	g_scaledPanel.context.drawImage(image20x20, 4 + offsetX, 4 + offsetY);
 
     // now recognize the digit
     Recognize();
@@ -24188,7 +24188,7 @@ function FillImageBuffer(context, elem, color)
 <h1>Recognize Handwritten Digit 95% Accuracy</h1>
 An interactive demonstration of a feedforward sigmoid neural network which can recognize hand written numeric digits using a network structure of 784, 30, 10 neurons.<br><br>
 See this blog post for more information: <a href="http://blog.demofox.org/2017/03/15/neural-network-recipe-recognize-handwritten-digits-with-95-accuracy/" target="_blank">Neural Network Recipe: Recognize Handwritten Digits With 95% Accuracy</a><br><br>
-NOTE: this demo is a bit less accurate than 95% due to the fact that drawing with a mouse isn't quite the same as drawing wiht a pen or pencil (constant line thickness etc).  It's just a different usage case than the network was trained for, but it's still fun to play around with. 
+NOTE: this demo is a bit less accurate than 95% due to the fact that drawing with a mouse isn't quite the same as drawing wiht a pen or pencil (constant line thickness etc).  It's just a different usage case than the network was trained for, but it's still fun to play around with. (Click here to see examples of images that the network was trained with: <a href="http://neuralnetworksanddeeplearning.com/images/mnist_100_digits.png" target="_blank">mnist_100_digits.png</a>)
 <br><br>
 Following the instructions for how the MNIST training data was made, the bounding box of the drawing is scaled down to 20x20 and centered on the center of mass of the pixels in a 28x28 image which is then fed into the already trained neural network..<br><br>
 <table>
