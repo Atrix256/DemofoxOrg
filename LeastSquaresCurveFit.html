@@ -424,7 +424,7 @@ function AddData()
 	var values = String(document.getElementById('Data').value).split(/[\s,]+/);
 
 	for (var i = 0; i < Math.floor(values.length/2); ++i)
-		g_controlPoints.push([values[i*2], values[i*2+1]]);
+		g_controlPoints.push([Number(values[i*2]), Number(values[i*2+1])]);
 
 	RedrawGraph();
 }
