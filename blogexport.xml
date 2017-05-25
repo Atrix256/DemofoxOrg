@@ -19325,10 +19325,10 @@ Believe it or not, the derivative of a Bezier curve of degree N is just a Bezier
 <h2>Making the Derivative Curve</h2>
 
 The formula for a Bezier curve of degree N is below.  Note that s is just 1-t, and is only used to make the equations easier to read.
-$latex \\sum\\limits_{i=0}^n\\binom {n} {i}s^{n-i}t^iP_i$
+$latex \sum\limits_{i=0}^n\binom {n} {i}s^{n-i}t^iP_i$
 
 The derivative of that formula is this!
-$latex \\sum\\limits_{i=0}^m\\binom {m} {i}s^{m-i}t^iQ_i$
+$latex \sum\limits_{i=0}^m\binom {m} {i}s^{m-i}t^iQ_i$
 
 In the above equation, $latex m=n-1$ and $latex Q_i = n*(P_{i+1}-P_i)$.
 
@@ -19797,7 +19797,7 @@ In particular, I'm a fan of explicit Bezier surfaces, which use Bernstein polyno
 One of the main reasons I like Bezier surfaces compared to b-spline or nurbs surfaces is that the math is simpler, meaning you can do more with them, and you can do it more quickly in general.
 
 Unfortunately Bezier curves and surfaces in general can be difficult to work with because they are parameterized by "time".  Below is the formula for a two dimensional quadratic Bezier curve parameterized by time t.  A, B and C are two dimensional control points of the curve.
-$latex x = f(t) = A_x(1-t)^2 + 2B_x(1-t)t + C_xt^2 \\\\
+$latex x = f(t) = A_x(1-t)^2 + 2B_x(1-t)t + C_xt^2 \\
 y = g(t) = A_y(1-t)^2 + 2B_y(1-t)t + Cyt^2$
 
 You can simplify this by parameterizing a curve on x instead of t to get a one dimensional or explicit Bezier curve. A, B, and C are now one dimensional control points (scalars).
@@ -42679,14 +42679,14 @@ $latex P = As^2 + 2Bst + Ct^2$
 The above makes a lot of sense and is easy to understand, wouldn't it be neat if math could describe it that way?
 
 Well... it turns out it can, and does.  Here is the formal "explicit definition" of bezier curves:
-$latex \\sum\\limits_{i=0}^n\\binom {n} {i}(1-t)^{n-i}t^iP_i$
+$latex \sum\limits_{i=0}^n\binom {n} {i}(1-t)^{n-i}t^iP_i$
 
 If you remember from above, s is the same as (1-t) so you could also write it like this:
-$latex \\sum\\limits_{i=0}^n\\binom {n} {i}s^{n-i}t^iP_i$
+$latex \sum\limits_{i=0}^n\binom {n} {i}s^{n-i}t^iP_i$
 
-The $latex \\sum\\limits_{i=0}^n$ (Sigma, going from 0 to n) means that you are going to sum (add) together n+1 terms (it includes both 0 and n), using i as the loop variable in your summation.  It's basically a for loop, adding together each iteration of the for loop.  Everything that comes after is what happens during each iteration of the for loop that gets summed together.
+The $latex \sum\limits_{i=0}^n$ (Sigma, going from 0 to n) means that you are going to sum (add) together n+1 terms (it includes both 0 and n), using i as the loop variable in your summation.  It's basically a for loop, adding together each iteration of the for loop.  Everything that comes after is what happens during each iteration of the for loop that gets summed together.
 
-The $latex \\binom {n} {i}$ part means to take the ith number from the (n+1)th row of Pascal's triangle.  More formally, this specifies to use specific binomial coefficients.
+The $latex \binom {n} {i}$ part means to take the ith number from the (n+1)th row of Pascal's triangle.  More formally, this specifies to use specific binomial coefficients.
 
 The next part $latex s^{n-i}t^i$ means that you multiply the binomial coefficient by s to the (n-i)th power, and t to the ith power.  This is the same as saying s starts at power n and counts down left to right, while t starts at 0 and counts up left to right.  This fits the pattern we saw above in binomial expansion.
 
@@ -42940,11 +42940,11 @@ Let's do some math to come up with our curve based sine equation!
 
 A rational Bezier equation is defined like this, which is basically just one Bezier curve divided by another:
 
-$latex \\bf{B}(t) = \\frac{\\sum\\limits_{i=0}^n\\binom {n} {i}(1-t)^{n-i}t^iW_iP_i}{\\sum\\limits_{i=0}^n\\binom {n} {i}(1-t)^{n-i}t^iW_i}$
+$latex \bf{B}(t) = \frac{\sum\limits_{i=0}^n\binom {n} {i}(1-t)^{n-i}t^iW_iP_i}{\sum\limits_{i=0}^n\binom {n} {i}(1-t)^{n-i}t^iW_i}$
 
 So, here is the equation for a rational quadratic bezier curve (n = 2):
 
-$latex \\bf{B}(t) = \\frac{(A*W_1*(1-t)^2 + B*W_2*2t(1-t) + C*W_3*t^2)}{(W_1*(1-t)^2 + W_2*2t(1-t) + W_3*t^2)}$
+$latex \bf{B}(t) = \frac{(A*W_1*(1-t)^2 + B*W_2*2t(1-t) + C*W_3*t^2)}{(W_1*(1-t)^2 + W_2*2t(1-t) + W_3*t^2)}$
 
 $latex A,B,C$ are the control points and $latex W_1,W_2,W_3$ are the weightings associated with those control points.
 
@@ -42956,7 +42956,7 @@ If we plug those values in and simplify, and treat it as an explicit (1d) equati
 
 <h2>Final Equation</h2>
 
-$latex y = \\frac{(0.70710678118*2x(1-x) + x^2)}{((1-x)^2 + 0.70710678118*2x(1-x) + x^2)}$
+$latex y = \frac{(0.70710678118*2x(1-x) + x^2)}{((1-x)^2 + 0.70710678118*2x(1-x) + x^2)}$
 
 or, so you can copy paste it:
 y=(0.70710678118*2x(1-x) + x^2) / ((1-x)^2 + 0.70710678118*2x(1-x) + x^2)
@@ -43193,7 +43193,7 @@ More coming in the future as I learn more, until then, ta ta!]]></content:encode
 
 That results in this equation:
 
-$latex \\bf{Out.RGB} = In.RGB * In.A + Out.RGB * (1.0 - In.A)$
+$latex \bf{Out.RGB} = In.RGB * In.A + Out.RGB * (1.0 - In.A)$
 
 In other words, it's just a linear interpolation between $latex In$ and $latex Out$, using the alpha of the pixel you are writing to determine the weighting for the lerp.
 
@@ -43201,7 +43201,7 @@ Just to be clear, $latex Out$ is the pixel in your frame buffer (ie the final re
 
 If you use pre-multiplied alpha, all that means is that $latex In.RGB$ is already multipled by $latex In.A$ which results in slightly less math:
 
-$latex \\bf{Out.RGB} = In.RGB + Out.RGB * (1.0 - In.A)$
+$latex \bf{Out.RGB} = In.RGB + Out.RGB * (1.0 - In.A)$
 
 Less math for the same results is always a good thing due to increased efficiency, but this also results in a higher quality results in the case of using mips.  For more info on that check out this link: <a target="_blank" href="https://developer.nvidia.com/content/alpha-blending-pre-or-not-pre">NVIDIA GameWorks - Alpha Blending: To Pre or Not To Pre</a>
 
@@ -43209,28 +43209,28 @@ To achieve this in OpenGL or DirectX with pre-multiplied alpha textures, you jus
 
 If you are using alpha to write to a render target that also has an alpha channel, the math improvement is even better.  Here is the equation with regular (post-multiplied) alpha in that scenario for combining the RGB portion of the pixels:
 
-$latex \\bf{Out.RGB} = \\frac{In.RGB * In.A + Out.RGB * Out.A * (1.0 - In.A)}{In.A + (1.0 - In.A) * Out.A}$
+$latex \bf{Out.RGB} = \frac{In.RGB * In.A + Out.RGB * Out.A * (1.0 - In.A)}{In.A + (1.0 - In.A) * Out.A}$
 
 When working with pre-multiplied alpha it just goes back to the lerp:
 
-$latex \\bf{Out.RGB} = In.RGB + Out.RGB * (1.0 - In.A)$
+$latex \bf{Out.RGB} = In.RGB + Out.RGB * (1.0 - In.A)$
 
 When blending to a target with alpha, the equation to combine alpha is the old familiar lerp:
 
-$latex \\bf{Out.A} = In.A + Out.A * (1.0 - In.A)$
+$latex \bf{Out.A} = In.A + Out.A * (1.0 - In.A)$
 
 That makes the lerp form of color combining even nicer since it means the same math for all color channels of the pixel:
 
-$latex \\bf{Out} = In + Out * (1.0 - In.A)$
+$latex \bf{Out} = In + Out * (1.0 - In.A)$
 
 Confused about why alpha combining using lerp makes sense?  It makes most sense to me when thinking about it like this... if you had something that was half opaque(Out.A = 0.5), then you looked at that through something that was 3/4 opaque (In.A = 0.75), only 25% of the light would get past the top layer (0.25), to reach the bottom layer.  Only 50% of the light that reached the bottom layer gets through, so we cut that 25% in half to get 12.5% (0.125).  Since alpha really means "opaqueness" (1.0 means no transparency), that means that the combined alpha is 1 - 0.125, or 0.875.
 
 If you plug the numbers into the above equation you get the same result:
 
-$latex \\bf{Out.A} = 0.75 + (1.0 - 0.75) * 0.5$
-$latex \\bf{Out.A} = 0.75 + 0.25 * 0.5$
-$latex \\bf{Out.A} = 0.75 + 0.125$
-$latex \\bf{Out.A} = 0.875$
+$latex \bf{Out.A} = 0.75 + (1.0 - 0.75) * 0.5$
+$latex \bf{Out.A} = 0.75 + 0.25 * 0.5$
+$latex \bf{Out.A} = 0.75 + 0.125$
+$latex \bf{Out.A} = 0.875$
 
 Note too that if you flip the order of what is getting mixed with what (ie make B mix into A instead of A mix into B), that you still get the same result.  Order doesn't matter.  This is how you can get away with not sorting transparent objects, and just rendering them in a second pass with z-writing off after the opaques have been rendered.
 
@@ -43537,41 +43537,41 @@ If you feel like skipping to the next section, I don't blame you, but if you are
 
 Let's say that you are want to be able to interpolate between $latex k+1$ data points:
 
-$latex (x_0, y_0)\\ldots(x_k, y_k)$
+$latex (x_0, y_0)\ldots(x_k, y_k)$
 
 The formula for calculating a Lagrange interpolated value is this:
 
-$latex L(x) := \\sum_{j=0}^{k} y_j \\ell_j(x)$
+$latex L(x) := \sum_{j=0}^{k} y_j \ell_j(x)$
 
-The capital sigma ($latex \\sum_{j=0}^{k}$) just means that we are going to loop a variable j from 0 to k (including k), and we are going to sum up the total of everything on the right for all values of j.  When you see a capital sigma, think sum (note they both start with an s).
+The capital sigma ($latex \sum_{j=0}^{k}$) just means that we are going to loop a variable j from 0 to k (including k), and we are going to sum up the total of everything on the right for all values of j.  When you see a capital sigma, think sum (note they both start with an s).
 
 The next thing after the sigma is $latex y_j$.  That is just the y value from our jth control point.  That is essentially controlPoints[j].y.
 
-After that comes the last part $latex \\ell_j(x)$. That is just the function for the jth control point that we multiply the control point by (aka the basis function), evaluated for the specific value x.
+After that comes the last part $latex \ell_j(x)$. That is just the function for the jth control point that we multiply the control point by (aka the basis function), evaluated for the specific value x.
 
 Since there is no operator between this function and the control point, that means we multiply them together.  So yeah... that crazy math just says "multiply each control point by it's basis function, and sum up the results", just like our pseudo code above does!
 
 The second equation we need to look at is the definition of the basis functions for each control point.  Here is the formula that describes the jth basis function, for the jth control point:
 
-$latex \\ell_j(x) := \\prod_{\\begin{smallmatrix}0\\le m\\le k\\\\ m\\neq j\\end{smallmatrix}} \\frac{x-x_m}{x_j-x_m}$
+$latex \ell_j(x) := \prod_{\begin{smallmatrix}0\le m\le k\\ m\neq j\end{smallmatrix}} \frac{x-x_m}{x_j-x_m}$
 
-First is the capital pi $latex \\prod_{\\begin{smallmatrix}0\\le m\\le k\\\\ m\\neq j\\end{smallmatrix}}$.  This means that we are going to do a loop, but instead of adding the results of the loop, we are going to multiply them together.  Where a capital sigma means sum, capital pi means product.
+First is the capital pi $latex \prod_{\begin{smallmatrix}0\le m\le k\\ m\neq j\end{smallmatrix}}$.  This means that we are going to do a loop, but instead of adding the results of the loop, we are going to multiply them together.  Where a capital sigma means sum, capital pi means product.
 
-The notation for product is a bit different here than in the sigma though which may be a bit tricky to read at first.  Instead of explicitly saying that $latex m$ should go from 0 to $latex k$, the notation $latex 0\\le m\\le k\\\\$ says that implicitly.  That same notation can be used with sigma, or the more explicit style notation could be used with pi.
+The notation for product is a bit different here than in the sigma though which may be a bit tricky to read at first.  Instead of explicitly saying that $latex m$ should go from 0 to $latex k$, the notation $latex 0\le m\le k\\$ says that implicitly.  That same notation can be used with sigma, or the more explicit style notation could be used with pi.
 
-The pi also has this notation next to it $latex m\\neq j$.  That means that the case where $latex m$ equals $latex j$ should be skipped.
+The pi also has this notation next to it $latex m\neq j$.  That means that the case where $latex m$ equals $latex j$ should be skipped.
 
-Finally, on to the second part: $latex \\frac{x-x_m}{x_j-x_m}$.  This part is pretty easy to read.  $latex x$ is the parameter to the function of course, $latex x_m$ is just controlPoints[m].x where $latex m$ is the index variable of our product loop ($latex \\prod$), and $latex x_j$ is just controlPoints[j].x where $latex j$ is the index variable of our summation loop ($latex \\sum$).
+Finally, on to the second part: $latex \frac{x-x_m}{x_j-x_m}$.  This part is pretty easy to read.  $latex x$ is the parameter to the function of course, $latex x_m$ is just controlPoints[m].x where $latex m$ is the index variable of our product loop ($latex \prod$), and $latex x_j$ is just controlPoints[j].x where $latex j$ is the index variable of our summation loop ($latex \sum$).
 
 Let's say that $latex k$ was 2 because we had 3 data pairs.  Our three basis functions would be:
 
-$latex \\ell_0(x) := \\frac{x-x_1}{x_0-x_1} * \\frac{x-x_2}{x_0-x_2}$
-$latex \\ell_1(x) := \\frac{x-x_0}{x_1-x_0} * \\frac{x-x_2}{x_1-x_2}$
-$latex \\ell_2(x) := \\frac{x-x_0}{x_2-x_0} * \\frac{x-x_1}{x_2-x_1}$
+$latex \ell_0(x) := \frac{x-x_1}{x_0-x_1} * \frac{x-x_2}{x_0-x_2}$
+$latex \ell_1(x) := \frac{x-x_0}{x_1-x_0} * \frac{x-x_2}{x_1-x_2}$
+$latex \ell_2(x) := \frac{x-x_0}{x_2-x_0} * \frac{x-x_1}{x_2-x_1}$
 
 Which means that our final Lagrange interpolation function would be:
 
-$latex L(x) := y_0 * \\frac{x-x_1}{x_0-x_1} * \\frac{x-x_2}{x_0-x_2} + y_1 * \\frac{x-x_0}{x_1-x_0} * \\frac{x-x_2}{x_1-x_2} + y_2 * \\frac{x-x_0}{x_2-x_0} * \\frac{x-x_1}{x_2-x_1}$
+$latex L(x) := y_0 * \frac{x-x_1}{x_0-x_1} * \frac{x-x_2}{x_0-x_2} + y_1 * \frac{x-x_0}{x_1-x_0} * \frac{x-x_2}{x_1-x_2} + y_2 * \frac{x-x_0}{x_2-x_0} * \frac{x-x_1}{x_2-x_1}$
 
 That is quite a mouth full, but hopefully you understand how we came up with that!
 
@@ -43587,7 +43587,7 @@ The easy way would be to multiply a bunch of terms together of this form $latex 
 
 That is exactly what it does with the numerator in the product notation of the basis function.
 
-$latex \\ell_j(x) := \\prod_{\\begin{smallmatrix}0\\le m\\le k\\\\ m\\neq j\\end{smallmatrix}} \\frac{x-x_m}{x_j-x_m}$
+$latex \ell_j(x) := \prod_{\begin{smallmatrix}0\le m\le k\\ m\neq j\end{smallmatrix}} \frac{x-x_m}{x_j-x_m}$
 
 Note that $latex j$ is the index of the current control point that we are calculating the basis function for.  All values of x, that isn't the x value of a control point will evaluate to non zero.
 
@@ -43605,9 +43605,9 @@ If you want to extend this technique to interpolating a curve through two dimens
 
 For instance, if you needed to interpolate a curve through 3 dimensional points, you would have data points like this:
 
-X Points = $latex (t_{x,0}, x_0)\\ldots(t_{x,k+1}, x_{k+1})$
-Y Points = $latex (t_{y,0}, y_0)\\ldots(t_{y,k+1}, y_{k+1})$
-Z Points = $latex (t_{z,0}, z_0)\\ldots(t_{z,k+1}, y_{k+1})$
+X Points = $latex (t_{x,0}, x_0)\ldots(t_{x,k+1}, x_{k+1})$
+Y Points = $latex (t_{y,0}, y_0)\ldots(t_{y,k+1}, y_{k+1})$
+Z Points = $latex (t_{z,0}, z_0)\ldots(t_{z,k+1}, y_{k+1})$
 
 And then you would interpolate on each axis by the t value to get your X, Y and Z axis values.  This should look familiar, because this is how higher dimensional Bezier curves work; you evaluate them per axis based on a parametric value per axis (s,t,u,etc).
 
@@ -43857,9 +43857,9 @@ Now, let's say that you wanted to animate the thermals over time.  You could use
 
 The equation for a Bezier Rectangle is:
 
-$latex \\mathbf{p}(u, v) = \\sum_{i=0}^n \\sum_{j=0}^m B_i^n(u) \\; B_j^m(v) \\; \\mathbf{k}_{i,j}$
+$latex \mathbf{p}(u, v) = \sum_{i=0}^n \sum_{j=0}^m B_i^n(u) \; B_j^m(v) \; \mathbf{k}_{i,j}$
 
-$latex \\mathbf{p}(u, v)$ is the point on the surface that you get after you plug in the parameters.  $latex u$ and $latex v$ are the parameters to the surface and should be within the range 0 to 1.  These are the same thing as the $latex t$ you see in Bezier curves, but there are two of them since there are two axes.
+$latex \mathbf{p}(u, v)$ is the point on the surface that you get after you plug in the parameters.  $latex u$ and $latex v$ are the parameters to the surface and should be within the range 0 to 1.  These are the same thing as the $latex t$ you see in Bezier curves, but there are two of them since there are two axes.
 
 There are two Sigmas (summations) which mean that it's a double for loop.
 
@@ -43867,7 +43867,7 @@ One of the for loops make $latex i$ go from 0 to $latex n$ and the other makes $
 
 $latex B_i^n(u)$ and $latex B_i^n(u)$ are Bernstein polynomials (aka binomial expansion terms) just as you see in Bezier Curves - there is just one per axis.
 
-Lastly comes the control points $latex \\mathbf{k}_{i,j}$.  The number of control on one axis are multiplied by the number of control points on the other axis.
+Lastly comes the control points $latex \mathbf{k}_{i,j}$.  The number of control on one axis are multiplied by the number of control points on the other axis.
 
 A biquadratic Bezier patch has a degree of (2,2) and has 3 control points on one axis, and 3 control points on the other.  That means that it has 9 control points total.
 
@@ -44100,7 +44100,7 @@ Remembering that the slope is just rise over run, and that the derivative at a p
 
 The resulting equation looks like:
 
-$latex m = \\frac{f(x+e)-f(x-e)}{2e}$
+$latex m = \frac{f(x+e)-f(x-e)}{2e}$
 
 This process is visualized below.  The black line is the actual slope at 0.4 and the orange line is the estimated slope.  The orange dots are the sample points taken.  The epsilon in this case is 0.2.
 
@@ -44114,7 +44114,7 @@ The backward difference works just like the central difference except uses diffe
 
 The resulting equation looks like this:
 
-$latex m = \\frac{f(x)-f(x-e)}{e}$
+$latex m = \frac{f(x)-f(x-e)}{e}$
 
 A neat property shared by both this and the forward difference is that many times you are already going to be evaluating f(x) for other uses, so in practice this will just mean that you only have to evaluate f(x-e), and will already have the f(x) value.  That can make it more efficient than the central difference method, but it can be less precise.
 
@@ -44130,7 +44130,7 @@ The forward difference is just like the backwards difference but it evaluates fo
 
 The equation looks like this:
 
-$latex m = \\frac{f(x+e)-f(x)}{e}$
+$latex m = \frac{f(x+e)-f(x)}{e}$
 
 Below you can see it visually.  Note again that smaller values of e make the estimation closer to correct.
 
@@ -44416,9 +44416,9 @@ $latex a*t^3+b*t^2+c*t+d$
 
 Where...
 
-$latex a = \\frac{-P_{-1} + 3*P_0 - 3*P_1 + P_2}{2}$
-$latex b = P_{-1} - \\frac{5*P_0}{2} + 2*P_1 - \\frac{P_2}{2}$
-$latex c = \\frac{-P_{-1} + P_1}{2}$
+$latex a = \frac{-P_{-1} + 3*P_0 - 3*P_1 + P_2}{2}$
+$latex b = P_{-1} - \frac{5*P_0}{2} + 2*P_1 - \frac{P_2}{2}$
+$latex c = \frac{-P_{-1} + P_1}{2}$
 $latex d = P_0$
 
 Note that t is a value that goes from 0 to 1.  When t is 0, your curve will be at $latex P_1$ and when t is 1, your curve will be at $latex P_2$.  $latex P_{-1}$ and $latex P_{2}$ are used to be able to make this interpolation $latex C1$ continuous.
@@ -45193,7 +45193,7 @@ With true Gaussian blurring however, the function that defines the weights for e
 
 The parameters to a Gaussian blur are:
 <ul>
-	<li>Sigma ($latex \\sigma$) - This defines how much blur there is.  A larger number is a higher amount of blur.</li>
+	<li>Sigma ($latex \sigma$) - This defines how much blur there is.  A larger number is a higher amount of blur.</li>
 	<li>Radius - The size of the kernel in pixels.  The appropriate pixel size can be calculated for a specific sigma, but more information on that lower down.</li>
 </ul>
 
@@ -45207,7 +45207,7 @@ Below is a 3x3 pixel 2d Gaussian Kernel also with a sigma of 1.0.  Note that thi
 
 An interesting property of Gaussian blurs is that you can apply multiple smaller blurs and it will come up with the result as if you did a larger Blur.  Unfortunately it's more calculations doing multiple smaller blurs so is not usually worth while.
 
-If you apply multiple blurs, the equivalent blur is the square root of the sum of the squares of the blur.  Taking wikipedia's example, if you applied a blur with radius 6 and a blur with a radius of 8, you'd end up with the equivelant of a radius 10 blur.  This is because $latex \\sqrt{6^2 + 8^2} = 10$.
+If you apply multiple blurs, the equivalent blur is the square root of the sum of the squares of the blur.  Taking wikipedia's example, if you applied a blur with radius 6 and a blur with a radius of 8, you'd end up with the equivelant of a radius 10 blur.  This is because $latex \sqrt{6^2 + 8^2} = 10$.
 
 <h2>Calculating The Kernel</h2>
 
@@ -45217,7 +45217,7 @@ Believe it or not, Pascal's triangle approaches the Gaussian bell curve as the r
 
 A better way is to use the Gaussian function which is this:
 
-$latex e^{-x^2/(2*\\sigma^2)}$
+$latex e^{-x^2/(2*\sigma^2)}$
 
 Where the sigma is your blur amount and x ranges across your values from the negative to the positive.  For instance if your kernel was 5 values, it would range from -2 to +2.
 
@@ -45229,7 +45229,7 @@ Whatever way you do it, make sure and normalize the result so that the weights a
 
 Given a sigma value, you can calculate the size of the kernel you need by using this formula:
 
-$latex 1+2 \\sqrt{-2 \\sigma^2 \\ln 0.005}$
+$latex 1+2 \sqrt{-2 \sigma^2 \ln 0.005}$
 
 That formula makes a Kernel large enough such that it cuts off when the value in the kernel is less than 0.5%.  You can adjust the number in there to higher or lower depending on your desires for speed versus quality.
 
@@ -46539,9 +46539,9 @@ There we are, our encryption scheme now matches the one described in the paper. 
 
 The above looks good, but what range of values should be we use for randomNumber1 and randomNumber2 and the actual size of the key?
 
-The paper refers to a security parameter lambda ($latex \\lambda$) that everything else is based on.
+The paper refers to a security parameter lambda ($latex \lambda$) that everything else is based on.
 
-It says that the size of the key (N) should be ($latex \\lambda^2$) bits, randomNumber1 should be around $latex 2^{N^3}$ ($latex N^3$ bits) and that randomNumber2 should be around $latex 2^{\\sqrt{N}}$ ($latex \\sqrt{N}$ bits).
+It says that the size of the key (N) should be ($latex \lambda^2$) bits, randomNumber1 should be around $latex 2^{N^3}$ ($latex N^3$ bits) and that randomNumber2 should be around $latex 2^{\sqrt{N}}$ ($latex \sqrt{N}$ bits).
 
 It also says that the best known attack against this algorithm takes about $latex 2^{N^2}$ operations and that you can assume an attacker is going to be able to do a billion operations per second (per this info <a target="_blank" href="http://crypto.stackexchange.com/questions/27793/key-size-for-symmetric-homomorphic-encryption-over-the-integers/">here</a>).  Note that 1 billion operations per second is a typical computer, not a super computer or a distributed attack using a bot network!
 
@@ -46847,13 +46847,13 @@ Here are some interesting avenues to explore with this stuff.  More blog posts c
 
 Say you have a function like this:
 
-$latex (a*x) \\mod m = n$
+$latex (a*x) \mod m = n$
 
 If you know the values of a, m and n, how do you solve for x?  Note in this post we are only dealing with integers, so we are looking for the integer solution for x.
 
 It might be hard to visualize with so many symbols, so here it is with some constants:
 
-$latex (5*x) \\mod 7 = 3$
+$latex (5*x) \mod 7 = 3$
 
 How would you solve that for x?  In other words, what do you need to multiply 5 by, so that when you divide the result by 7, that you get 3 as the remainder?
 
@@ -46863,19 +46863,19 @@ Brute force can be a challenge if the numbers are really large, like in some cry
 
 Interestingly, there might not even be a valid answer for x that satisfies the equation!  The below has no answer for instance:
 
-$latex (2*x) \\mod 8 = 5$
+$latex (2*x) \mod 8 = 5$
 
 <h2>Better Than Brute Force</h2>
 
 There's something called the "Modular Multiplicative Inverse" which looks eerily familiar:
 
-$latex (a*x) \\mod m = 1$
+$latex (a*x) \mod m = 1$
 
 Where a and m are known, and the inverse itself is the value of x.
 
 Using the same constants we did above, that gives us this:
 
-$latex (5*x) \\mod 7 = 1$
+$latex (5*x) \mod 7 = 1$
 
 In this case, the inverse (x) is 3.  You can verify that by seeing that (5*3) % 7 is 1.
 
@@ -47011,19 +47011,19 @@ int main(int argc, char **argv)
 
 <h2>Example Runs</h2>
 
-Here is a normal run that solves $latex (7*x) \\mod 9 = 2$, to come up with a value of 8 for x.
+Here is a normal run that solves $latex (7*x) \mod 9 = 2$, to come up with a value of 8 for x.
 
 <img src="http://blog.demofox.org/wp-content/uploads/2015/09/7_9_2.png"/>
 
-Here is a run that solves $latex (5*x) \\mod 7 = 3$.  Brute force gives us a value of 2 for x, while the inverse gives us a value of 9.  Both are valid, and in fact are equivalent since 9 % 7 = 2.  This shows that getting the inverse and then multiplying it to get the desired answer doesn't always give you the smallest possible value of x.
+Here is a run that solves $latex (5*x) \mod 7 = 3$.  Brute force gives us a value of 2 for x, while the inverse gives us a value of 9.  Both are valid, and in fact are equivalent since 9 % 7 = 2.  This shows that getting the inverse and then multiplying it to get the desired answer doesn't always give you the smallest possible value of x.
 
 <img src="http://blog.demofox.org/wp-content/uploads/2015/09/5_7_3.png"/>
 
-Here is a large number run that solves $latex (7*x) \\mod 1000001 = 538$.  Brute force gives a value of 571,506 for x, while using the inversion method gives us a value of 230,571,736.
+Here is a large number run that solves $latex (7*x) \mod 1000001 = 538$.  Brute force gives a value of 571,506 for x, while using the inversion method gives us a value of 230,571,736.
 
 <img src="http://blog.demofox.org/wp-content/uploads/2015/09/7_1m1_538.png"/>
 
-Lastly, here is a run that solves $latex (8*x) \\mod 6 = 4$.  Brute force gives us a value of 2 for x, but interestingly, it isn't invertible, so the inversion based solution can't even find us an answer!
+Lastly, here is a run that solves $latex (8*x) \mod 6 = 4$.  Brute force gives us a value of 2 for x, but interestingly, it isn't invertible, so the inversion based solution can't even find us an answer!
 
 <img src="http://blog.demofox.org/wp-content/uploads/2015/09/8_6_4.png"/>
 
@@ -47078,7 +47078,7 @@ You can read more about the modular multiplicative inverse here: <a target="_bla
 		<dc:creator><![CDATA[admin]]></dc:creator>
 		<guid isPermaLink="false">http://blog.demofox.org/?p=3239</guid>
 		<description></description>
-		<content:encoded><![CDATA[$latex x \\equiv 2 \\pmod{3}$
+		<content:encoded><![CDATA[$latex x \equiv 2 \pmod{3}$
 
 The equation above is a congruence.  What it says is that x % 3 is 2.
 
@@ -47086,13 +47086,13 @@ The equals sign with three bars means "is equivalent to", so more literally what
 
 5 is a solution, so is 8, so is 11 and so is -1!
 
-The general solution for x is $latex x = 2 +3*N$ where N is any integer, aka $latex N \\in \\mathbb{Z}$.
+The general solution for x is $latex x = 2 +3*N$ where N is any integer, aka $latex N \in \mathbb{Z}$.
 
 What if you were trying to find an integer value x that satisfied the multiple congruences below?  How would you solve it?
 
-$latex x \\equiv 2 \\pmod{3}$
-$latex x \\equiv 2 \\pmod{4}$
-$latex x \\equiv 1 \\pmod{5}$
+$latex x \equiv 2 \pmod{3}$
+$latex x \equiv 2 \pmod{4}$
+$latex x \equiv 1 \pmod{5}$
 
 You could use brute force, but you'd have to check every value from 0 to 60 (not including 60) since 60 is the least common multiple (In this case, you calculate LCM 3*4*5 = 60, since the numbers have a greatest common divisor of 1, aka they are co-prime).
 
@@ -47115,12 +47115,12 @@ In that video, it talks about modular inversion.  You can read about the details
 Let's work through an example that you can follow along with just to make sure you understand it, since I pointed you elsewhere for explanations :P
 
 Here is our set of congruences:
-$latex x \\equiv 5 \\pmod{7}$
-$latex x \\equiv 8 \\pmod{11}$
-$latex x \\equiv 2 \\pmod{3}$
+$latex x \equiv 5 \pmod{7}$
+$latex x \equiv 8 \pmod{11}$
+$latex x \equiv 2 \pmod{3}$
 
 First up, we want to break it into 3 sections, combined with addition.
-$latex x = \\_\\_\\_\\_\\_ + \\_\\_\\_\\_\\_ + \\_\\_\\_\\_\\_$
+$latex x = \_\_\_\_\_ + \_\_\_\_\_ + \_\_\_\_\_$
 
 In the above, the first empty space will be the solution to the first equation, the second empty space will be the solution to the second equation, and the third empty space will be the solution to the third equation.
 
@@ -47136,11 +47136,11 @@ This works because you can see that in the first term, no matter what we end up 
 
 Next up, we need to solve for the N's.
 
-The first term needs to have an $latex N_1$ such that $latex 33*N_1 \\pmod 7 = 5$.
+The first term needs to have an $latex N_1$ such that $latex 33*N_1 \pmod 7 = 5$.
 
 How do we solve that?  We could use brute force, testing every number 0 through 6 (otherwise known as 7-1), but in the last post we showed a better way to do it using the extended euclidean algorithm.  So, that link once again is: <a href="http://blog.demofox.org/2015/09/10/modular-multiplicative-inverse/" target="_blank">Modular Multiplicative Inverse</a>.
 
-The answer when solving using inversion comes out to be 15.  Note that our answer is in "mod 7" space, so you could use any value $latex 1+7*I $ where $latex I \\in \\mathbb{Z}$, but we can stick to using 15 to make it easier to follow.
+The answer when solving using inversion comes out to be 15.  Note that our answer is in "mod 7" space, so you could use any value $latex 1+7*I $ where $latex I \in \mathbb{Z}$, but we can stick to using 15 to make it easier to follow.
 
 That gives us this:
 $latex x = 33*15 + 21*N_2 + 77*N_3$
@@ -47155,9 +47155,9 @@ or
 $latex x = 173$
 
 Since this is just one of many solutions, the real answer is:
-$latex x = 173 \\pmod{231}$
+$latex x = 173 \pmod{231}$
 or
-$latex x = 173 + 231*N$ where $latex N \\in \\mathbb{Z}$
+$latex x = 173 + 231*N$ where $latex N \in \mathbb{Z}$
 
 Let's check our result and see if we got it right...
 
@@ -47382,51 +47382,51 @@ Also, it looks like Khan Academy has a good bit on modular math!
 		<dc:creator><![CDATA[admin]]></dc:creator>
 		<guid isPermaLink="false">http://blog.demofox.org/?p=3276</guid>
 		<description></description>
-		<content:encoded><![CDATA[$latex x \\% 2 = 1$
+		<content:encoded><![CDATA[$latex x \% 2 = 1$
 
 The above equation is pretty easy to solve, it just means that x is any value that when you divide by 2, gives a remainder of 1.  x is all odd numbers.  The more formal answer is:
 
-$latex x \\equiv 1 + 2\\mathbb{Z}$
+$latex x \equiv 1 + 2\mathbb{Z}$
 
 That reads as "x is equivalent to 1 plus 2 times any integer".  x has infinitely many solutions, so long as they fit that constraint.
 
 That's easy enough to figure out, but how would you solve this equation?
 
-$latex (x \\% 5) \\%2 = 1$
+$latex (x \% 5) \%2 = 1$
 
 or this one?
 
-$latex ((x \\% 7) \\% 5) \\%2 = 1$
+$latex ((x \% 7) \% 5) \%2 = 1$
 
 <h2>One Level (Simple Case)</h2>
 
 There is something called the quotient remainder theorem that lets us change an equation like this:
 
-$latex A \\% B = C$
+$latex A \% B = C$
 
 Into one like this:
 
-$latex A \\equiv C + B \\mathbb{Z}$
+$latex A \equiv C + B \mathbb{Z}$
 
 The Z means "all integers" which implies that there are infinitely many solutions to A. This reads as "A is equivelant to C plus B times any integer".
 
 Let's work out a couple examples.
 
-$latex x \\% 5 = 3$
+$latex x \% 5 = 3$
 
 That transforms to:
 
-$latex x \\equiv 3 + 5 \\mathbb{Z}$
+$latex x \equiv 3 + 5 \mathbb{Z}$
 
 If you try plugging any positive or negative integer in place of Z, you'll see that you get a number that satisfies the first equation.
 
 Here's another one:
 
-$latex x \\% 538 = 211$
+$latex x \% 538 = 211$
 
 That transforms to:
 
-$latex x \\equiv 211 + 538 \\mathbb{Z}$
+$latex x \equiv 211 + 538 \mathbb{Z}$
 
 Once again you can plug any positive or negative integer in for Z and get a value for x that satisfies the original equation.
 
@@ -47436,15 +47436,15 @@ Pretty easy and pretty handy right?  Let's get a little more complex.
 
 Let's say you want to solve this equation from the intro.
 
-$latex (x \\% 5) \\%2 = 1$
+$latex (x \% 5) \%2 = 1$
 
 The first thing you might do is transform it to the below.
 
-$latex x \\% 5 \\equiv 1 + 2 N_1$ where $latex N_1 \\in \\mathbb{Z}$.
+$latex x \% 5 \equiv 1 + 2 N_1$ where $latex N_1 \in \mathbb{Z}$.
 
 What now?  Can we transform it again?  If we do, we get this:
 
-$latex x \\equiv 1 + 2 N_1+ 5 N_2$ where $latex N_i \\in \\mathbb{Z}$.
+$latex x \equiv 1 + 2 N_1+ 5 N_2$ where $latex N_i \in \mathbb{Z}$.
 
 plugging 1 in for the N1 and N2, we get 8, which does satisfy the original equation.
 
@@ -47452,31 +47452,31 @@ If we plug 3 in for N1 and 1 in for N2 though, we get 12 which DOESN'T satisfy t
 
 Well it turns out there are subtle restrictions on our equations that got lost in the shuffle.  Let's start over...
 
-$latex (x \\% 5) \\%2 = 1$
+$latex (x \% 5) \%2 = 1$
 
 In effect, what that equation says is "Something divided by two gives a remainder of 1" where the something happens to be x % 5, but we don't really care about what the something actually is right now.
 
-The equation also implies that the right side of the equation is a value modulo two, and it's only valid values are {0,1}.  Another way to write this is to say that the right side $latex \\in \\mathbb Z_2$ which reads as "in all integers mod 2".
+The equation also implies that the right side of the equation is a value modulo two, and it's only valid values are {0,1}.  Another way to write this is to say that the right side $latex \in \mathbb Z_2$ which reads as "in all integers mod 2".
 
 1 is obviously in the set of valid values {0,1}, so we don't need any special notation just yet, but let's keep it in mind as we move onto the next step.
 
-$latex x \\% 5 \\equiv 1 + 2 \\mathbb Z$
+$latex x \% 5 \equiv 1 + 2 \mathbb Z$
 
-The above says that x divided by 5 gives a remainder that is 1 plus two times all integers.  However there is a catch.  There right side of the equation is a mod 5 value, which means it's only valid values are {0,1,2,3,4}.  In other words, the right side of the equation is $latex \\in \\mathbb Z_5$.
+The above says that x divided by 5 gives a remainder that is 1 plus two times all integers.  However there is a catch.  There right side of the equation is a mod 5 value, which means it's only valid values are {0,1,2,3,4}.  In other words, the right side of the equation is $latex \in \mathbb Z_5$.
 
 This has an effect of implicitly limiting the valid values that we can plug in to Z.  It limits it to values of Z where 1+2*Z is in {0,1,2,3,4}.  Let's write this out a little more formally.
 
-$latex x \\% 5 \\equiv a$ where $latex a = 1 + 2 \\mathbb Z$ and $latex a \\in \\mathbb Z_5$
+$latex x \% 5 \equiv a$ where $latex a = 1 + 2 \mathbb Z$ and $latex a \in \mathbb Z_5$
 
 Let's transform the equation again to solve for x:
 
-$latex x \\equiv a + 5\\mathbb Z$ where $latex a = 1 + 2 \\mathbb Z$ and $latex a \\in \\mathbb Z_5$
+$latex x \equiv a + 5\mathbb Z$ where $latex a = 1 + 2 \mathbb Z$ and $latex a \in \mathbb Z_5$
 
 Note that there is no modulus on the left side of the equation now, so the right side of the equation is unlimited into the valid values it can have.
 
 How do we use this resulting formula though to find valid values of x?
 
-First we figure out the valid values of a.  $latex a = 1 + 2 \\mathbb Z$ where $latex a \\in \\mathbb Z_5$, so it's only valid values have to be a subset of {0,1,2,3,4}.
+First we figure out the valid values of a.  $latex a = 1 + 2 \mathbb Z$ where $latex a \in \mathbb Z_5$, so it's only valid values have to be a subset of {0,1,2,3,4}.
 
 Plugging a -1 in for Z, we get a value for a of -1, which isn't a valid answer so we throw it away.
 
@@ -47489,12 +47489,12 @@ Plugging a 2 in gives us a value of 5, which isn't valid, so we throw it away an
 Our values for a are {1,3}.
 
 The solution we got was this:
-$latex x \\equiv a + 5\\mathbb Z$
+$latex x \equiv a + 5\mathbb Z$
 
 Plugging in each value of a means that we get two equations as a solution for x.  Valid values of x are the union of these two lists - both equations give valid answers.
 
-$latex x \\equiv 1 + 5\\mathbb Z$<br/>
-$latex x \\equiv 3 + 5\\mathbb Z$
+$latex x \equiv 1 + 5\mathbb Z$<br/>
+$latex x \equiv 3 + 5\mathbb Z$
 
 The first equation gives us values of {..., -4, 1, 6, 11, ...}<br/>
 The second equation gives us values of {..., -2, 3, 8, 13, ...}
@@ -47502,7 +47502,7 @@ The second equation gives us values of {..., -2, 3, 8, 13, ...}
 Taking the union of those, our solutions for x are:
 {..., -4, -2, 1, 3, 6, 8, 11, 13, ...}
 
-If you plug those into the original equation $latex (x \\% 5) \\%2 = 1$, you'll see that they are valid solutions!  Those equations also represent ALL solutions, so they aren't only valid, they are also complete.
+If you plug those into the original equation $latex (x \% 5) \%2 = 1$, you'll see that they are valid solutions!  Those equations also represent ALL solutions, so they aren't only valid, they are also complete.
 
 Let's step it up just one more notch.
 
@@ -47510,56 +47510,56 @@ Let's step it up just one more notch.
 
 Let's solve the hardest equation from the intro:
 
-$latex ((x \\% 7) \\% 5) \\%2 = 1$
+$latex ((x \% 7) \% 5) \%2 = 1$
 
-This starts off just like the two leveled equation.  Something on the left mod 2 is equation to 1.  The 1 on the right side is $latex \\in \\mathbb Z_2$, but since that's obviously true for this constant, we don't need to do anything special.  So, we transform it to the below:
+This starts off just like the two leveled equation.  Something on the left mod 2 is equation to 1.  The 1 on the right side is $latex \in \mathbb Z_2$, but since that's obviously true for this constant, we don't need to do anything special.  So, we transform it to the below:
 
-$latex (x \\% 7) \\% 5 \\equiv a$<br>
-$latex a = 1 + 2 \\mathbb Z$<br>
-$latex a \\in \\mathbb Z_5$
+$latex (x \% 7) \% 5 \equiv a$<br>
+$latex a = 1 + 2 \mathbb Z$<br>
+$latex a \in \mathbb Z_5$
 
 Then we do another transformation:
-$latex x \\% 7 \\equiv b$<br>
-$latex b = a + 5 \\mathbb Z$<br>
-$latex a = 1 + 2 \\mathbb Z$<br>
-$latex a \\in \\mathbb Z_5$<br>
-$latex b \\in \\mathbb Z_7$
+$latex x \% 7 \equiv b$<br>
+$latex b = a + 5 \mathbb Z$<br>
+$latex a = 1 + 2 \mathbb Z$<br>
+$latex a \in \mathbb Z_5$<br>
+$latex b \in \mathbb Z_7$
 
 Then for the last transformation, we get this:
-$latex x \\equiv b + 7 \\mathbb Z$<br>
-$latex b = a + 5 \\mathbb Z$<br>
-$latex a = 1 + 2 \\mathbb Z$<br>
-$latex a \\in \\mathbb Z_5$<br>
-$latex b \\in \\mathbb Z_7$
+$latex x \equiv b + 7 \mathbb Z$<br>
+$latex b = a + 5 \mathbb Z$<br>
+$latex a = 1 + 2 \mathbb Z$<br>
+$latex a \in \mathbb Z_5$<br>
+$latex b \in \mathbb Z_7$
 
 Now that we have our equations worked out, we need to start finding out what the values actually are.  We start with a because it's what b and x are based on, and is made up of constants.  We get {1,3} again as the valid values of a.  That gives us:
-$latex x \\equiv b + 7 \\mathbb Z$<br>
-$latex b = a + 5 \\mathbb Z$<br>
+$latex x \equiv b + 7 \mathbb Z$<br>
+$latex b = a + 5 \mathbb Z$<br>
 $latex a = [1,3]$<br>
-$latex b \\in \\mathbb Z_7$
+$latex b \in \mathbb Z_7$
 
-Now we want to plug each value of a into b and find all the valid values for b.  When we plug 1 into b for a, it becomes $latex b = 1 + 5 \\mathbb Z$, $latex b \\in \\mathbb Z_7$.  The valid values for that are {1,6}.
+Now we want to plug each value of a into b and find all the valid values for b.  When we plug 1 into b for a, it becomes $latex b = 1 + 5 \mathbb Z$, $latex b \in \mathbb Z_7$.  The valid values for that are {1,6}.
 
-When we plug 3 into b for a, it becomes $latex b = 3 + 5 \\mathbb Z$, $latex b \\in \\mathbb Z_7$.  The only valid value there is {3}.
+When we plug 3 into b for a, it becomes $latex b = 3 + 5 \mathbb Z$, $latex b \in \mathbb Z_7$.  The only valid value there is {3}.
 
 That means that our valid values for b are {1,3,6}.  It's the union of the valid values we found for each value of a.
 
 That makes our equations into this:
-$latex x \\equiv b + 7 \\mathbb Z$<br>
+$latex x \equiv b + 7 \mathbb Z$<br>
 $latex b = [1,3,6]$
 
 If we plug those values of b into the equation for x, we get these three equations:
 
-$latex x \\equiv 1 + 7 \\mathbb Z$<br>
-$latex x \\equiv 3 + 7 \\mathbb Z$<br>
-$latex x \\equiv 6 + 7 \\mathbb Z$<br>
+$latex x \equiv 1 + 7 \mathbb Z$<br>
+$latex x \equiv 3 + 7 \mathbb Z$<br>
+$latex x \equiv 6 + 7 \mathbb Z$<br>
 
 The first equation gives us some x values of {..., -6, 1, 8, 15, ...}.  The second equation gives us x values of {..., -4, 3, 10, 17, ...}.  The third equation gives us x values of {..., -1, 6, 13, 20, ...}.
 
 Taking the union of all of those, we get...
 {..., -6, -4, -1, 1, 3, 6, 8, 10, 13, 15, 17, 20, ...}
 
-If you plug those numbers into the original equation $latex ((x \\% 7) \\% 5) \\%2 = 1$, you can see that they are valid solutions!
+If you plug those numbers into the original equation $latex ((x \% 7) \% 5) \%2 = 1$, you can see that they are valid solutions!
 
 When you are performing this algorithm, if you ever hit a case where there are no valid answers in one of the steps - like say, there were no valid answers for equation b in the above - that means that there is no solution to your equation.
 
@@ -47914,11 +47914,11 @@ You might notice that the elements of the vector have to add up to 1.  This make
 
 Qubits describe their probabilities a little bit differently though.  Instead of storing the probability of them being 0 or 1, they store what's called the amplitude, which when squared gives the probability.  Doing this lets them do something really important that I'll talk about lower down, but for now, you can hopefully just accept that this is how it works.
 
-Consider a qubit having a 50% chance that it's a 0, and a 50% chance that it's a 1.  We need some number that when squared gives 0.5 aka 1/2.  That value is $latex 1/\\sqrt{2}$.
+Consider a qubit having a 50% chance that it's a 0, and a 50% chance that it's a 1.  We need some number that when squared gives 0.5 aka 1/2.  That value is $latex 1/\sqrt{2}$.
 
-So, for a qubit that has an even chance of being a 0 or 1, a vector to represent it is $latex [1/\\sqrt{2}, 1/\\sqrt{2}]$.
+So, for a qubit that has an even chance of being a 0 or 1, a vector to represent it is $latex [1/\sqrt{2}, 1/\sqrt{2}]$.
 
-Then, a vector describing a qubit that has a 75% chance being a 0 and a 25% chance of being a 1 would be $latex [\\sqrt{3}/2, 1/2]$.  If you square the first number you can see that you get 3/4 (75% chance) and squaring the second number gives you 1/4 (25% chance).
+Then, a vector describing a qubit that has a 75% chance being a 0 and a 25% chance of being a 1 would be $latex [\sqrt{3}/2, 1/2]$.  If you square the first number you can see that you get 3/4 (75% chance) and squaring the second number gives you 1/4 (25% chance).
 
 I got those vectors by solving the simple equation:
 $latex x^2 = P$
@@ -47932,27 +47932,27 @@ Still nothing too crazy going on...
 <h2>Ket Notation</h2>
 
 There is some notation you'll come across a lot when reading about quantum computing / mechanics / etc that looks like this:
-$latex 1/\\sqrt{2}(|0\\rangle + |1\\rangle) $
+$latex 1/\sqrt{2}(|0\rangle + |1\rangle) $
 
 That is "Ket Notation" and comes from "Bra-Ket Notation".  It's bark is worse than it's bite.
 
 If you multiply it out, you get this:
-$latex 1/\\sqrt{2} * |0\\rangle + 1/\\sqrt{2} * |1\\rangle $
+$latex 1/\sqrt{2} * |0\rangle + 1/\sqrt{2} * |1\rangle $
 
-All that means is that the "0" state of the vector has an amplitude of $latex 1/\\sqrt{2}$ and so does the "1" state.  Writing that as a vector, we get what we already saw above for the qubit which had 50/50 odds of being a 0 or a 1:
-$latex [1/\\sqrt{2}, 1/\\sqrt{2}]$
+All that means is that the "0" state of the vector has an amplitude of $latex 1/\sqrt{2}$ and so does the "1" state.  Writing that as a vector, we get what we already saw above for the qubit which had 50/50 odds of being a 0 or a 1:
+$latex [1/\sqrt{2}, 1/\sqrt{2}]$
 
 Here is the ket notation for the qubit which had a 75% chance of being a 0 and a 25% chance of being a 1:
-$latex 1/2(\\sqrt{3}|0\\rangle + |1\\rangle) $
+$latex 1/2(\sqrt{3}|0\rangle + |1\rangle) $
 
 You can multiply that out to get this:
-$latex \\sqrt{3}/2*|0\\rangle + 1/2*|1\\rangle $
+$latex \sqrt{3}/2*|0\rangle + 1/2*|1\rangle $
 
 Which translates to the vector we saw before:
-$latex [\\sqrt{3}/2, 1/2]$
+$latex [\sqrt{3}/2, 1/2]$
 
 Lastly, you might see it shown like this:
-$latex |0\\rangle $
+$latex |0\rangle $
 
 All that means is that the "0" state is 1.  Since the "1" state isn't listed, it has a value of 0.  That is the same as this vector:
 $latex [1, 0]$
@@ -47966,28 +47966,28 @@ Note that the mapping of which state belongs to which spot in the vector is comp
 Phase is the reason that qubits store amplitude, which square to probabilities, instead of storing probabilities themselves.
 
 I said that the amplitude vector for a qubit which has a 50/50 chance of being a 0 or a 1 was this:
-$latex [1/\\sqrt{2}, 1/\\sqrt{2}]$
+$latex [1/\sqrt{2}, 1/\sqrt{2}]$
 
 I lied a bit though, and that is only one possible answer.  Here's another that has a 50/50 chance:
-$latex [-1/\\sqrt{2}, 1/\\sqrt{2}]$
+$latex [-1/\sqrt{2}, 1/\sqrt{2}]$
 
 This gets interesting when you add two vectors together.  First lets add two amplitude vectors which have the same phases for each state:
-$latex [1/\\sqrt{2}, 1/\\sqrt{2}] + [1/\\sqrt{2}, 1/\\sqrt{2}] = [\\sqrt{2}, \\sqrt{2}] $
+$latex [1/\sqrt{2}, 1/\sqrt{2}] + [1/\sqrt{2}, 1/\sqrt{2}] = [\sqrt{2}, \sqrt{2}] $
 
 Each component added together.
 
-Now, let's add two amplitude vectors where the $latex |1\\rangle $ state has opposite phase in one of the vectors:
-$latex [1/\\sqrt{2}, 1/\\sqrt{2}] + [1/\\sqrt{2}, -1/\\sqrt{2}] = [\\sqrt{2}, 0] $
+Now, let's add two amplitude vectors where the $latex |1\rangle $ state has opposite phase in one of the vectors:
+$latex [1/\sqrt{2}, 1/\sqrt{2}] + [1/\sqrt{2}, -1/\sqrt{2}] = [\sqrt{2}, 0] $
 
-You can see that the $latex |0\\rangle $ states added together while the $latex |1\\rangle $ states subtracted and resulted in zero.
+You can see that the $latex |0\rangle $ states added together while the $latex |1\rangle $ states subtracted and resulted in zero.
 
 This is called destructive interference, and is one of the things that makes quantum computing powerful.  We can change a qubit's phase without affecting it's value (or probability of values).
 
 I left out another important amplitude vector for describing a qubit that has a 50/50 chance of being a 0 or a 1:
-$latex [1/\\sqrt{2}, 1/\\sqrt{-2}]$
+$latex [1/\sqrt{2}, 1/\sqrt{-2}]$
 
 Which can also be written as:
-$latex [1/\\sqrt{2}, 1/(\\sqrt{2}*i)]$
+$latex [1/\sqrt{2}, 1/(\sqrt{2}*i)]$
 
 Yep, that is an imaginary number in the 1 state!
 
@@ -47995,13 +47995,13 @@ Since amplitude squared is probability, it means we can also use imaginary numbe
 <a href="http://blog.demofox.org/2014/12/27/using-imaginary-numbers-to-rotate-2d-vectors/" target="_blank">Using Imaginary Numbers To Rotate 2D Vectors</a>
 <a href="https://en.wikipedia.org/wiki/Bloch_sphere" target="_blank">Wikipedia: Bloch Sphere</a>
 
-However, since imaginary numbers can be involved, squaring amplitudes to get probabilities isn't enough.  Like for example with the vector $latex [0,i]$, if you square the $latex |1\\rangle$ state to get the probability, you get -1, or -100%.  That isn't right!
+However, since imaginary numbers can be involved, squaring amplitudes to get probabilities isn't enough.  Like for example with the vector $latex [0,i]$, if you square the $latex |1\rangle$ state to get the probability, you get -1, or -100%.  That isn't right!
 
 The real operation to getting probability from amplitude is you multiply the amplitude by it's complex conjugate.  In other words, if you have a complex number, you multiply the imaginary part by -1 to get the conjugate, and multiply by that.
 
 As an example, if you have $latex 3+5i$, the complex conjugate is $latex 3-5i$.
 
-In the example of the vector $latex [0,i]$, you get the probability of the $latex |1\\rangle$ state by multiplying $latex i$ by $latex -i$ to get 1, or 100%.
+In the example of the vector $latex [0,i]$, you get the probability of the $latex |1\rangle$ state by multiplying $latex i$ by $latex -i$ to get 1, or 100%.
 
 Complex conjugate sounds scary, but hopefully you can see it isn't as scary as it sounds.  You just flip the sign of the imaginary component of the complex number.
 
@@ -48023,10 +48023,10 @@ Anyways, let's get onto some specific logic gates! (These are from <a href="http
 
 This is a not gate, but is also described as a 180 degree rotation around the x axis of the bloch sphere.
 
-$latex \\begin{bmatrix}
-0 & 1 \\\\
-1 & 0 \\\\
-\\end{bmatrix}$
+$latex \begin{bmatrix}
+0 & 1 \\
+1 & 0 \\
+\end{bmatrix}$
 
 You might notice that it looks like a backwards identity matrix.  That is exactly how it works too... if you multiply a 2 element vector by that matrix, it will flip the elements in that vector!
 
@@ -48036,43 +48036,43 @@ If the qubit is not in a superposition, and instead is actually just a 0 or a 1,
 
 If the qubit is in a superposition, it will just flip the probabilities of each state.
 
-This maps the $latex |0\\rangle$ state to $latex |1\\rangle$ and vice versa.
+This maps the $latex |0\rangle$ state to $latex |1\rangle$ and vice versa.
 
 <h3>Pauli-Y Gate</h3>
 
-This is described as a 180 degree rotation around the y axis of the bloch sphere, and maps $latex |0\\rangle$ to $latex i|1\\rangle$ and  $latex |1\\rangle$ to  $latex -i|0\\rangle$.
+This is described as a 180 degree rotation around the y axis of the bloch sphere, and maps $latex |0\rangle$ to $latex i|1\rangle$ and  $latex |1\rangle$ to  $latex -i|0\rangle$.
 
-$latex \\begin{bmatrix}
-0 & -i \\\\
-i & 0 \\\\
-\\end{bmatrix}$
+$latex \begin{bmatrix}
+0 & -i \\
+i & 0 \\
+\end{bmatrix}$
 
 It's like a NOT but also adjusts phase.
 
 <h3>Pauli-Z Gate</h3>
 
-This is described as a 180 degree rotation around the z axis of the bloch sphere. All it does in practice is negate the phase of the $latex |1\\rangle$ state.
+This is described as a 180 degree rotation around the z axis of the bloch sphere. All it does in practice is negate the phase of the $latex |1\rangle$ state.
 
-$latex \\begin{bmatrix}
-1 & 0 \\\\
-0 & -1 \\\\
-\\end{bmatrix}$
+$latex \begin{bmatrix}
+1 & 0 \\
+0 & -1 \\
+\end{bmatrix}$
 
 <h3>General Phase Adjustment Gates</h3>
 
-You can adjust the phase of individual gates by using a matrix like this one, which is a more general version of the Pauli-Z gate, and adjusts the phase of of the $latex |1\\rangle$ state to whatever value is desired, without affecting the probabilities of the qubit values.
+You can adjust the phase of individual gates by using a matrix like this one, which is a more general version of the Pauli-Z gate, and adjusts the phase of of the $latex |1\rangle$ state to whatever value is desired, without affecting the probabilities of the qubit values.
 
-$latex \\begin{bmatrix}
-1 & 0 \\\\
-0 & e^{i\\theta} \\\\
-\\end{bmatrix}$
+$latex \begin{bmatrix}
+1 & 0 \\
+0 & e^{i\theta} \\
+\end{bmatrix}$
 
-The value $latex e^{i\\theta}$ ends up being a complex number, that can also be written like this:
-$latex cos(\\theta)+i sin(\\theta)$
+The value $latex e^{i\theta}$ ends up being a complex number, that can also be written like this:
+$latex cos(\theta)+i sin(\theta)$
 
-where $latex \\theta$ is any angle in radians.
+where $latex \theta$ is any angle in radians.
 
-You'll find that circuits commonly only adjust the $latex |1\\rangle$ state.  This is because the absolute phase of the individual states don't matter (since they don't affect probabilities), but what does matter is the difference in phase between the $latex |0\\rangle$ state and the $latex |1\\rangle$ state, since that can cause constructive or destructive interference.  For this reason, you'll often see the $latex |0\\rangle$ state without a phase value, and only the $latex |1\\rangle$ state will get it's phase modified during calculations.
+You'll find that circuits commonly only adjust the $latex |1\rangle$ state.  This is because the absolute phase of the individual states don't matter (since they don't affect probabilities), but what does matter is the difference in phase between the $latex |0\rangle$ state and the $latex |1\rangle$ state, since that can cause constructive or destructive interference.  For this reason, you'll often see the $latex |0\rangle$ state without a phase value, and only the $latex |1\rangle$ state will get it's phase modified during calculations.
 
 <h3>Hadamard Gate (Interesting Gate!)</h3>
 
@@ -48084,14 +48084,14 @@ What this gate does is if you pass it a pure 0 or 1, it will output a value that
 
 The interesting part happens when you put that output through a Hadamard gate again - you get the original value of 0 or 1 out!
 
-It can do this because it stores the info about the original value as phase information.  When the input value is $latex |0\\rangle$, the Hadamard gate outputs $latex [1/\\sqrt{2}, 1/\\sqrt{2}]$ which has matching phases for each state.  When the input value is $latex |1\\rangle$, the gate outputs $latex [1/\\sqrt{2}, -1/\\sqrt{2}]$ which has opposite phases for each state.
+It can do this because it stores the info about the original value as phase information.  When the input value is $latex |0\rangle$, the Hadamard gate outputs $latex [1/\sqrt{2}, 1/\sqrt{2}]$ which has matching phases for each state.  When the input value is $latex |1\rangle$, the gate outputs $latex [1/\sqrt{2}, -1/\sqrt{2}]$ which has opposite phases for each state.
 
-$latex 1/\\sqrt{2} \\begin{bmatrix}
-1 & 1 \\\\
-1 & -1 \\\\
-\\end{bmatrix}$
+$latex 1/\sqrt{2} \begin{bmatrix}
+1 & 1 \\
+1 & -1 \\
+\end{bmatrix}$
 
-This gate is a crucial part in both Grover's algorithm - which can search an unsorted list in $latex O(\\sqrt{N})$, as well as in Shor's algorithm, which can factor large numbers much faster than classical computers, putting certain types of cryptography at risk for being cracked by quantum computers.
+This gate is a crucial part in both Grover's algorithm - which can search an unsorted list in $latex O(\sqrt{N})$, as well as in Shor's algorithm, which can factor large numbers much faster than classical computers, putting certain types of cryptography at risk for being cracked by quantum computers.
 
 It has some other uses too, which you can check out here:
 <a href="http://cs.stackexchange.com/questions/48330/does-a-hadamard-gate-have-uses-outside-of-pure-and-evenly-mixed-states/48333?noredirect=1#comment99085_48333" target="_blank">Does a Hadamard Gate have uses outside of pure and evenly mixed states?</a>
@@ -48490,33 +48490,33 @@ Image from wikipedia: <a href="https://en.wikipedia.org/wiki/Qubit" target="_bla
 
 The Bloch sphere is a way of visually representing a qubit.
 
-The north pole is the $latex |0\\rangle$ state, and the south pole is the $latex |1\\rangle$ state.  The Z axis is vertical and runs from the $latex |0\\rangle$ to the $latex |1\\rangle$ state.  A qubit's state is represented by a point on the sphere.
+The north pole is the $latex |0\rangle$ state, and the south pole is the $latex |1\rangle$ state.  The Z axis is vertical and runs from the $latex |0\rangle$ to the $latex |1\rangle$ state.  A qubit's state is represented by a point on the sphere.
 
 If you read the last post, you might remember that there was a Pauli-Z gate which changed the phase of a qubit without changing it's probability, as well as a more generalized version of the phase changing gate which also just rotated around the Z axis.  Looking at the bloch sphere, you can see why that is true!  Rotating a point around the Z axis moves it around the sphere horizontally, but it doesn't make it any closer or farther to either the north or south pole.  Since the distance to the poles is preserved, the probability of being one or the other stays the same, even though the phase changes.
 
-The not gate, aka the Pauli-X gate, rotated a point around the X axis 180 degrees.  Looking at the sphere, you could see how that would change a $latex |1\\rangle$ to a $latex |0\\rangle$, or otherwise flip the probabilities & amplitudes of the states.
+The not gate, aka the Pauli-X gate, rotated a point around the X axis 180 degrees.  Looking at the sphere, you could see how that would change a $latex |1\rangle$ to a $latex |0\rangle$, or otherwise flip the probabilities & amplitudes of the states.
 
-The Pauli-Y gate is a little more complex though (pun intended!) as it mapped $latex |0\\rangle$ to $latex i|1\\rangle$ and $latex |1\\rangle$ to $latex -i|0\\rangle$ by rotating 180 degrees around the Y axis.  You may wonder how $latex |1\\rangle$ and $latex i|1\\rangle$ can both refer to the south pole, but the situation there is that every point EXCEPT the poles have a unique representation.  So, they really do both refer to the south pole.
+The Pauli-Y gate is a little more complex though (pun intended!) as it mapped $latex |0\rangle$ to $latex i|1\rangle$ and $latex |1\rangle$ to $latex -i|0\rangle$ by rotating 180 degrees around the Y axis.  You may wonder how $latex |1\rangle$ and $latex i|1\rangle$ can both refer to the south pole, but the situation there is that every point EXCEPT the poles have a unique representation.  So, they really do both refer to the south pole.
 
-To find where a qubit sits on the sphere, the first step is to figure out the spherical coordinates theta ($latex \\theta$) and phi ($latex \\phi$) values, which you can then convert to a 3d point.
+To find where a qubit sits on the sphere, the first step is to figure out the spherical coordinates theta ($latex \theta$) and phi ($latex \phi$) values, which you can then convert to a 3d point.
 
-Start with whatever qubit you have in this form, where you know what the values for alpha ($latex \\alpha$) and beta ($latex \\beta$) are:
-$latex |\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle$
+Start with whatever qubit you have in this form, where you know what the values for alpha ($latex \alpha$) and beta ($latex \beta$) are:
+$latex |\psi\rangle = \alpha|0\rangle + \beta|1\rangle$
 
 You can also write a qubit as:
-$latex |\\psi\\rangle = \\cos\\left(\\tfrac{\\theta}{2}\\right) |0 \\rangle \\, + \\, e^{i \\phi}  \\sin\\left(\\tfrac{\\theta}{2}\\right) |1 \\rangle$
+$latex |\psi\rangle = \cos\left(\tfrac{\theta}{2}\right) |0 \rangle \, + \, e^{i \phi}  \sin\left(\tfrac{\theta}{2}\right) |1 \rangle$
 
 Or like this, with less euler, and more trig:
-$latex |\\psi\\rangle = \\cos\\left(\\tfrac{\\theta}{2}\\right) |0 \\rangle \\, +  \\, ( \\cos \\phi + i \\sin \\phi) \\, \\sin\\left(\\tfrac{\\theta}{2}\\right) |1 \\rangle$
+$latex |\psi\rangle = \cos\left(\tfrac{\theta}{2}\right) |0 \rangle \, +  \, ( \cos \phi + i \sin \phi) \, \sin\left(\tfrac{\theta}{2}\right) |1 \rangle$
 
 You can then set your known alpha and beta values to the trig (or euler) based equations:
-$latex \\alpha = \\cos\\left(\\tfrac{\\theta}{2}\\right)$
-$latex \\beta = \\, ( \\cos \\phi + i \\sin \\phi) \\, \\sin\\left(\\tfrac{\\theta}{2}\\right)$
+$latex \alpha = \cos\left(\tfrac{\theta}{2}\right)$
+$latex \beta = \, ( \cos \phi + i \sin \phi) \, \sin\left(\tfrac{\theta}{2}\right)$
 
 and then solve for theta and phi (I wave my hands a bit here).
 
 Once you have the theta and phi values figured out, you can convert that to a unit distance 3d point representing a point on the sphere by using the below, which describes the X,Y,Z components of the point:
-$latex (\\sin \\theta \\cos \\phi, \\; \\sin \\theta  \\sin \\phi, \\; \\cos \\theta)$
+$latex (\sin \theta \cos \phi, \; \sin \theta  \sin \phi, \; \cos \theta)$
 
 Hopefully this explanation makes enough sense that if you encounter the bloch sphere, or things talking about rotations on the bloch sphere, you won't be too lost :P
 
@@ -48594,7 +48594,7 @@ tails / tails & 0\% & 67\% & 0\% \\
 \end{array}
 $
 
-Qubits actually work the same way!  Using the same values as the coins, let's say qubit A is a 0, and qubit B has a 1/3 chance of becoming a 0, and a 2/3 chance of becoming a 1.  Converting those probabilities to amplitudes you could get $latex A=[1,0], B=[\\frac{1}{\\sqrt{3}}, \\frac{\\sqrt{2}}{\\sqrt{3}}]$.
+Qubits actually work the same way!  Using the same values as the coins, let's say qubit A is a 0, and qubit B has a 1/3 chance of becoming a 0, and a 2/3 chance of becoming a 1.  Converting those probabilities to amplitudes you could get $latex A=[1,0], B=[\frac{1}{\sqrt{3}}, \frac{\sqrt{2}}{\sqrt{3}}]$.
 
 $latex
 \begin{array}{c|c|c|c|c}
@@ -48609,7 +48609,7 @@ $
 
 Note that in both cases, the probabilities add up to 100% like you'd expect.
 
-In the case of qubits, the resulting vector is $latex [\\frac{1}{\\sqrt{3}}, \\frac{\\sqrt{2}}{\\sqrt{3}}, 0, 0] $, which is still normalized, and represents the amplitudes for the 4 possible states of those two qubits: 00, 01, 10 and 11.
+In the case of qubits, the resulting vector is $latex [\frac{1}{\sqrt{3}}, \frac{\sqrt{2}}{\sqrt{3}}, 0, 0] $, which is still normalized, and represents the amplitudes for the 4 possible states of those two qubits: 00, 01, 10 and 11.
 
 When working with one qubit (or coin), there are 2 possible outcomes 0 or 1 (heads or tails).  When working with two qubits (or coins),  there are four possible outcomes 00, 01, 10, 11 (heads/heads, heads/tails, tails/heads, tails/tails).  When working with three qubits or coins, there are eight possible outcomes: 000,001,010 ... 111.
 
@@ -48617,84 +48617,84 @@ With both coins and qubits there are $latex 2^N$ possibilities, where $latex N$ 
 
 If you had 8 qubits, you'd have to use a 256 dimensional vector to describe the possibilities, since $latex 2^8$ is 256.  When performing quantum computing with 8 qubits, you only have to deal with the 8 qubits.  When simulating quantum computing on a regular, classical computer, you have to deal with the 256 amplitudes.  This kind of gives a glimpse at how quantum computers can be faster than regular computers at certain things.  There is an economy of scale working against us on regular computers simulating quantum computing.
 
-The method we used to combine the probabilities of single qubits into an amplitude vector representing multiple qubits is called the Kronecker product.  That's just a fancy way of saying we have to multiply everything from the first vector by everything from the second vector, to get a third vector that is bigger than the first two.  You'll see it represented like this: $latex A \\otimes B$ and while it's similar to the "outer product" and even uses the same symbol (!), it gives a slightly different result versus if you did an outer product and then vectorized the matrix.
+The method we used to combine the probabilities of single qubits into an amplitude vector representing multiple qubits is called the Kronecker product.  That's just a fancy way of saying we have to multiply everything from the first vector by everything from the second vector, to get a third vector that is bigger than the first two.  You'll see it represented like this: $latex A \otimes B$ and while it's similar to the "outer product" and even uses the same symbol (!), it gives a slightly different result versus if you did an outer product and then vectorized the matrix.
 
 The Kronecker product of vectors works like this:
 
-$latex \\begin{bmatrix}
-A_1 \\\\
-A_2 \\\\
-... \\\\
-A_M \\\\
-\\end{bmatrix}
-\\otimes
-\\begin{bmatrix}
-B_1 \\\\
-B_2 \\\\
-... \\\\
-B_N \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+A_1 \\
+A_2 \\
+... \\
+A_M \\
+\end{bmatrix}
+\otimes
+\begin{bmatrix}
+B_1 \\
+B_2 \\
+... \\
+B_N \\
+\end{bmatrix}
 =
-\\begin{bmatrix}
-A_1 B_1 \\\\
-A_1 B_2 \\\\
-... \\\\
-A_1 B_N \\\\
-A_2 B_1 \\\\
-A_2 B_2 \\\\
-... \\\\
-A_2 B_N \\\\
-... \\\\
-A_M B_1 \\\\
-A_M B_2 \\\\
-... \\\\
-A_M B_N \\\\
-\\end{bmatrix}
+\begin{bmatrix}
+A_1 B_1 \\
+A_1 B_2 \\
+... \\
+A_1 B_N \\
+A_2 B_1 \\
+A_2 B_2 \\
+... \\
+A_2 B_N \\
+... \\
+A_M B_1 \\
+A_M B_2 \\
+... \\
+A_M B_N \\
+\end{bmatrix}
 $
 
 Let's show an example involving two qubits.
 
-The first qubit has a 75% chance of being heads so it's amplitude is $latex [\\sqrt{3}/2,1/2]$.  The second qubit has a 2/3 chance of being heads so has an amplitude of $latex [\\sqrt{2}/\\sqrt{3}, 1/\\sqrt{3}]$.
+The first qubit has a 75% chance of being heads so it's amplitude is $latex [\sqrt{3}/2,1/2]$.  The second qubit has a 2/3 chance of being heads so has an amplitude of $latex [\sqrt{2}/\sqrt{3}, 1/\sqrt{3}]$.
 
 To calculate the amplitude vector representing these two qubits, we do a kronecker product:
-$latex \\begin{bmatrix}
-\\cfrac{\\sqrt{3}}{2} \\\\
-\\cfrac{1}{2} \\\\
-\\end{bmatrix}
-\\otimes
-\\begin{bmatrix}
-\\cfrac{\\sqrt{2}}{\\sqrt{3}} \\\\
-\\cfrac{1}{\\sqrt{3}} \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+\cfrac{\sqrt{3}}{2} \\
+\cfrac{1}{2} \\
+\end{bmatrix}
+\otimes
+\begin{bmatrix}
+\cfrac{\sqrt{2}}{\sqrt{3}} \\
+\cfrac{1}{\sqrt{3}} \\
+\end{bmatrix}
 =
-\\begin{bmatrix}
-\\cfrac{\\sqrt{3}}{2}\\cfrac{\\sqrt{2}}{\\sqrt{3}} \\\\
-\\cfrac{\\sqrt{3}}{2}\\cfrac{1}{\\sqrt{3}} \\\\
-\\cfrac{1}{2}\\cfrac{\\sqrt{2}}{\\sqrt{3}} \\\\
-\\cfrac{1}{2}\\cfrac{1}{\\sqrt{3}} \\\\
-\\end{bmatrix}
+\begin{bmatrix}
+\cfrac{\sqrt{3}}{2}\cfrac{\sqrt{2}}{\sqrt{3}} \\
+\cfrac{\sqrt{3}}{2}\cfrac{1}{\sqrt{3}} \\
+\cfrac{1}{2}\cfrac{\sqrt{2}}{\sqrt{3}} \\
+\cfrac{1}{2}\cfrac{1}{\sqrt{3}} \\
+\end{bmatrix}
 $
 
 If you simplify that, you get:
-$latex \\begin{bmatrix}
-\\cfrac{1}{\\sqrt{2}} \\\\
-\\cfrac{1}{2} \\\\
-\\cfrac{1}{\\sqrt{6}} \\\\
-\\cfrac{1}{2\\sqrt{3}} \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+\cfrac{1}{\sqrt{2}} \\
+\cfrac{1}{2} \\
+\cfrac{1}{\sqrt{6}} \\
+\cfrac{1}{2\sqrt{3}} \\
+\end{bmatrix}
 $
 
 or horizontally for easier reading:
-$latex \\begin{bmatrix}
-\\cfrac{1}{\\sqrt{2}} &
-\\cfrac{1}{2} &
-\\cfrac{1}{\\sqrt{6}} &
-\\cfrac{1}{2\\sqrt{3}} &
-\\end{bmatrix}
+$latex \begin{bmatrix}
+\cfrac{1}{\sqrt{2}} &
+\cfrac{1}{2} &
+\cfrac{1}{\sqrt{6}} &
+\cfrac{1}{2\sqrt{3}} &
+\end{bmatrix}
 $
 
 Squaring those values to get the probabilities of each state, we get the below, which you might notice adds up to 100%, meaning the vector is still normalized!
-$latex \\begin{bmatrix} 50\\% & 25\\% & 17\\% & 8\\% \\end{bmatrix}$
+$latex \begin{bmatrix} 50\% & 25\% & 17\% & 8\% \end{bmatrix}$
 
 This generalizes for larger numbers of qubits, so you could use the Kronecker product to combine a vector describing 4 qubits with a vector describing 3 qubits, to come up with a vector that describes 7 qubits (which would have 128 amplitudes in it, since 2^7 = 128!).
 
@@ -48737,7 +48737,7 @@ Entanglement isn't limited to just two qubits, you can entangle any number of qu
 
 Entanglement has a special mathematical meaning.  If you can represent a state of a group of qubits by a kronecker product, they are not entangled.  If you CAN'T represent a state of a group of qubits by a kronecker product, they ARE entangled.  These two things - entanglement and lack of kronecker product factorability (made that term up) - are the same thing.
 
-As an example, what two vectors could you use the kronecker product on to get the entangled two qubit state $latex 1/\\sqrt{2}(|00\\rangle+|11\\rangle)$ (or in vector form $latex [1/\\sqrt{2}, 0, 0, 1/\\sqrt{2}]$)?  You'll find there aren't any!  That state is the entangled state where the two qubits will always have the same value when you observe them.
+As an example, what two vectors could you use the kronecker product on to get the entangled two qubit state $latex 1/\sqrt{2}(|00\rangle+|11\rangle)$ (or in vector form $latex [1/\sqrt{2}, 0, 0, 1/\sqrt{2}]$)?  You'll find there aren't any!  That state is the entangled state where the two qubits will always have the same value when you observe them.
 
 Entangled qubits are nothing special in quantum circuits.  You don't have to take any special precautions when working with them.  They are an interesting byproduct of quantum computing, and so basically are something neat that comes out of your quantum circuit, but they don't require any extra thought when using them within your circuits.  Don't worry about them too much (:
 
@@ -48747,32 +48747,32 @@ Let's have a look at some multi qubit gates! (These are again from <a href="http
 
 <h3>Swap Gate</h3>
 
-Given two qubits, with possible states $latex |00\\rangle, |01\\rangle, |10\\rangle, |11\\rangle$, this gate swaps the amplitudes (probabilities) of $latex |01\\rangle,  |10\\rangle$ and leaves the probabilities of the states $latex |00\\rangle$ and $latex |11\\rangle$ alone.
+Given two qubits, with possible states $latex |00\rangle, |01\rangle, |10\rangle, |11\rangle$, this gate swaps the amplitudes (probabilities) of $latex |01\rangle,  |10\rangle$ and leaves the probabilities of the states $latex |00\rangle$ and $latex |11\rangle$ alone.
 
-That might seem weird, but the probability of the $latex |00\\rangle$ state is the probability of the first qubit being 0 added to the probability of the second qubit being 0.  If those probabilities swap, they still add to the same value, so this probability is unaffected.  It's the same situation for the $latex |11\\rangle$ state.
+That might seem weird, but the probability of the $latex |00\rangle$ state is the probability of the first qubit being 0 added to the probability of the second qubit being 0.  If those probabilities swap, they still add to the same value, so this probability is unaffected.  It's the same situation for the $latex |11\rangle$ state.
 
 Here's the matrix for the swap gate:
-$latex \\begin{bmatrix}
-1 & 0 & 0 & 0 \\\\
-0 & 0 & 1 & 0 \\\\
-0 & 1 & 0 & 0 \\\\
-0 & 0 & 0 & 1 \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
 $
 
 <h3>Square Root of Swap Gate</h3>
 
-I don't really understand a usage case for this gate myself, but it apparently does a half way swap between two qubits.  That once again modifies the probabilities of the $latex |01\\rangle,  |10\\rangle$ states, but leaves state $latex |00\\rangle$ and $latex |11\\rangle$ alone again, for the same reason as the swap gate.
+I don't really understand a usage case for this gate myself, but it apparently does a half way swap between two qubits.  That once again modifies the probabilities of the $latex |01\rangle,  |10\rangle$ states, but leaves state $latex |00\rangle$ and $latex |11\rangle$ alone again, for the same reason as the swap gate.
 
 Wikipedia says that if you have this gate, and the single qubit gates, that you can do universal quantum computation.  In other words, you can build a fully functional quantum computer using just this and the single qubit gates.
 
 Here's the matrix:
-$latex \\begin{bmatrix}
-1 & 0 & 0 & 0 \\\\
-0 & \\frac{1}{2}(1+i) & \\frac{1}{2}(1-i) & 0 \\\\
-0 & \\frac{1}{2}(1-i) & \\frac{1}{2}(1+i) & 0 \\\\
-0 & 0 & 0 & 1 \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & \frac{1}{2}(1+i) & \frac{1}{2}(1-i) & 0 \\
+0 & \frac{1}{2}(1-i) & \frac{1}{2}(1+i) & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
 $
 
 <h3>Controlled Not Gate</h3>
@@ -48782,12 +48782,12 @@ The controlled not (CNOT) gate flips the value of the second qubit if the first 
 Interestingly, this gate is also useful for creating entangled qubits, which you'll be able to see lower down!
 
 Here is the matrix:
-$latex \\begin{bmatrix}
-1 & 0 & 0 & 0 \\\\
-0 & 1 & 0 & 0 \\\\
-0 & 0 & 0 & 1 \\\\
-0 & 0 & 1 & 0 \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
+0 & 0 & 1 & 0 \\
+\end{bmatrix}
 $
 
 The controlled not gate is also referred to as the quantum XOR gate.  To see why, check out the truth table below for this gate:
@@ -48813,19 +48813,19 @@ You can actually convert any single qubit gate into a controlled gate.  That mak
 How you do that is you make a 4x4 identity matrix, and make the lower 2x2 sub-matrix into the single qubit matrix you want to use.
 
 In other words, if your single qubit matrix is this:
-$latex \\begin{bmatrix}
-U_{00} & U_{01} \\\\
-U_{10} & U_{11} \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+U_{00} & U_{01} \\
+U_{10} & U_{11} \\
+\end{bmatrix}
 $
 
 Then the controlled version of the matrix would be this:
-$latex \\begin{bmatrix}
-1 & 0 & 0 & 0 \\\\
-0 & 1 & 0 & 0 \\\\
-0 & 0 & U_{00} & U_{01} \\\\
-0 & 0 & U_{10} & U_{11} \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & U_{00} & U_{01} \\
+0 & 0 & U_{10} & U_{11} \\
+\end{bmatrix}
 $
 
 Pretty simple right?
@@ -48835,16 +48835,16 @@ Pretty simple right?
 The Tofolli gate is a 3 qubit gate that is also known as the CCNOT gate or controlled controlled not gate.  It flips the third qubit if the first two qubits are true.
 
 It's matrix looks pretty uninteresting:
-$latex \\begin{bmatrix}
-1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\\\
-0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\\\
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\\\
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\\\
-0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\\\
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\\\
-0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\\\
-0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+\end{bmatrix}
 $
 
 This is also known as the quantum AND gate.  If you look at the truth table below, you'll see that when the input has the right most qubit of 0, that in the output, the right most qubit will be the AND value of the two left qubits.  We need the three bits of input mapping to three bits of output like this so that the gate is reversible.
@@ -48867,16 +48867,16 @@ $
 <h3>Fredkin Gate</h3>
 
 The Fredkin gate is a controlled swap gate.  Here's the matrix:
-$latex \\begin{bmatrix}
-1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\\\
-0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\\\
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\\\
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\\\
-0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\\\
-0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\\\
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\\\
-0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+\end{bmatrix}
 $
 
 Just like we talked about how to make a generalized controlled gate acting on two qubits, you should be able to notice that this gate is just a specific version of a generalized controlled 3 qubit gate.  You take an 8x8 identity matrix, and make the lower right 4x4 matrix be the 2 qubit gate that you want to add a control on.  In this case, the lower right 4x4 matrix is just the swap gate we mentioned earlier in the post (:
@@ -48904,7 +48904,7 @@ In a quantum circuit, you can't just apply a gate to an individual quabit at a t
 
 So, how do we make a matrix that applies the Hadamard gate to qubit 1, and identity to qubit 2?  You use the kronecker product!
 
-Since we want to apply the Hadamard matrix to qubit 1 and identity to qubit 2, we are going to calculate $latex H \\otimes I$ (If we wanted to apply the Hadamard gate to qubit 2 and identity to qubit 1 we would calculate $latex I \\otimes H$ instead).
+Since we want to apply the Hadamard matrix to qubit 1 and identity to qubit 2, we are going to calculate $latex H \otimes I$ (If we wanted to apply the Hadamard gate to qubit 2 and identity to qubit 1 we would calculate $latex I \otimes H$ instead).
 
 $latex
 H \otimes I = 
@@ -49039,7 +49039,7 @@ It worked!  We got our original input back.
 We talked about how to make single qubit gates apply to specific qubits by using the kronecker product with identity to move the gate to the right location.
 
 If you have 4 qubits and you want to apply some single qubit gate (say Hadamard) to the 3rd qubit, you would just do this to get the matrix:
-$latex I \\otimes I \\otimes H \\otimes I $
+$latex I \otimes I \otimes H \otimes I $
 
 What if you want to do complex things with multi qubit gates though?  Like what if you want to do a controlled not gate where you want the 2nd qubit to flip it's value if the 4th qubit was true?
 
@@ -49063,16 +49063,16 @@ Below is the mathematical way that you would get the matrix representing this ga
 
 $latex I$ is the identity matrix, $latex S$ is the swap gate, and $latex C$ is the controlled not gate.
 
-$latex M = \\\\
-(I \\otimes I \\otimes S) * \\\\
-(I \\otimes S \\otimes I) * \\\\
-(S \\otimes I \\otimes I) * \\\\
-(I \\otimes S \\otimes I) * \\\\
-(C \\otimes I \\otimes I) * \\\\
-(I \\otimes S \\otimes I) * \\\\
-(S \\otimes I \\otimes I) * \\\\
-(I \\otimes S \\otimes I) * \\\\
-(I \\otimes I \\otimes S) \\\\
+$latex M = \\
+(I \otimes I \otimes S) * \\
+(I \otimes S \otimes I) * \\
+(S \otimes I \otimes I) * \\
+(I \otimes S \otimes I) * \\
+(C \otimes I \otimes I) * \\
+(I \otimes S \otimes I) * \\
+(S \otimes I \otimes I) * \\
+(I \otimes S \otimes I) * \\
+(I \otimes I \otimes S) \\
 $
 
 <h2>Code</h2>
@@ -50705,7 +50705,7 @@ Which simplifies the C++ code to just this:
 bool out = B;
 [/code]
 
-Using Boolean algebra to simplify, you'd have to remember (or derive) the identity that $latex A+\\overline{A}=1 $, and all the other identities to help you simplify equations.
+Using Boolean algebra to simplify, you'd have to remember (or derive) the identity that $latex A+\overline{A}=1 $, and all the other identities to help you simplify equations.
 
 Karnaugh maps make this easier because you will be able to see visually what can be combined (simplified) and what can't.
 
@@ -50751,7 +50751,7 @@ A & 0 & \multicolumn{1}{|c|}{1} \\
 \end{array}
 $
 
-Looking at what we circled, we can see that both values of $latex A$ are involved in our group, so $latex A$ doesn't matter to the output.  We can also see that $latex \\overline{B}$ is not involved in any places where there is a 1, so we can ignore that too.  All that leaves is $latex B$, which is our final, and most minimal answer.
+Looking at what we circled, we can see that both values of $latex A$ are involved in our group, so $latex A$ doesn't matter to the output.  We can also see that $latex \overline{B}$ is not involved in any places where there is a 1, so we can ignore that too.  All that leaves is $latex B$, which is our final, and most minimal answer.
 
 That agrees with the Boolean algebra solution, but came without having to remember any identities.  Hooray!
 
@@ -50837,7 +50837,7 @@ $
 
 We once again have two groups, but they are each of size one, which is totally ok!
 
-The upper left group is expressed as $latex \\overline{AB}$, while the lower right group is expressed as $latex AB$.  We OR those two groups together to get the answer: $latex \\overline{AB} + AB$.  That's all there is to it.
+The upper left group is expressed as $latex \overline{AB}$, while the lower right group is expressed as $latex AB$.  We OR those two groups together to get the answer: $latex \overline{AB} + AB$.  That's all there is to it.
 
 <h2>Four Variable Karnaugh Map: Don't Care Values</h2>
 
@@ -50869,11 +50869,11 @@ $
 
 In this case, even with the wild card don't care values, we still just have two 1 item groups, that we OR together to get the answer:
 
-$latex \\overline{AB}CD+ABCD$
+$latex \overline{AB}CD+ABCD$
 
 Note that we could factor out the CD and make it into the below, but then it would no longer be in a sum of products form.
 
-$latex CD(\\overline{AB}+AB)$
+$latex CD(\overline{AB}+AB)$
 
 You might also have noticed the strange ordering of the values in the table: 00, 01, 11, 10.  Normally doesn't 2 (10) come before 3 (11)?  It does, except in this case, we only want to change one variable at a time between neighboring cells.  Going from 01 to 11 means that the first bit changed, while going from 01 to 10 means that two bits changed, so isn't useful for us finding groups.  The order that the numbers are in is actually called Gray Code, named after Frank Grey (<a href="https://en.wikipedia.org/wiki/Gray_code" target="_blank">Wikipedia: Gray Code</a>).
 
@@ -50993,7 +50993,7 @@ AB & 01 & 0 & 0 & 0 & 0 \\
 \end{array}
 $
 
-Here is the group highlighted below, which is represented as $latex \\overline{B}CD$, which is also the answer:
+Here is the group highlighted below, which is represented as $latex \overline{B}CD$, which is also the answer:
 
 $latex
 \begin{array}{cccccc}
@@ -52051,11 +52051,11 @@ $
 
 Now the final step.  Take the constants that multiply your powers of t and make a matrix out of them.  You are done!
 
-$latex \\begin{bmatrix}
-1 & -2 & 1 \\\\
-0 & 2 & -2 \\\\
-0 & 0 & 1 \\\\
-\\end{bmatrix}
+$latex \begin{bmatrix}
+1 & -2 & 1 \\
+0 & 2 & -2 \\
+0 & 0 & 1 \\
+\end{bmatrix}
 $
 
 <h2>Using the Matrix Form</h2>
@@ -52064,23 +52064,23 @@ Using the matrix form of Bezier curves is also pretty simple.
 
 First, we need to make a vector of the power series of our t value:
 
-$latex powerSeries = \\begin{bmatrix}
-t^0 & t^1 & t^2 \\\\
-\\end{bmatrix}
+$latex powerSeries = \begin{bmatrix}
+t^0 & t^1 & t^2 \\
+\end{bmatrix}
 $
 
 Which can also be written as:
 
-$latex powerSeries = \\begin{bmatrix}
-1 & t & t^2 \\\\
-\\end{bmatrix}
+$latex powerSeries = \begin{bmatrix}
+1 & t & t^2 \\
+\end{bmatrix}
 $
 
 You also need a vector of your control points:
 
-$latex controlPoints = \\begin{bmatrix}
-A & B & C \\\\
-\\end{bmatrix}
+$latex controlPoints = \begin{bmatrix}
+A & B & C \\
+\end{bmatrix}
 $
 
 You next perform this operation to get a result vector:
@@ -52655,7 +52655,7 @@ a_0 \\
 \oplus 0 \land x_1 x_2 x_3
 $
 
-Note that $latex \\land $ is the symbol for AND.  I'm showing it explicitly because otherwise the equation looks weird, and a multiplication symbol isn't correct.
+Note that $latex \land $ is the symbol for AND.  I'm showing it explicitly because otherwise the equation looks weird, and a multiplication symbol isn't correct.
 
 Since 0 ANDed with anything else is 0, and also since n XOR 0 = n, that whole last term disappears, leaving us with this equation:
 
@@ -53230,7 +53230,7 @@ Unfortunately, the above has a weakness.  The weakness is that each share you ge
 
 Ideally, you wouldn't have any information about the secret value until you had the full number of shares required to unlock the secret.
 
-To address this problem, we are going to choose some prime number $latex k $ and instead of shares being $latex (x,y) $ data points on the curve, they are going to be $latex (x,y \\bmod k) $.  In technical terms we are going to be using points on a finite field, or a Galois field.
+To address this problem, we are going to choose some prime number $latex k $ and instead of shares being $latex (x,y) $ data points on the curve, they are going to be $latex (x,y \bmod k) $.  In technical terms we are going to be using points on a finite field, or a Galois field.
 
 The value we choose for $latex k $ needs to be larger than any of the coefficients of our terms (the random numbers) as well as larger than our secret value and larger than the number of shares we want to create.  The larger the better besides that, because a larger $latex k $ value means a larger "brute force" space to search.
 
@@ -55240,9 +55240,9 @@ Let's take a look at where we are at mathematically.  For $latex N $ samples of 
 
 For now, let's drop the "divide by two" part and look at the equations we have.
 
-$latex Value_{cosine} = \\sum\\limits_{n=0}^{N-1} Sample_n * Cos(2\\pi*Frequency*n/N) $
+$latex Value_{cosine} = \sum\limits_{n=0}^{N-1} Sample_n * Cos(2\pi*Frequency*n/N) $
 
-$latex Value_{sine} = \\sum\\limits_{n=0}^{N-1} Sample_n * Sin(2\\pi*Frequency*n/N) $
+$latex Value_{sine} = \sum\limits_{n=0}^{N-1} Sample_n * Sin(2\pi*Frequency*n/N) $
 
 Those equations above do exactly what we worked through in the samples.
 
@@ -55282,7 +55282,7 @@ That looks pretty useful for our usage case doesn't it?  If you notice that our 
 
 We can now take our two equations and combine them into a single equation:
 
-$latex Value = \\sum\\limits_{n=0}^{N-1} Sample_n * e^{i *2\\pi * Frequency*n/N} $
+$latex Value = \sum\limits_{n=0}^{N-1} Sample_n * e^{i *2\pi * Frequency*n/N} $
 
 When we do the above calculation, we will get a complex number out with a real and imaginary part.  The real part of the complex number is just the cosine value, while the imaginary part of the complex number is the sine value.  Nothing scary has happened, we've just used/abused complex numbers a bit to give us what we want in a more compact form.
 
@@ -55306,11 +55306,11 @@ The important take away from this section is that if you have N samples, the DFT
 
 That then leads to this equation below, where we just put a subscript on Value, to signify which frequency we are probing for.
 
-$latex Value_{Frequency} = \\sum\\limits_{n=0}^{N-1} Sample_n * e^{2\\pi i*Frequency*n/N} $
+$latex Value_{Frequency} = \sum\limits_{n=0}^{N-1} Sample_n * e^{2\pi i*Frequency*n/N} $
 
 Frequency is an integer, and is between 0 and N-1.  We can say that mathematically by listing this information along with the equation:
 
-$latex Frequency \\in [0,N), Frequency \\in \\mathbb Z $
+$latex Frequency \in [0,N), Frequency \in \mathbb Z $
 
 <h2>Final Form</h2>
 
@@ -55324,25 +55324,25 @@ Instead of $latex Sample_n $, the symbol is $latex x_n$.
 
 This gives us a more formal version of the equation:
 
-$latex X_k= \\sum\\limits_{n=0}^{N-1} x_n * e^{2\\pi ikn/N} $
+$latex X_k= \sum\limits_{n=0}^{N-1} x_n * e^{2\pi ikn/N} $
 
-$latex k\\in [0,N), k \\in \\mathbb Z $
+$latex k\in [0,N), k \in \mathbb Z $
 
 We are close to the final form, but we aren't quite done yet!
 
 Remember the divide by two?  I had us take out the divide by two so that I could re-introduce it now in it's correct form.  Basically, since we are querying for N frequencies, we need to divide each frequency's result by N.  I mentioned that we had to divide by N/2 to make the amplitude information correct, but since we are checking both positive AND negative frequencies, we have to divide by 2*(N/2), or just N.  That makes our equation become this:
 
-$latex X_k= 1/N \\sum\\limits_{n=0}^{N-1} x_n * e^{2\\pi ikn/N} $
+$latex X_k= 1/N \sum\limits_{n=0}^{N-1} x_n * e^{2\pi ikn/N} $
 
-$latex k\\in [0,N), k \\in \\mathbb Z $
+$latex k\in [0,N), k \in \mathbb Z $
 
 Lastly, we actually want to make the waves go backwards, so we make the exponent negative.  The reason for this is a deeper topic than I want to get into right now, but you can read more about why here if you are curious: <a href="http://math.stackexchange.com/q/58163/138443">DFT - Why are the definitions for inverse and forward commonly switched?</a>
 
 That brings us to our final form of the formula for the discrete Fourier transform:
 
-$latex X_k= 1/N \\sum\\limits_{n=0}^{N-1} x_n * e^{-2\\pi ikn/N} $
+$latex X_k= 1/N \sum\limits_{n=0}^{N-1} x_n * e^{-2\pi ikn/N} $
 
-$latex k\\in [0,N), k \\in \\mathbb Z $
+$latex k\in [0,N), k \in \mathbb Z $
 
 <h2>Taking a Test Drive</h2>
 
@@ -55365,9 +55365,9 @@ Making the formula for the Inverse DFT is really simple.
 
 We start with our DFT formula, drop the 1/N from the front, and also make the exponent to e positive instead of negative.  That is all!  The intuition here for me is that we are just doing the reverse of the DFT process, to do the inverse DFT process.
 
-$latex x_k= \\sum\\limits_{n=0}^{N-1} X_n * e^{2\\pi ikn/N} $
+$latex x_k= \sum\limits_{n=0}^{N-1} X_n * e^{2\pi ikn/N} $
 
-$latex k\\in [0,N), k \\in \\mathbb Z $
+$latex k\in [0,N), k \in \mathbb Z $
 
 While the DFT takes in real valued signals and gives out complex valued frequency data, the IDFT takes in complex valued frequency data, and gives out real valued signals.
 
@@ -55399,17 +55399,17 @@ The formula we came up with is one possible DFT formula, but there are a handful
 
 The first option is whether to make the e exponent negative or not.  Check out these two formulas to see what I mean.
 
-$latex X_k= \\sum\\limits_{n=0}^{N-1} x_n * e^{2\\pi ikn/N} $
+$latex X_k= \sum\limits_{n=0}^{N-1} x_n * e^{2\pi ikn/N} $
 vs
-$latex X_k= \\sum\\limits_{n=0}^{N-1} x_n * e^{-2\\pi ikn/N} $
+$latex X_k= \sum\limits_{n=0}^{N-1} x_n * e^{-2\pi ikn/N} $
 
 Either one is acceptable, but when providing DFT'd data, you should mention which one you did, and make sure and use the opposite one in your inverse DFT formula.
 
 The next options is whether to divide by N or not, like the below:
 
-$latex X_k= \\sum\\limits_{n=0}^{N-1} x_n * e^{2\\pi ikn/N} $
+$latex X_k= \sum\limits_{n=0}^{N-1} x_n * e^{2\pi ikn/N} $
 vs
-$latex X_k= 1/N \\sum\\limits_{n=0}^{N-1} x_n * e^{2\\pi ikn/N} $
+$latex X_k= 1/N \sum\limits_{n=0}^{N-1} x_n * e^{2\pi ikn/N} $
 
 Again, either one is acceptable, but you need to make sure and let people know which one you did, and also make sure and use the opposite one in your inverse DFT formula.
 
@@ -55814,7 +55814,7 @@ You can also download a zip of the source code here:
 
 The rendering equation might look a bit scary at first but stay with me, it is actually a lot simpler than it looks.
 
-$latex L_o( \\omega_o)= L_e(\\omega_o)+\\int_{\\Omega}{f(\\omega_i, \\omega_o)L_i(\\omega_i)(\\omega_i \\cdot n)\\mathrm{d}\\omega_i}$
+$latex L_o( \omega_o)= L_e(\omega_o)+\int_{\Omega}{f(\omega_i, \omega_o)L_i(\omega_i)(\omega_i \cdot n)\mathrm{d}\omega_i}$
 
 Here's a simplified version:
 
@@ -55826,18 +55826,18 @@ It's pretty easy to know how much an object is glowing in a particular direction
 
 The rest of the equation is where it gets harder.  The rest of the equation is this:
 
-$latex \\int_{\\Omega}{f(\\omega_i, \\omega_o)L_i(\\omega_i)(\\omega_i \\cdot n)\\mathrm{d}\\omega_i}$
+$latex \int_{\Omega}{f(\omega_i, \omega_o)L_i(\omega_i)(\omega_i \cdot n)\mathrm{d}\omega_i}$
 
-The integral (the $latex \\int_{\\Omega}$ at the front and the $latex \\mathrm{d}\\omega_i$ at the back) just means that we are going to take the result of everything between those two symbols, and add them up for every point in a hemisphere, multiplying each value by the fractional size of the point's area for the hemisphere. The hemisphere we are talking about is the positive hemisphere surrounding the normal of the surface we are looking at.
+The integral (the $latex \int_{\Omega}$ at the front and the $latex \mathrm{d}\omega_i$ at the back) just means that we are going to take the result of everything between those two symbols, and add them up for every point in a hemisphere, multiplying each value by the fractional size of the point's area for the hemisphere. The hemisphere we are talking about is the positive hemisphere surrounding the normal of the surface we are looking at.
 
 One of the reasons things get harder at this point is that there are an infinite number of points on the hemisphere.
 
 Let's ignore the integral for a second and talk about the rest of the equation.  In other words, lets consider only one of the points on the hemisphere for now.
 
 <ul>
-	<li>$latex f(\\omega_i, \\omega_o)$ - This is the "Bidirectional reflectance distribution function", otherwise known as the BRDF.  It describes how much light is reflected towards the view direction, of the light coming in from the point on the hemisphere we are considering.</li>
-	<li>$latex L_i(\\omega_i)$ - This is how much light is coming in from the point on the hemisphere we are considering.</li>
-	<li>$latex (\\omega_i \\cdot n)$ - This is the cosine of the angle between the point on the hemisphere we are considering and the surface normal, gotten via a dot product.  What this term means is that as the light direction gets more perpendicular to the normal, light is reflected less and less.  This is based on the actual behavior of light and you can read more about it here if you want to: <a target="_blank" href="https://en.wikipedia.org/wiki/Lambert%27s_cosine_law">Wikipedia: Lambert's Cosine Law</a>.  Here is another great link about it <a target="_blank" href="http://www.cgl.uwaterloo.ca/wmcowan/teaching/cs488/pdf/lambertian.pdf">lambertian.pdf</a>. (Thanks for the link Jay!)</li>
+	<li>$latex f(\omega_i, \omega_o)$ - This is the "Bidirectional reflectance distribution function", otherwise known as the BRDF.  It describes how much light is reflected towards the view direction, of the light coming in from the point on the hemisphere we are considering.</li>
+	<li>$latex L_i(\omega_i)$ - This is how much light is coming in from the point on the hemisphere we are considering.</li>
+	<li>$latex (\omega_i \cdot n)$ - This is the cosine of the angle between the point on the hemisphere we are considering and the surface normal, gotten via a dot product.  What this term means is that as the light direction gets more perpendicular to the normal, light is reflected less and less.  This is based on the actual behavior of light and you can read more about it here if you want to: <a target="_blank" href="https://en.wikipedia.org/wiki/Lambert%27s_cosine_law">Wikipedia: Lambert's Cosine Law</a>.  Here is another great link about it <a target="_blank" href="http://www.cgl.uwaterloo.ca/wmcowan/teaching/cs488/pdf/lambertian.pdf">lambertian.pdf</a>. (Thanks for the link Jay!)</li>
 </ul>
 
 So what this means is that for a specific point on the hemisphere, we find out how much light is coming in from that direction, multiply it by how much the BRDF says light should be reflected towards the view direction from that direction, and then apply Lambert's cosine law to make light dimmer as the light direction gets more perpendicular with the surface normal (more parallel with the surface).
@@ -59429,10 +59429,10 @@ First up, we need to be able to convert logic into ANF.  Oddly enough, I already
 
 As an example, let's work with a circuit that takes 3 input bits, and adds them together to make a 2 bit result.  We'll need one ANF expression per output bit.  $latex O_0$ will be the 1's place output bit (least significant bit), and $latex O_1$ will be the 2's place output bit (most significant bit).  Our 3 input bits will be u,v,w.
 
-$latex O_0 = u \\oplus v \\oplus w$
-$latex O_1 = uv \\oplus vw \\oplus uw$
+$latex O_0 = u \oplus v \oplus w$
+$latex O_1 = uv \oplus vw \oplus uw$
 
-If we want to use our polynomial evaluation technique, we need equations that are univariate (one variable) instead of multivariate (multiple variables).  We can try just using a single variable x in place of u,v and w.  Remember that in ANF, you work with polynomials mod 2 (aka $latex \\mathbb{Z}_2$), and that XOR ($latex \\oplus$) is addition while AND is multiplication.  This gives the formulas below:
+If we want to use our polynomial evaluation technique, we need equations that are univariate (one variable) instead of multivariate (multiple variables).  We can try just using a single variable x in place of u,v and w.  Remember that in ANF, you work with polynomials mod 2 (aka $latex \mathbb{Z}_2$), and that XOR ($latex \oplus$) is addition while AND is multiplication.  This gives the formulas below:
 
 $latex O_0 = x + x + x = 3x$
 $latex O_1 = xx + xx + xx = 3x^2$
@@ -59488,7 +59488,7 @@ u & v & w & O_1 & O_0 \\
 \end{array}
 $
 
-Now, let's modulus the result by 2 since ANF expects to work mod 2 ($latex \\mathbb{Z}_2$ to be more precise), and put the decimal value of the result next to it.
+Now, let's modulus the result by 2 since ANF expects to work mod 2 ($latex \mathbb{Z}_2$ to be more precise), and put the decimal value of the result next to it.
 
 $latex
 \begin{array}{|c|c|c|c|c|c|}
@@ -61981,7 +61981,7 @@ To calculate the output value of a neuron, you multiply every input into that ne
 <img src="http://blog.demofox.org/wp-content/uploads/2017/02/Neuron.png"/>
 
 A more formal definition of a neuron's output is below. $latex b$ is the bias, $latex w_j$ is the j'th weight and $latex i_j$ is the j'th input.
-$latex Output = b+\\sum_{j=0}^nw_ji_j $
+$latex Output = b+\sum_{j=0}^nw_ji_j $
 
 You might notice that the above is really just the dot product of the weight vector and the input vector, with a value added on the end.  We could re-write it like that:
 $latex Output = Dot(w,i)+b$
@@ -62240,25 +62240,25 @@ We'll start by finding the derivative of x, and then the derivative of y.
 
 We start by making a dual number for our x value, remembering that the real part is the actual value for x, and the dual part is the derivative of x, which is 1:
 
-$latex 5+1\\epsilon$
+$latex 5+1\epsilon$
 
 or:
 
-$latex 5+\\epsilon$
+$latex 5+\epsilon$
 
-We multiply that value by itself to get the $latex x^2$ value, keeping in mind that $latex \\epsilon^2$ is zero:
-$latex (5+\\epsilon)*(5+\\epsilon)= \\\\
-25+10\\epsilon+\\epsilon^2= \\\\
-25+10\\epsilon \\\\
+We multiply that value by itself to get the $latex x^2$ value, keeping in mind that $latex \epsilon^2$ is zero:
+$latex (5+\epsilon)*(5+\epsilon)= \\
+25+10\epsilon+\epsilon^2= \\
+25+10\epsilon \\
 $
 
 Next we need to multiply that by 3 to get the $latex 3x^2$ term:
 
-$latex 3*(25+10\\epsilon) = 75+30\\epsilon$
+$latex 3*(25+10\epsilon) = 75+30\epsilon$
 
 Putting that aside for a moment, we need to make the $latex 2y^3$ term.  We start by making our y value:
 
-$latex 2+0\\epsilon$
+$latex 2+0\epsilon$
 
 or:
 
@@ -62276,8 +62276,8 @@ $latex 8*2=16$
 
 Now that we have our two terms, we subtract the y term from the x term to get our final result:
 
-$latex 75+30\\epsilon-16 = \\\\
-59+30\\epsilon$
+$latex 75+30\epsilon-16 = \\
+59+30\epsilon$
 
 This result says that $latex 3x^2-2y^3$ has a value of 59 at location (5,2), and that the derivative of x at that point is 30.
 
@@ -62289,7 +62289,7 @@ Calculating the derivative of y is very similar to calculating the derivative of
 
 First up, we need to make the value for x:
 
-$latex 5+0\\epsilon$
+$latex 5+0\epsilon$
 
 or:
 
@@ -62301,21 +62301,21 @@ $latex 5*5*3=75$
 
 Next we need to make the value for y, remembering that we use an epsilon value of 1 since the derivative of y is 1 this time around.
 
-$latex 2+\\epsilon$
+$latex 2+\epsilon$
 
 We cube that value and multiply by 2 to get the $latex 2y^3$ term:
-$latex 2*(2+\\epsilon)*(2+\\epsilon)*(2+\\epsilon)= \\\\
-2*(2+\\epsilon)*(4+4\\epsilon+\\epsilon^2)= \\\\
-2*(2+\\epsilon)*(4+4\\epsilon)= \\\\
-2*(8+12\\epsilon+4\\epsilon^2)= \\\\
-2*(8+12\\epsilon)= \\\\
-16+24\\epsilon
+$latex 2*(2+\epsilon)*(2+\epsilon)*(2+\epsilon)= \\
+2*(2+\epsilon)*(4+4\epsilon+\epsilon^2)= \\
+2*(2+\epsilon)*(4+4\epsilon)= \\
+2*(8+12\epsilon+4\epsilon^2)= \\
+2*(8+12\epsilon)= \\
+16+24\epsilon
 $
 
 Now we subtract the y term from the x term to get the final result:
 
-$latex 75 - (16+24\\epsilon)= \\\\
-59-24\\epsilon
+$latex 75 - (16+24\epsilon)= \\
+59-24\epsilon
 $
 
 This result says that $latex 3x^2-2y^3$ has a value of 59 at location (5,2), and that the derivative of y at that point is -24.
@@ -62330,13 +62330,13 @@ Luckily there is a way to address this.  Basically, instead of making two dual n
 
 Thus, instead of having:
 
-$latex x'=(a+b\\epsilon) \\\\
-y'=(a+b\\epsilon)
+$latex x'=(a+b\epsilon) \\
+y'=(a+b\epsilon)
 $
 
 You have:
 
-$latex (a+b\\epsilon_x+c\\epsilon_y)$
+$latex (a+b\epsilon_x+c\epsilon_y)$
 
 Then, in your math or in your program, you treat it as if it's two different dual numbers packed into one.  This lets you do the work for the real number once instead of twice, but still lets you do your dual number work for each variable independently.
 
@@ -62344,10 +62344,10 @@ While it's probably easiest to think of these as two dual numbers packed into on
 
 Check out what happens when we multiply two of these together, keeping in mind that multiplying ANY two epsilon values together becomes zero, even if they are different epsilons:
 
-$latex (a+b\\epsilon_x+c\\epsilon_y) * (d+e\\epsilon_x+f\\epsilon_y)= \\\\
-ad + ae\\epsilon_x + af\\epsilon_y + bd\\epsilon_x + be\\epsilon_x^2 + bf\\epsilon_x\\epsilon_y + cd\\epsilon_y + ce\\epsilon_x\\epsilon_y + cf\\epsilon_y^2= \\\\
-ad + ae\\epsilon_x + af\\epsilon_y + bd\\epsilon_x + cd\\epsilon_y= \\\\
-ad + (ae+bd)\\epsilon_x + (af+cd)\\epsilon_y
+$latex (a+b\epsilon_x+c\epsilon_y) * (d+e\epsilon_x+f\epsilon_y)= \\
+ad + ae\epsilon_x + af\epsilon_y + bd\epsilon_x + be\epsilon_x^2 + bf\epsilon_x\epsilon_y + cd\epsilon_y + ce\epsilon_x\epsilon_y + cf\epsilon_y^2= \\
+ad + ae\epsilon_x + af\epsilon_y + bd\epsilon_x + cd\epsilon_y= \\
+ad + (ae+bd)\epsilon_x + (af+cd)\epsilon_y
 $
 
 The interesting thing is that the above result gives you the same values as if you did the same work for two dual numbers individually.
@@ -62360,36 +62360,36 @@ Our goal is to calculate the value and partial derivatives of the function $late
 
 First we make our x value:
 
-$latex 5 + 1\\epsilon_x + 0\\epsilon_y$
+$latex 5 + 1\epsilon_x + 0\epsilon_y$
 
 or:
 
-$latex 5 + \\epsilon_x$
+$latex 5 + \epsilon_x$
 
 We square that and multiply it by 3 to get our $latex 3x^2$ term:
 
-$latex 3*(5 + \\epsilon_x)*(5 + \\epsilon_x)= \\\\
-3*(25+10\\epsilon_x+\\epsilon_x^2)= \\\\
-3*(25+10\\epsilon_x)= \\\\
-75+30\\epsilon_x
+$latex 3*(5 + \epsilon_x)*(5 + \epsilon_x)= \\
+3*(25+10\epsilon_x+\epsilon_x^2)= \\
+3*(25+10\epsilon_x)= \\
+75+30\epsilon_x
 $
 
 Next, we make our y value:
 
-$latex 2 + 0\\epsilon_x + 1\\epsilon_y$
+$latex 2 + 0\epsilon_x + 1\epsilon_y$
 
 or:
 
-$latex 2 + \\epsilon_y$
+$latex 2 + \epsilon_y$
 
 We cube it and multiply it by 2 to get our $latex 2x^3$ term:
 
-$latex 16+24\\epsilon_y$
+$latex 16+24\epsilon_y$
 
 Lastly we subtract the y term from the x term to get our final answer:
 
-$latex (75+30\\epsilon_x) - (16+24\\epsilon_y)= \\\\
-59+30\\epsilon_x-24\\epsilon_y
+$latex (75+30\epsilon_x) - (16+24\epsilon_y)= \\
+59+30\epsilon_x-24\epsilon_y
 $
 
 The result says that $latex 3x^2-2y^3$ has a value of 59 at location (5,2), and that the derivative of x at that point is 30, and the derivative of y at that point is -24.
@@ -62894,20 +62894,20 @@ $latex Output = Activation(Input0 * 0.23 + Input1 * -0.1 + 0.3)$
 
 Let's say that we want this network to output a zero when we give an input of 1,0, and that we don't care what it outputs otherwise.  We'll plug 1 and 0 in for Input0 and Input1 respectively and see what the output of the network is right now:
 
-$latex Output = Activation(1* 0.23 + 0 * -0.1 + 0.3) \\\\
+$latex Output = Activation(1* 0.23 + 0 * -0.1 + 0.3) \\
 Output = Activation(0.53)
 $
 
 For the activation function, we are going to use a common one called the sigmoid activation function, which is also sometimes called the logistic activation function.  It looks like this:
 
-$latex \\sigma(x) = \\frac{1}{1+e^{-x}}$
+$latex \sigma(x) = \frac{1}{1+e^{-x}}$
 
 Without going into too much detail, the reason why sigmoid is so commonly used is because it's a smoother and differentiable version of the step function.
 
 Applying that activation function to our output neuron, we get this:
 
-$latex Output = Activation(0.53) \\\\
-Output = \\sigma(0.53) \\\\
+$latex Output = Activation(0.53) \\
+Output = \sigma(0.53) \\
 Output = 0.6295
 $
 
@@ -62915,23 +62915,23 @@ So, we plugged in 1 and 0, but instead of getting a 0 out, we got 0.6295.  Our w
 
 The secret to correcting our weights and biases is whichever of these terms seem least scary to you: slopes, derivatives, gradients.
 
-If "slope" was the least scary term to you, you probably remember the line formula $latex y=mx+b$ and that the m value was the "rise over run" or the slope of the line.  Well believe it or not, that's all a derivative is.  A derivative is just the slope of a function at a specific point on that function.  Even if a function is curved, you can pick a point on the graph and get a slope at that point.  The notation for a derivative is $latex \\frac{dy}{dx}$, which literally means "change in y divided by change in x", or "delta y divided by delta x", which is literally rise over run.
+If "slope" was the least scary term to you, you probably remember the line formula $latex y=mx+b$ and that the m value was the "rise over run" or the slope of the line.  Well believe it or not, that's all a derivative is.  A derivative is just the slope of a function at a specific point on that function.  Even if a function is curved, you can pick a point on the graph and get a slope at that point.  The notation for a derivative is $latex \frac{dy}{dx}$, which literally means "change in y divided by change in x", or "delta y divided by delta x", which is literally rise over run.
 
-In the case of a linear function (a line), it has the same derivative over the entire thing, so you can take a step size of any size on the x axis and multiply that step size by $latex \\frac{dy}{dx}$ to figure out how much to add or subtract from y to stay on the line.
+In the case of a linear function (a line), it has the same derivative over the entire thing, so you can take a step size of any size on the x axis and multiply that step size by $latex \frac{dy}{dx}$ to figure out how much to add or subtract from y to stay on the line.
 
 In the case of a non linear function, the derivative can change from one point to the next, so this slope is only guaranteed to be accurate for an infinitely small step size. In practice, people just often use "small" step sizes and calling it good enough, which is what we'll be doing momentarily.
 
-Now that you realize you already knew what a derivative is, we have to talk about partial derivatives.  There really isn't anything very scary about them and they still mean the exact same thing - they are the slope!  They are even calculated the exact same way, but they use a fancier looking d in their notation: $latex \\frac{\\partial y}{\\partial x}$.
+Now that you realize you already knew what a derivative is, we have to talk about partial derivatives.  There really isn't anything very scary about them and they still mean the exact same thing - they are the slope!  They are even calculated the exact same way, but they use a fancier looking d in their notation: $latex \frac{\partial y}{\partial x}$.
 
-The reason partial derivatives even exist is because if you have a function of multiple variables like $latex z=f(x,y)=x^2+3y+2$, you have two variables that you can take the derivative of.  You can calculate $latex \\frac{\\partial z}{\\partial x}$ and $latex \\frac{\\partial z}{\\partial y}$.  The first value tells you how much the z value changes for a change in x, the second value tells you how much the z value changes for a change in y.
+The reason partial derivatives even exist is because if you have a function of multiple variables like $latex z=f(x,y)=x^2+3y+2$, you have two variables that you can take the derivative of.  You can calculate $latex \frac{\partial z}{\partial x}$ and $latex \frac{\partial z}{\partial y}$.  The first value tells you how much the z value changes for a change in x, the second value tells you how much the z value changes for a change in y.
 
 By the way, if you are curious, the partial derivatives for that function above are below.  When calculating partial derivatives, any variable that isn't the one you care about, you just treat as a constant and do normal derivation.
 
-$latex \\frac{\\partial z}{\\partial x} = 2x\\\\
-\\frac{\\partial z}{\\partial y} = 3\\\\
+$latex \frac{\partial z}{\partial x} = 2x\\
+\frac{\partial z}{\partial y} = 3\\
 $
 
-If you put both of those values together into a vector $latex (\\frac{\\partial z}{\\partial x},\\frac{\\partial z}{\\partial y})$ you have what is called the gradient vector.
+If you put both of those values together into a vector $latex (\frac{\partial z}{\partial x},\frac{\partial z}{\partial y})$ you have what is called the gradient vector.
 
 The gradient vector has an interesting property, which is that it points in the direction that makes the function output grow the most.  Basically, if you think of your function as a surface, it points up the steepest direction of the surface, from the point you evaluated the function at.
 
@@ -62982,7 +62982,7 @@ Using dual numbers, you would evaluate the output of the network, using dual num
 
 Another way to get the gradient vector is by doing so numerically using finite differences.  You can read about numerical derivatives on my post here: <a href="http://blog.demofox.org/2015/08/02/finite-differences/" target="_blank">Finite Differences</a>
 
-Basically what you would do is if you were trying to calculate the partial derivative of a weight, like $latex \\frac{\\partial Cost}{\\partial Weight0}$, you would first calculate the cost of the network as usual, then you would add a small value to Weight0 and evaluate the cost again.  You subtract the new cost from the old cost, and divide by the small value you added to Weight0.  This will give you the partial derivative for that weight value.  You'd repeat this for all your weights and biases.
+Basically what you would do is if you were trying to calculate the partial derivative of a weight, like $latex \frac{\partial Cost}{\partial Weight0}$, you would first calculate the cost of the network as usual, then you would add a small value to Weight0 and evaluate the cost again.  You subtract the new cost from the old cost, and divide by the small value you added to Weight0.  This will give you the partial derivative for that weight value.  You'd repeat this for all your weights and biases.
 
 Since realistic neural networks often have MANY MANY weights and biases, calculating the gradient numerically is a REALLY REALLY slow process because of how many times you have to run the network to get cost values with adjusted weights.  The only upside is that this method is even easier to implement than dual numbers.  You can literally stop reading and go do this right now if you want to :P
 
@@ -63011,10 +63011,10 @@ That might look weird or confusing, but since we know that derivatives are actua
 $latex 3/2 = 1.5$
 
 So far so good?  Now let's choose some number out of the air - say, 5 - and do the same thing we did with the chain rule
-$latex 3/2 = \\\\
-3/5 * 5/2 = \\\\
-15/10 = \\\\
-3/2 = \\\\
+$latex 3/2 = \\
+3/5 * 5/2 = \\
+15/10 = \\
+3/2 = \\
 1.5$
 
 Due to doing the reverse of cross cancellation, we are able to inject multiplicative terms into fractions (and derivatives!) and come up with the same answer.
@@ -63049,20 +63049,20 @@ Let's work through the training process manually.
 
 We put a 1 as input and calculate Z which is the "weighted input" of the neuron.
 
-$latex Z = input*weight+bias \\\\
-Z = 1*0.3+0.5 \\\\
+$latex Z = input*weight+bias \\
+Z = 1*0.3+0.5 \\
 Z = 0.8$
 
 Next, we need to calculate O which is the neuron output.  We calculate this by putting the weighted input through the sigmoid activation function.
 
-$latex O = \\sigma(0.8) \\\\
+$latex O = \sigma(0.8) \\
 O = 0.6900$
 
 The last step of the "forward pass" is to calculate the cost.  We are going to use half squared error as our cost, to slightly simplify some math.
 
-$latex Cost = 0.5*||target - actual||^2\\\\
-Cost = 0.5*||0-0.6900||^2\\\\
-Cost = 0.5*0.4761\\\\
+$latex Cost = 0.5*||target - actual||^2\\
+Cost = 0.5*||0-0.6900||^2\\
+Cost = 0.5*0.4761\\
 Cost = 0.238
 $
 
@@ -63070,63 +63070,63 @@ Now the backpropagation pass begins, which will give us the partial derivatives 
 
 First we want to calculate dCost/dO which tells us how much the cost changes when the neuron output changes.  Thanks to the nice form of our cost function, that value is simple to calculate:
 
-$latex \\frac{\\partial Cost}{\\partial O} = O - target\\\\
-\\frac{\\partial Cost}{\\partial O} = 0.69 - 0\\\\
-\\frac{\\partial Cost}{\\partial O} = 0.69$
+$latex \frac{\partial Cost}{\partial O} = O - target\\
+\frac{\partial Cost}{\partial O} = 0.69 - 0\\
+\frac{\partial Cost}{\partial O} = 0.69$
 
 Next we want to calculate dO/dZ which tells us how much the neuron output changes when the neuron's weighted input changes.  The activation function we used also makes this very easy to calculate:
 
-$latex \\frac{\\partial O}{\\partial Z} = O * (1-O)\\\\
-\\frac{\\partial O}{\\partial Z} = 0.69 * 0.31\\\\
-\\frac{\\partial O}{\\partial Z} = 0.2139$
+$latex \frac{\partial O}{\partial Z} = O * (1-O)\\
+\frac{\partial O}{\partial Z} = 0.69 * 0.31\\
+\frac{\partial O}{\partial Z} = 0.2139$
 
 Next we are going to multiply these two values together to get dCost/dZ which tells us how much the cost changes when the weighted input to the neuron changes.
 
-$latex \\frac{\\partial Cost}{\\partial Z} = \\frac{\\partial Cost}{\\partial O} * \\frac{\\partial O}{\\partial Z}\\\\
-\\frac{\\partial Cost}{\\partial Z} = 0.69 * 0.2139 \\\\
-\\frac{\\partial Cost}{\\partial Z} = 0.1476$
+$latex \frac{\partial Cost}{\partial Z} = \frac{\partial Cost}{\partial O} * \frac{\partial O}{\partial Z}\\
+\frac{\partial Cost}{\partial Z} = 0.69 * 0.2139 \\
+\frac{\partial Cost}{\partial Z} = 0.1476$
 
 This value has two special meanings.  Firstly, this value represents the amount of error in this neuron.  Secondly, this value represents dCost/dBias, which is one of the values we need to do training!
 
-$latex \\frac{\\partial Cost}{\\partial bias} = \\frac{\\partial Cost}{\\partial Z}\\\\
-\\frac{\\partial Cost}{\\partial bias} = 0.1476\\\\$
+$latex \frac{\partial Cost}{\partial bias} = \frac{\partial Cost}{\partial Z}\\
+\frac{\partial Cost}{\partial bias} = 0.1476\\$
 
 Next, we need dZ/dWeight, which tells us how much the weighted input of the neuron changes when you change the weight.  This is just the input value, which is 1.  This makes intuitive sense because if you added 1.0 to the weight, Z would grow by whatever the input is.
 
 Now that we have dCost/dZ and dZ/dWeight, we can calculate dCost/dWeight:
 
-$latex \\frac{\\partial Cost}{\\partial Weight} = \\frac{\\partial Cost}{\\partial Z} * \\frac{\\partial Z}{\\partial Weight}\\\\
-\\frac{\\partial Cost}{\\partial Weight} = 0.1476 * 1\\\\
-\\frac{\\partial Cost}{\\partial Weight} = 0.1476$
+$latex \frac{\partial Cost}{\partial Weight} = \frac{\partial Cost}{\partial Z} * \frac{\partial Z}{\partial Weight}\\
+\frac{\partial Cost}{\partial Weight} = 0.1476 * 1\\
+\frac{\partial Cost}{\partial Weight} = 0.1476$
 
 We now have the partial derivatives we need to be able to train our network!
 
 Using a learning rate of 0.5, we'll first update our weight:
 
-$latex Weight = Weight - \\frac{\\partial Cost}{\\partial Weight} * 0.5\\\\
-Weight = 0.3 - 0.1476 * 0.5\\\\
+$latex Weight = Weight - \frac{\partial Cost}{\partial Weight} * 0.5\\
+Weight = 0.3 - 0.1476 * 0.5\\
 Weight = 0.2262$
 
 Then we'll update our bias:
 
-$latex Bias = Bias - \\frac{\\partial Cost}{\\partial Bias } * 0.5\\\\
-Bias = 0.5 - 0.1476 * 0.5\\\\
+$latex Bias = Bias - \frac{\partial Cost}{\partial Bias } * 0.5\\
+Bias = 0.5 - 0.1476 * 0.5\\
 Bias = 0.4262$
 
 Our network has learned a very small amount!
 
 To verify this, let's calculate the network's output and cost with these new values.
 
-$latex Z = input*weight+bias \\\\
-Z = 1*0.2262+0.4262 \\\\
-Z = 0.6524\\\\
-\\\\
-O = \\sigma(0.6524) \\\\
-O = 0.6576\\\\
-\\\\
-Cost = 0.5*||target - actual||^2\\\\
-Cost = 0.5*||0-0.6576||^2\\\\
-Cost = 0.5*0.4324\\\\
+$latex Z = input*weight+bias \\
+Z = 1*0.2262+0.4262 \\
+Z = 0.6524\\
+\\
+O = \sigma(0.6524) \\
+O = 0.6576\\
+\\
+Cost = 0.5*||target - actual||^2\\
+Cost = 0.5*||0-0.6576||^2\\
+Cost = 0.5*0.4324\\
 Cost = 0.2162
 $
 
@@ -63150,16 +63150,16 @@ We have two training examples, and we are training the neuron to act like a NOT 
 The first thing we do is calculate the derivatives (gradient vector) for each of the inputs.
 
 We already calculated the "input 1, output 0" derivatives in the last example:
-$latex \\frac{\\partial Cost}{\\partial Weight} = 0.1476 \\\\
-\\frac{\\partial Cost}{\\partial Bias} = 0.1476$
+$latex \frac{\partial Cost}{\partial Weight} = 0.1476 \\
+\frac{\partial Cost}{\partial Bias} = 0.1476$
 
 If we follow the same steps with the "input 0, output 1" training example we get these:
-$latex \\frac{\\partial Cost}{\\partial Weight} = 0.0 \\\\
-\\frac{\\partial Cost}{\\partial Bias} = -0.0887$
+$latex \frac{\partial Cost}{\partial Weight} = 0.0 \\
+\frac{\partial Cost}{\partial Bias} = -0.0887$
 
 To get the actual derivatives to train the network with, we just average them!
-$latex \\frac{\\partial Cost}{\\partial Weight} = 0.0738 \\\\
-\\frac{\\partial Cost}{\\partial Bias} = 0.0294$
+$latex \frac{\partial Cost}{\partial Weight} = 0.0738 \\
+\frac{\partial Cost}{\partial Bias} = 0.0294$
 
 From there, we do the same adjustments as before to the weight and bias values to get a weight of 0.2631 and a bias of 0.4853.
 
@@ -63181,84 +63181,84 @@ Let's look at how we'd calculate the derivatives needed to train this network us
 
 First comes the forward pass where we calculate the network's output when we give it 01 as input.
 
-$latex Z0=input0*weight0+input1*weight1+bias0 \\\\
-Z0=0*0.2+1*0.8+0.5 \\\\
-Z0=1.3 \\\\
-\\\\
-O0=\\sigma(1.3) \\\\
-O0=0.7858\\\\
-\\\\
-Z1=input0*weight2+input0*weight3+bias1\\\\
-Z1=0*0.6+1*0.4+0.1\\\\
-Z1=0.5\\\\
-\\\\
-O1=\\sigma(0.5)\\\\
+$latex Z0=input0*weight0+input1*weight1+bias0 \\
+Z0=0*0.2+1*0.8+0.5 \\
+Z0=1.3 \\
+\\
+O0=\sigma(1.3) \\
+O0=0.7858\\
+\\
+Z1=input0*weight2+input0*weight3+bias1\\
+Z1=0*0.6+1*0.4+0.1\\
+Z1=0.5\\
+\\
+O1=\sigma(0.5)\\
 O1=0.6225$
 
 Next we calculate a cost.  We don't strictly need to do this step since we don't use this value during backpropagation, but this will be useful to verify that we've improved things after an iteration of training.
 
-$latex Cost=0.5*||target-actual||^2\\\\
-Cost=0.5*||(1,0)-(0.7858,0.6225)||^2\\\\
-Cost=0.5*||(0.2142,-0.6225)||^2\\\\
-Cost=0.5*0.6583^2\\\\
+$latex Cost=0.5*||target-actual||^2\\
+Cost=0.5*||(1,0)-(0.7858,0.6225)||^2\\
+Cost=0.5*||(0.2142,-0.6225)||^2\\
+Cost=0.5*0.6583^2\\
 Cost=0.2167$
 
 Now we begin the backwards pass to calculate the derivatives that we'll need for training.
 
 Let's calculate dCost/dZ0 aka the error in neuron 0.  We'll do this by calculating dCost/dO0, then dO0/dZ0 and then multiplying them together to get dCost/dZ0.  Just like before, this is also the derivative for the bias of the neuron, so this value is also dCost/dBias0.
 
-$latex \\frac{\\partial Cost}{\\partial O0}=O0-target0\\\\
-\\frac{\\partial Cost}{\\partial O0}=0.7858-1\\\\
-\\frac{\\partial Cost}{\\partial O0}=-0.2142\\\\
-\\\\
-\\frac{\\partial O0}{\\partial Z0} = O0 * (1-O0)\\\\
-\\frac{\\partial O0}{\\partial Z0} = 0.7858 * 0.2142\\\\
-\\frac{\\partial O0}{\\partial Z0} = 0.1683\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Z0} = \\frac{\\partial Cost}{\\partial O0} * \\frac{\\partial O0}{\\partial Z0}\\\\
-\\frac{\\partial Cost}{\\partial Z0} = -0.2142 * 0.1683\\\\
-\\frac{\\partial Cost}{\\partial Z0} = -0.0360\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Bias0} = -0.0360
+$latex \frac{\partial Cost}{\partial O0}=O0-target0\\
+\frac{\partial Cost}{\partial O0}=0.7858-1\\
+\frac{\partial Cost}{\partial O0}=-0.2142\\
+\\
+\frac{\partial O0}{\partial Z0} = O0 * (1-O0)\\
+\frac{\partial O0}{\partial Z0} = 0.7858 * 0.2142\\
+\frac{\partial O0}{\partial Z0} = 0.1683\\
+\\
+\frac{\partial Cost}{\partial Z0} = \frac{\partial Cost}{\partial O0} * \frac{\partial O0}{\partial Z0}\\
+\frac{\partial Cost}{\partial Z0} = -0.2142 * 0.1683\\
+\frac{\partial Cost}{\partial Z0} = -0.0360\\
+\\
+\frac{\partial Cost}{\partial Bias0} = -0.0360
 $
 
 We can use dCost/dZ0 to calculate dCost/dWeight0 and dCost/dWeight1 by multiplying it by dZ0/dWeight0 and dZ0/dWeight1, which are input0 and input1 respectively.
 
-$latex \\frac{\\partial Cost}{\\partial Weight0} = \\frac{\\partial Cost}{\\partial Z0} * \\frac{\\partial Z0}{\\partial Weight0} \\\\
-\\frac{\\partial Cost}{\\partial Weight0} = -0.0360 * 0 \\\\
-\\frac{\\partial Cost}{\\partial Weight0} = 0\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Weight1} = \\frac{\\partial Cost}{\\partial Z0} * \\frac{\\partial Z0}{\\partial Weight1} \\\\
-\\frac{\\partial Cost}{\\partial Weight1} = -0.0360 * 1 \\\\
-\\frac{\\partial Cost}{\\partial Weight1} = -0.0360
+$latex \frac{\partial Cost}{\partial Weight0} = \frac{\partial Cost}{\partial Z0} * \frac{\partial Z0}{\partial Weight0} \\
+\frac{\partial Cost}{\partial Weight0} = -0.0360 * 0 \\
+\frac{\partial Cost}{\partial Weight0} = 0\\
+\\
+\frac{\partial Cost}{\partial Weight1} = \frac{\partial Cost}{\partial Z0} * \frac{\partial Z0}{\partial Weight1} \\
+\frac{\partial Cost}{\partial Weight1} = -0.0360 * 1 \\
+\frac{\partial Cost}{\partial Weight1} = -0.0360
 $
 
 Next we need to calculate dCost/dZ1 aka the error in neuron 1.  We'll do this like before.  We'll calculate dCost/dO1, then dO1/dZ1 and then multiplying them together to get dCost/dZ1.  Again, this is also the derivative for the bias of the neuron, so this value is also dCost/dBias1.
 
-$latex \\frac{\\partial Cost}{\\partial O1}=O1-target1\\\\
-\\frac{\\partial Cost}{\\partial O1}=0.6225-0\\\\
-\\frac{\\partial Cost}{\\partial O1}=0.6225\\\\
-\\\\
-\\frac{\\partial O1}{\\partial Z1} = O1 * (1-O1)\\\\
-\\frac{\\partial O1}{\\partial Z1} = 0.6225 * 0.3775\\\\
-\\frac{\\partial O1}{\\partial Z1} = 0.235\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Z1} = \\frac{\\partial Cost}{\\partial O1} * \\frac{\\partial O1}{\\partial Z1}\\\\
-\\frac{\\partial Cost}{\\partial Z1} = 0.6225 * 0.235\\\\
-\\frac{\\partial Cost}{\\partial Z1} = 0.1463\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Bias1} = 0.1463
+$latex \frac{\partial Cost}{\partial O1}=O1-target1\\
+\frac{\partial Cost}{\partial O1}=0.6225-0\\
+\frac{\partial Cost}{\partial O1}=0.6225\\
+\\
+\frac{\partial O1}{\partial Z1} = O1 * (1-O1)\\
+\frac{\partial O1}{\partial Z1} = 0.6225 * 0.3775\\
+\frac{\partial O1}{\partial Z1} = 0.235\\
+\\
+\frac{\partial Cost}{\partial Z1} = \frac{\partial Cost}{\partial O1} * \frac{\partial O1}{\partial Z1}\\
+\frac{\partial Cost}{\partial Z1} = 0.6225 * 0.235\\
+\frac{\partial Cost}{\partial Z1} = 0.1463\\
+\\
+\frac{\partial Cost}{\partial Bias1} = 0.1463
 $
 
 Just like with neuron 0, we can use dCost/dZ1 to calculate dCost/dWeight2 and dCost/dWeight3 by multiplying it by dZ1/dWeight2 and dZ1/dWeight2, which are input0 and input1 respectively.
 
-$latex \\frac{\\partial Cost}{\\partial Weight2} = \\frac{\\partial Cost}{\\partial Z1} * \\frac{\\partial Z1}{\\partial Weight2} \\\\
-\\frac{\\partial Cost}{\\partial Weight2} = 0.1463 * 0 \\\\
-\\frac{\\partial Cost}{\\partial Weight2} = 0\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Weight3} = \\frac{\\partial Cost}{\\partial Z1} * \\frac{\\partial Z1}{\\partial Weight3} \\\\
-\\frac{\\partial Cost}{\\partial Weight3} = 0.1463 * 1 \\\\
-\\frac{\\partial Cost}{\\partial Weight3} = 0.1463
+$latex \frac{\partial Cost}{\partial Weight2} = \frac{\partial Cost}{\partial Z1} * \frac{\partial Z1}{\partial Weight2} \\
+\frac{\partial Cost}{\partial Weight2} = 0.1463 * 0 \\
+\frac{\partial Cost}{\partial Weight2} = 0\\
+\\
+\frac{\partial Cost}{\partial Weight3} = \frac{\partial Cost}{\partial Z1} * \frac{\partial Z1}{\partial Weight3} \\
+\frac{\partial Cost}{\partial Weight3} = 0.1463 * 1 \\
+\frac{\partial Cost}{\partial Weight3} = 0.1463
 $
 
 After using these derivatives to update the weights and biases with a learning rate of 0.5, they become:
@@ -63290,41 +63290,41 @@ This is the last example, implemented as Example4() in the sample code. Two inpu
 
 First comes the forward pass where we calculate the network's output.  We'll give it 0.05 and 0.1 as input, and we'll say our desired output is 0.01 and 0.99.
 
-$latex Z0=input0*weight0+input1*weight1+bias0 \\\\
-Z0=0.05*0.15+0.1*0.2+0.35 \\\\
-Z0=0.3775 \\\\
-\\\\
-O0=\\sigma(0.3775) \\\\
-O0=0.5933 \\\\
-\\\\
-Z1=input0*weight2+input1*weight3+bias1\\\\
-Z1=0.05*0.25+0.1*0.3+0.35\\\\
-Z1=0.3925\\\\
-\\\\
-O1=\\sigma(0.3925)\\\\
-O1=0.5969\\\\
-\\\\
-Z2=O0*weight4+O1*weight5+bias2\\\\
-Z2=0.5933*0.4+0.5969*0.45+0.6\\\\
-Z2=1.106\\\\
-\\\\
-O2=\\sigma(1.106)\\\\
-O2=0.7514\\\\
-\\\\
-Z3=O0*weight6+O1*weight7+bias3\\\\
-Z3=0.5933*0.5+0.5969*0.55+0.6\\\\
-Z3=1.225\\\\
-\\\\
-O3=\\sigma(1.225)\\\\
+$latex Z0=input0*weight0+input1*weight1+bias0 \\
+Z0=0.05*0.15+0.1*0.2+0.35 \\
+Z0=0.3775 \\
+\\
+O0=\sigma(0.3775) \\
+O0=0.5933 \\
+\\
+Z1=input0*weight2+input1*weight3+bias1\\
+Z1=0.05*0.25+0.1*0.3+0.35\\
+Z1=0.3925\\
+\\
+O1=\sigma(0.3925)\\
+O1=0.5969\\
+\\
+Z2=O0*weight4+O1*weight5+bias2\\
+Z2=0.5933*0.4+0.5969*0.45+0.6\\
+Z2=1.106\\
+\\
+O2=\sigma(1.106)\\
+O2=0.7514\\
+\\
+Z3=O0*weight6+O1*weight7+bias3\\
+Z3=0.5933*0.5+0.5969*0.55+0.6\\
+Z3=1.225\\
+\\
+O3=\sigma(1.225)\\
 O3=0.7729
 $
 
 Next we calculate the cost, taking O2 and O3 as our actual output, and 0.01 and 0.99 as our target (desired) output.
 
-$latex Cost=0.5*||target-actual||^2\\\\
-Cost=0.5*||(0.01,0.99)-(0.7514,0.7729)||^2\\\\
-Cost=0.5*||(-0.7414,-0.2171)||^2\\\\
-Cost=0.5*0.7725^2\\\\
+$latex Cost=0.5*||target-actual||^2\\
+Cost=0.5*||(0.01,0.99)-(0.7514,0.7729)||^2\\
+Cost=0.5*||(-0.7414,-0.2171)||^2\\
+Cost=0.5*0.7725^2\\
 Cost=0.2984$
 
 Now we start the backward pass to calculate the derivatives for training.
@@ -63333,19 +63333,19 @@ Now we start the backward pass to calculate the derivatives for training.
 
 First we'll calculate dCost/dZ2 aka the error in neuron 2, remembering that the value is also dCost/dBias2.
 
-$latex \\frac{\\partial Cost}{\\partial O2}=O2-target0\\\\
-\\frac{\\partial Cost}{\\partial O2}=0.7514-0.01\\\\
-\\frac{\\partial Cost}{\\partial O2}=0.7414\\\\
-\\\\
-\\frac{\\partial O2}{\\partial Z2} = O2 * (1-O2)\\\\
-\\frac{\\partial O2}{\\partial Z2} = 0.7514 * 0.2486\\\\
-\\frac{\\partial O2}{\\partial Z2} = 0.1868\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Z2} = \\frac{\\partial Cost}{\\partial O2} * \\frac{\\partial O2}{\\partial Z2}\\\\
-\\frac{\\partial Cost}{\\partial Z2} = 0.7414 * 0.1868\\\\
-\\frac{\\partial Cost}{\\partial Z2} = 0.1385\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Bias2} = 0.1385
+$latex \frac{\partial Cost}{\partial O2}=O2-target0\\
+\frac{\partial Cost}{\partial O2}=0.7514-0.01\\
+\frac{\partial Cost}{\partial O2}=0.7414\\
+\\
+\frac{\partial O2}{\partial Z2} = O2 * (1-O2)\\
+\frac{\partial O2}{\partial Z2} = 0.7514 * 0.2486\\
+\frac{\partial O2}{\partial Z2} = 0.1868\\
+\\
+\frac{\partial Cost}{\partial Z2} = \frac{\partial Cost}{\partial O2} * \frac{\partial O2}{\partial Z2}\\
+\frac{\partial Cost}{\partial Z2} = 0.7414 * 0.1868\\
+\frac{\partial Cost}{\partial Z2} = 0.1385\\
+\\
+\frac{\partial Cost}{\partial Bias2} = 0.1385
 $
 
 We can use dCost/dZ2 to calculate dCost/dWeight4 and dCost/dWeight5.
@@ -63366,19 +63366,19 @@ $
 
 Next we'll calculate dCost/dZ3 aka the error in neuron 3, which is also dCost/dBias3.
 
-$latex \\frac{\\partial Cost}{\\partial O3}=O3-target1\\\\
-\\frac{\\partial Cost}{\\partial O3}=0.7729-0.99\\\\
-\\frac{\\partial Cost}{\\partial O3}=-0.2171\\\\
-\\\\
-\\frac{\\partial O3}{\\partial Z3} = O3 * (1-O3)\\\\
-\\frac{\\partial O3}{\\partial Z3} = 0.7729 * 0.2271\\\\
-\\frac{\\partial O3}{\\partial Z3} = 0.1755\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Z3} = \\frac{\\partial Cost}{\\partial O3} * \\frac{\\partial O3}{\\partial Z3}\\\\
-\\frac{\\partial Cost}{\\partial Z3} = -0.2171 * 0.1755\\\\
-\\frac{\\partial Cost}{\\partial Z3} = -0.0381\\\\
-\\\\
-\\frac{\\partial Cost}{\\partial Bias3} = -0.0381
+$latex \frac{\partial Cost}{\partial O3}=O3-target1\\
+\frac{\partial Cost}{\partial O3}=0.7729-0.99\\
+\frac{\partial Cost}{\partial O3}=-0.2171\\
+\\
+\frac{\partial O3}{\partial Z3} = O3 * (1-O3)\\
+\frac{\partial O3}{\partial Z3} = 0.7729 * 0.2271\\
+\frac{\partial O3}{\partial Z3} = 0.1755\\
+\\
+\frac{\partial Cost}{\partial Z3} = \frac{\partial Cost}{\partial O3} * \frac{\partial O3}{\partial Z3}\\
+\frac{\partial Cost}{\partial Z3} = -0.2171 * 0.1755\\
+\frac{\partial Cost}{\partial Z3} = -0.0381\\
+\\
+\frac{\partial Cost}{\partial Bias3} = -0.0381
 $
 
 We can use dCost/dZ3 to calculate dCost/dWeight6 and dCost/dWeight7.
@@ -65630,34 +65630,34 @@ To map some range of x values from -1 to 1, we'll need to decide on what x value
 
 Given a left and right value, and an x value we want to map to the range, perhaps the most straight forward way to do it would be this:
 
-$latex XOut = \\frac{X-Left}{Right-Left} * 2 - 1$
+$latex XOut = \frac{X-Left}{Right-Left} * 2 - 1$
 
 The division calculates the percentage of how far X is between left and right.  Multiplying that by 2 and subtracting 1 changes it so instead of valid points being from 0 to 1 (aka from 0% to 100%), they are instead between -1 and 1.
 
 Let's change this formula so that there is one term that is multiplied by X and another term that has everything else. (Wondering why? It's because I'm cheating and know the final form. Don't feel bad if it isn't intuitive why we'd do this!)
 
-$latex \\frac{X-Left}{Right-Left} * 2 - 1 =\\\\
-\\\\
-\\frac{2(X-Left)}{Right-Left} - 1 =\\\\
-\\\\
-\\frac{2X-2*Left}{Right-Left} - 1 =\\\\
-\\\\
-\\frac{2X-2*Left}{Right-Left} - \\frac{Right-Left}{Right-Left} =\\\\
-\\\\
-\\frac{2X-2*Left-(Right-Left)}{Right-Left} =\\\\
-\\\\
-\\frac{2X-2*Left-Right+Left}{Right-Left} =\\\\
-\\\\
-\\frac{2X-Left-Right}{Right-Left} =\\\\
-\\\\
-\\frac{2X}{Right-Left} - \\frac{Right+Left}{Right-Left} =\\\\
-\\\\
-\\frac{2}{Right-Left}X - \\frac{Right+Left}{Right-Left}\\\\
+$latex \frac{X-Left}{Right-Left} * 2 - 1 =\\
+\\
+\frac{2(X-Left)}{Right-Left} - 1 =\\
+\\
+\frac{2X-2*Left}{Right-Left} - 1 =\\
+\\
+\frac{2X-2*Left}{Right-Left} - \frac{Right-Left}{Right-Left} =\\
+\\
+\frac{2X-2*Left-(Right-Left)}{Right-Left} =\\
+\\
+\frac{2X-2*Left-Right+Left}{Right-Left} =\\
+\\
+\frac{2X-Left-Right}{Right-Left} =\\
+\\
+\frac{2X}{Right-Left} - \frac{Right+Left}{Right-Left} =\\
+\\
+\frac{2}{Right-Left}X - \frac{Right+Left}{Right-Left}\\
 $
 
 Setting up the formula this way allows us to transform the x component of an (x,y,z,1) point using a dot product:
 
-$latex (x,y,z,1) \\cdot (\\frac{2}{Right-Left},0,0,-\\frac{Right+Left}{Right-Left}) = \\frac{2}{Right-Left}X - \\frac{Right+Left}{Right-Left}$
+$latex (x,y,z,1) \cdot (\frac{2}{Right-Left},0,0,-\frac{Right+Left}{Right-Left}) = \frac{2}{Right-Left}X - \frac{Right+Left}{Right-Left}$
 
 A dot product is what happens during matrix multiplication, so if we put this into a 4x4 matrix, we get the same result.  Let's check that out.
 
@@ -65831,7 +65831,7 @@ There's some fine print though that isn't talked about until quite a bit later.
 
 Let's have a look at three unknowns in two equations:
 
-$latex A + B + C = 2 \\\\
+$latex A + B + C = 2 \\
 B = 5$
 
 If we just need a third equation to solve this, why not just modify the second equation to make a third?
@@ -66887,9 +66887,9 @@ If you have four control points A,B,C,D then the first slice of the volume textu
 <img src="http://blog.demofox.org/wp-content/uploads/2017/04/3dold.png"/>
 
 $latex 
-A = C_0 \\\\
-B = C_1 \\\\
-C = C_2 \\\\
+A = C_0 \\
+B = C_1 \\
+C = C_2 \\
 D = C_3
 $
 
