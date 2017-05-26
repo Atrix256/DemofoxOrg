@@ -20080,11 +20080,11 @@ At the bottom of this post is the C++ code that generated the images in this pos
 
 50 uniformly distributed random numbers generated with std::mt19937:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/UniformRandom1D_.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/uniformrandom1d_.png"/>
 
 50 evenly spaced non random numbers:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/Uniform1D_.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/uniform1d_.png"/>
 
 If you find yourself in this situation of wanting at least some randomness, but you want better coverage than plain vanilla random numbers, as you might guess, you do have some options!
 
@@ -28343,9 +28343,9 @@ Here are 2 really interesting links on computing and using soft max:
 
 Check out the images below for an example of when you might use this.  This is from a shadertoy shader <a href="https://www.shadertoy.com/view/XdB3Dw" title="The Popular Shader" target="_blank">The Popular Shader</a>.  The first image is with using normal max, and the second image uses soft max.
 
-<img src="https://demofox2.files.wordpress.com/2014/02/softminOFF.png" alt="softminOFF" width="802" height="483" class="alignnone size-full wp-image-878" />
+<img src="https://demofox2.files.wordpress.com/2014/02/softminoff.png" alt="softminOFF" width="802" height="483" class="alignnone size-full wp-image-878" />
 
-<img src="https://demofox2.files.wordpress.com/2014/02/softminON.png" alt="softminON" width="800" height="483" class="alignnone size-full wp-image-879" />]]></content:encoded>
+<img src="https://demofox2.files.wordpress.com/2014/02/softminon.png" alt="softminON" width="800" height="483" class="alignnone size-full wp-image-879" />]]></content:encoded>
 		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
 		<wp:post_id>876</wp:post_id>
 		<wp:post_date><![CDATA[2014-02-20 12:13:19]]></wp:post_date>
@@ -28930,7 +28930,7 @@ void main (void)
 		<dc:creator><![CDATA[admin]]></dc:creator>
 		<guid isPermaLink="false">http://blog.demofox.org/?p=977</guid>
 		<description></description>
-		<content:encoded><![CDATA[<a href="https://demofox2.files.wordpress.com/2014/06/AnalyticFog.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/AnalyticFog-1024x576.png" alt="AnalyticFog" width="1024" height="576" class="aligncenter size-large wp-image-1011" /></a>
+		<content:encoded><![CDATA[<a href="https://demofox2.files.wordpress.com/2014/06/AnalyticFog.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/analyticfog-1024x576.png" alt="AnalyticFog" width="1024" height="576" class="aligncenter size-large wp-image-1011" /></a>
 
 There are a number of ways to implement the effect of fog with modern real time rendered graphics.  This blog post will explain how to render fog that has varying density, based on a function of X,Y,Z location in space, like in the picture above.
 
@@ -28952,7 +28952,7 @@ In any case, the first thing you need to do when fogging is figure out the point
 
 <h1>Constant Density Fog</h1>
 
-<img src="https://demofox2.files.wordpress.com/2014/06/GraphConstant.png" alt="GraphConstant" width="397" height="266" class="aligncenter size-full wp-image-1014" />
+<img src="https://demofox2.files.wordpress.com/2014/06/graphconstant.png" alt="GraphConstant" width="397" height="266" class="aligncenter size-full wp-image-1014" />
 
 The simplest sort of fog is fog that has the same density all throughout it.
 
@@ -28964,19 +28964,19 @@ Doing this, you know the pixel should be 40% fogged, so you interpolate the pixe
 
 The image below shows a constant fog density of 0.04.
 
-<a href="https://demofox2.files.wordpress.com/2014/06/ConstantFog1.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/ConstantFog1-1024x545.png" alt="ConstantFog1" width="1024" height="545" class="aligncenter size-large wp-image-992" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/ConstantFog1.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/constantfog1-1024x545.png" alt="ConstantFog1" width="1024" height="545" class="aligncenter size-large wp-image-992" /></a>
 
 Here's an image of the same constant density fog as viewed from inside the fog:
 
-<a href="https://demofox2.files.wordpress.com/2014/06/ConstantFog3.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/ConstantFog3-1024x544.png" alt="ConstantFog3" width="1024" height="544" class="aligncenter size-large wp-image-997" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/ConstantFog3.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/constantfog3-1024x544.png" alt="ConstantFog3" width="1024" height="544" class="aligncenter size-large wp-image-997" /></a>
 
 A problem with constant fog density though, is that if you view it from edge on, you'll get a very noticeable hard edge where the fog begins, like you can see in the image below:
 
-<a href="https://demofox2.files.wordpress.com/2014/06/ConstantFog2.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/ConstantFog2-1024x546.png" alt="ConstantFog2" width="1024" height="546" class="aligncenter size-large wp-image-995" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/ConstantFog2.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/constantfog2-1024x546.png" alt="ConstantFog2" width="1024" height="546" class="aligncenter size-large wp-image-995" /></a>
 
 <h1>Linear Density Fog</h1>
 
-<img src="https://demofox2.files.wordpress.com/2014/06/GraphLinear.png" alt="GraphLinear" width="400" height="301" class="aligncenter size-full wp-image-1015" />
+<img src="https://demofox2.files.wordpress.com/2014/06/graphlinear.png" alt="GraphLinear" width="400" height="301" class="aligncenter size-full wp-image-1015" />
 
 With linear fog density, the fog gets denser linearly, the farther you go into the fog.
 
@@ -28988,19 +28988,19 @@ FogDensity(Point, Plane) = (Plane.NormX * Point.X + Plane.NormY * Point.Y + Plan
 
 Here's a picture of linear fog with a fog growth factor of 0.01:
 
-<a href="https://demofox2.files.wordpress.com/2014/06/LinearFog1.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/LinearFog1-1024x545.png" alt="LinearFog1" width="1024" height="545" class="aligncenter size-large wp-image-1002" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/LinearFog1.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/linearfog1-1024x545.png" alt="LinearFog1" width="1024" height="545" class="aligncenter size-large wp-image-1002" /></a>
 
 The same fog viewed from the inside:
 
-<a href="https://demofox2.files.wordpress.com/2014/06/LinearFog2.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/LinearFog2-1024x546.png" alt="LinearFog2" width="1024" height="546" class="aligncenter size-large wp-image-1003" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/LinearFog2.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/linearfog2-1024x546.png" alt="LinearFog2" width="1024" height="546" class="aligncenter size-large wp-image-1003" /></a>
 
 And lastly, the fog viewed edge on to show that the "hard line" problem of linear fog is gone (dramatic difference isn't it?!):
 
-<a href="https://demofox2.files.wordpress.com/2014/06/LinearFog3.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/LinearFog3-1024x546.png" alt="LinearFog3" width="1024" height="546" class="aligncenter size-large wp-image-1004" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/LinearFog3.png" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/linearfog3-1024x546.png" alt="LinearFog3" width="1024" height="546" class="aligncenter size-large wp-image-1004" /></a>
 
 <h1>Analytic Fog Density - Integrals</h1>
 
-<img src="https://demofox2.files.wordpress.com/2014/06/GraphAnalytic.png" alt="GraphAnalytic" width="400" height="258" class="aligncenter size-full wp-image-1016" />
+<img src="https://demofox2.files.wordpress.com/2014/06/graphanalytic.png" alt="GraphAnalytic" width="400" height="258" class="aligncenter size-full wp-image-1016" />
 
 Taking a couple steps further, you might want to use equations to define fog density with some function FogDensity = f(x,y,z,).
 
@@ -29131,7 +29131,7 @@ Here's a good read on fog defined by a plane, that also gets into how to make br
 <a href="https://www.terathon.com/lengyel/Lengyel-UnifiedFog.pdf" target="_blank">Unified Distance Formulas for Halfspace Fog</a>
 
 Interactive ShaderToy.com demo with GLSL pixel shader source code that you can also edit in real time with WebGL:
-<a href="https://www.shadertoy.com/view/ldfXzB" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/Fog.png" alt="Fog" width="641" height="353" class="aligncenter size-full wp-image-979" /></a>]]></content:encoded>
+<a href="https://www.shadertoy.com/view/ldfXzB" target="_blank"><img src="https://demofox2.files.wordpress.com/2014/06/fog.png" alt="Fog" width="641" height="353" class="aligncenter size-full wp-image-979" /></a>]]></content:encoded>
 		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
 		<wp:post_id>977</wp:post_id>
 		<wp:post_date><![CDATA[2014-06-22 11:15:45]]></wp:post_date>
@@ -29224,47 +29224,47 @@ Here are the two source images I used.  The first one is of the "Comic Sans" fon
 <h1>Distance Field Textures in Action</h1>
 
 Here's a shot of the texture usages rendered from a distance:
-<a href="https://demofox2.files.wordpress.com/2014/06/ZoomedOut.png"><img src="https://demofox2.files.wordpress.com/2014/06/ZoomedOut.png" alt="ZoomedOut" width="1280" height="720" class="aligncenter size-full wp-image-1045" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/ZoomedOut.png"><img src="https://demofox2.files.wordpress.com/2014/06/zoomedout.png" alt="ZoomedOut" width="1280" height="720" class="aligncenter size-full wp-image-1045" /></a>
 
 <h1>Font in Action</h1>
 
 Here's a shot of the text close up with the alpha test code:
-<a href="https://demofox2.files.wordpress.com/2014/06/LettersAlphaTest.png"><img src="https://demofox2.files.wordpress.com/2014/06/LettersAlphaTest.png" alt="LettersAlphaTest" width="1280" height="720" class="aligncenter size-full wp-image-1048" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/LettersAlphaTest.png"><img src="https://demofox2.files.wordpress.com/2014/06/lettersalphatest.png" alt="LettersAlphaTest" width="1280" height="720" class="aligncenter size-full wp-image-1048" /></a>
 
 Here's the same shot, using the smooth step code.  Keep in mind that the "8" you are looking at is about 32x32 pixels :P
-<a href="https://demofox2.files.wordpress.com/2014/06/LettersSmooth.png"><img src="https://demofox2.files.wordpress.com/2014/06/LettersSmooth.png" alt="LettersSmooth" width="1280" height="720" class="aligncenter size-full wp-image-1049" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/LettersSmooth.png"><img src="https://demofox2.files.wordpress.com/2014/06/letterssmooth.png" alt="LettersSmooth" width="1280" height="720" class="aligncenter size-full wp-image-1049" /></a>
 
 Here's the text taken from 512x512 down to 256x256, rendered with the alpha test code.  You can already see degradation unfortunately but the look at the pictures above and remember that the full font texture is essentially 512x256 (I doubled it because my textures have to be square) and looks great up close:
-<a href="https://demofox2.files.wordpress.com/2014/06/LettersAlphaTest_256x256.png"><img src="https://demofox2.files.wordpress.com/2014/06/LettersAlphaTest_256x256.png" alt="LettersAlphaTest_256x256" width="1280" height="720" class="aligncenter size-full wp-image-1051" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/LettersAlphaTest_256x256.png"><img src="https://demofox2.files.wordpress.com/2014/06/lettersalphatest_256x256.png" alt="LettersAlphaTest_256x256" width="1280" height="720" class="aligncenter size-full wp-image-1051" /></a>
 
 Here's the 256x256 font texture again, this time rendered with smooth step.  A little bit better, but still pretty bad (but not bad for the resolution of the source font texture!):
-<a href="https://demofox2.files.wordpress.com/2014/06/LettersSmooth_256x256.png"><img src="https://demofox2.files.wordpress.com/2014/06/LettersSmooth_256x256.png" alt="LettersSmooth_256x256" width="1280" height="720" class="aligncenter size-full wp-image-1052" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/LettersSmooth_256x256.png"><img src="https://demofox2.files.wordpress.com/2014/06/letterssmooth_256x256.png" alt="LettersSmooth_256x256" width="1280" height="720" class="aligncenter size-full wp-image-1052" /></a>
 
 <h1>Decal in Action</h1>
 
 Here's the mustache decal, which has a source image size of 128x128, rendered with the alpha test code:
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest.png" alt="MoustacheAlphaTest" width="1280" height="720" class="aligncenter size-full wp-image-1054" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachealphatest.png" alt="MoustacheAlphaTest" width="1280" height="720" class="aligncenter size-full wp-image-1054" /></a>
 
 Here's the mustache rendered with the smooth step code:
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth.png" alt="MoustacheSmooth" width="1280" height="720" class="aligncenter size-full wp-image-1055" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachesmooth.png" alt="MoustacheSmooth" width="1280" height="720" class="aligncenter size-full wp-image-1055" /></a>
 
 Now it starts to get interesting.  Here it is at 64x64 with alpha test code:
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_64x64.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_64x64.png" alt="MoustacheAlphaTest_64x64" width="1280" height="720" class="aligncenter size-full wp-image-1056" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_64x64.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachealphatest_64x64.png" alt="MoustacheAlphaTest_64x64" width="1280" height="720" class="aligncenter size-full wp-image-1056" /></a>
 
 And now 64x64 with smooth step:
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_64x64.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_64x64.png" alt="MoustacheSmooth_64x64" width="1280" height="720" class="aligncenter size-full wp-image-1057" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_64x64.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachesmooth_64x64.png" alt="MoustacheSmooth_64x64" width="1280" height="720" class="aligncenter size-full wp-image-1057" /></a>
 
 Here's 32x32 with alpha test:
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_32x32.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_32x32.png" alt="MoustacheAlphaTest_32x32" width="1280" height="720" class="aligncenter size-full wp-image-1058" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_32x32.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachealphatest_32x32.png" alt="MoustacheAlphaTest_32x32" width="1280" height="720" class="aligncenter size-full wp-image-1058" /></a>
 
 Here's 32x32 with smooth step:
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_32x32.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_32x32.png" alt="MoustacheSmooth_32x32" width="1280" height="720" class="aligncenter size-full wp-image-1059" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_32x32.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachesmooth_32x32.png" alt="MoustacheSmooth_32x32" width="1280" height="720" class="aligncenter size-full wp-image-1059" /></a>
 
 Here's 16x16 with alpha test:
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_16x16.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_16x16.png" alt="MoustacheAlphaTest_16x16" width="1280" height="720" class="aligncenter size-full wp-image-1061" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheAlphaTest_16x16.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachealphatest_16x16.png" alt="MoustacheAlphaTest_16x16" width="1280" height="720" class="aligncenter size-full wp-image-1061" /></a>
 
 And lastly, here's 16x16 with smooth step.  Not freaking bad for a 16x16 texture right??!!!
-<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_16x16.png"><img src="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_16x16.png" alt="MoustacheSmooth_16x16" width="1280" height="720" class="aligncenter size-full wp-image-1062" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_16x16.png"><img src="https://demofox2.files.wordpress.com/2014/06/moustachesmooth_16x16.png" alt="MoustacheSmooth_16x16" width="1280" height="720" class="aligncenter size-full wp-image-1062" /></a>
 
 <h1>Shadow Maps</h1>
 
@@ -29324,7 +29324,7 @@ This is a no brainer for static shadows, but dynamic shadows this may not be as 
 This is a "theory of management" type of thing that helps explain why people act certain ways in specific situations, and what sort of management style they need to be successful.  I might butcher the details a little bit, but if you want to read about it in more depth, you might start with this wikipedia page: <a href="http://en.wikipedia.org/wiki/Situational_leadership_theory" title="Wikipedia: Situational Leadership" target="_blank">Wikipedia: Situation Leadership</a>.
 
 Let's kick things off with a diagram:
-<img src="https://demofox2.files.wordpress.com/2014/07/SLChart.png" alt="SLChart" width="442" height="390" class="aligncenter size-full wp-image-1071" />
+<img src="https://demofox2.files.wordpress.com/2014/07/slchart.png" alt="SLChart" width="442" height="390" class="aligncenter size-full wp-image-1071" />
 
 The idea is that basically, when someone is put into a new situation, they will generally progress from 1 to 4(*).  This can be either hiring a programmer fresh out of college, or taking an experienced programmer from one team and putting him onto another team, or presumably could also refer to an entire team tackling a new type of problem.
 
@@ -29584,7 +29584,7 @@ Khan academy videos about these topics:
 
 3) That gives you 2 samples if you only compost the last and current frame, but more samples is better of course.  You could keep more frames from the past around, but that takes up the precious resource of memory.  Apparently, when the hardware does MSAA (multisampling antialiasing), it has different configurations for different numbers of samples and it's configurable somehow.  If you have 2 samples, they may be 2 vertical dots, or 2 horizontal dots.  If you have 3 samples, it might look like a "3" on a domino.  If you have 5 samples it might look like a "5" on a domino.
 
-<img src="https://demofox2.files.wordpress.com/2014/08/MSAAConfigs.png" alt="MSAAConfigs" width="303" height="75" class="aligncenter size-full wp-image-1130" />
+<img src="https://demofox2.files.wordpress.com/2014/08/msaaconfigs.png" alt="MSAAConfigs" width="303" height="75" class="aligncenter size-full wp-image-1130" />
 
 4) Sometimes a corner will be sampled so that a sample can be shared across multiple pixels to increase efficiency.  There is this really interesting thing called "flipquads" that samples on an edge for that same reason.  You can see some info on here: <a href="http://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/fliptri_tr.pdf" title="An Extremely Inexpensive Multisampling Scheme" target="_blank">An Extremely Inexpensive Multisampling Scheme</a>.  Basically, you only do two samples per pixel, sampling at 2 of the 4 sample locations on the edge of a pixel, so that the pixels that share the edge can use the results.  Effectively, you are doing 2 sample per pixel, but getting 4 samples per pixel due to sample sharing.
 
@@ -29658,16 +29658,16 @@ The tiles I used are very geometric, but if you have more organic looking tiles,
 Also, as the links at the bottom will tell you, if you have wang tiles where each axis has only 2 edge types, even though the number of permutations of tiles in that situation is 16 (XVariation^2 * YVariation^2), you can actually get away with just using 8 tiles (XVariation * YVariation * 2).  In my example below I had to use all 16 though because I'm just generating edge types in a pixel shader without deeply analyzing neighboring tiles, and it would be a lot more complex to limit my generation to just the 8 tiles.  If you can think of a nice way to generate a wang tile grid using only the 8 tiles though, please let me know!
 
 The 16 wang tiles used:
-<a href="https://demofox2.files.wordpress.com/2014/08/WTTiles.png"><img src="https://demofox2.files.wordpress.com/2014/08/WTTiles.png" alt="WTTiles" width="1024" height="576" class="aligncenter size-full wp-image-1150" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/WTTiles.png"><img src="https://demofox2.files.wordpress.com/2014/08/wttiles.png" alt="WTTiles" width="1024" height="576" class="aligncenter size-full wp-image-1150" /></a>
 
 A resulting grid:
-<a href="https://demofox2.files.wordpress.com/2014/08/WTGrid.png"><img src="https://demofox2.files.wordpress.com/2014/08/WTGrid.png" alt="WTGrid" width="1024" height="576" class="aligncenter size-full wp-image-1151" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/WTGrid.png"><img src="https://demofox2.files.wordpress.com/2014/08/wtgrid.png" alt="WTGrid" width="1024" height="576" class="aligncenter size-full wp-image-1151" /></a>
 
 Here's a more complex set of 16 wang tiles:
-<a href="https://demofox2.files.wordpress.com/2014/08/Wang2Tiles.png"><img src="https://demofox2.files.wordpress.com/2014/08/Wang2Tiles.png" alt="Wang2Tiles" width="1024" height="576" class="aligncenter size-full wp-image-1169" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/Wang2Tiles.png"><img src="https://demofox2.files.wordpress.com/2014/08/wang2tiles.png" alt="Wang2Tiles" width="1024" height="576" class="aligncenter size-full wp-image-1169" /></a>
 
 And a resulting grid:
-<a href="https://demofox2.files.wordpress.com/2014/08/Wang2Grid.png"><img src="https://demofox2.files.wordpress.com/2014/08/Wang2Grid.png" alt="Wang2Grid" width="1024" height="576" class="aligncenter size-full wp-image-1170" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/Wang2Grid.png"><img src="https://demofox2.files.wordpress.com/2014/08/wang2grid.png" alt="Wang2Grid" width="1024" height="576" class="aligncenter size-full wp-image-1170" /></a>
 
 <h1>Links For More Info</h1>
 
@@ -29723,13 +29723,13 @@ By the way... something really crazy about wang tiles is that apparently they ca
 		<description></description>
 		<content:encoded><![CDATA[I can't remember for sure but I think I read about this first in <a href="http://www.amazon.com/New-Kind-Science-Stephen-Wolfram/dp/1579550088" title="A New Kind Of Science" target="_blank">A New Kind Of Science</a> by Stephen Wolfram (yes, the same guy who made Wolfram Alpha!).  Counting in binary is actually a fractal, check out these 4 sequential images...
 
-<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal1.png"><img src="https://demofox2.files.wordpress.com/2014/08/BinaryFractal1.png" alt="BinaryFractal1" width="1024" height="160" class="aligncenter size-full wp-image-1162" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal1.png"><img src="https://demofox2.files.wordpress.com/2014/08/binaryfractal1.png" alt="BinaryFractal1" width="1024" height="160" class="aligncenter size-full wp-image-1162" /></a>
 
-<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal2.png"><img src="https://demofox2.files.wordpress.com/2014/08/BinaryFractal2.png" alt="BinaryFractal2" width="1024" height="160" class="aligncenter size-full wp-image-1163" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal2.png"><img src="https://demofox2.files.wordpress.com/2014/08/binaryfractal2.png" alt="BinaryFractal2" width="1024" height="160" class="aligncenter size-full wp-image-1163" /></a>
 
-<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal3.png"><img src="https://demofox2.files.wordpress.com/2014/08/BinaryFractal3.png" alt="BinaryFractal3" width="1024" height="160" class="aligncenter size-full wp-image-1164" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal3.png"><img src="https://demofox2.files.wordpress.com/2014/08/binaryfractal3.png" alt="BinaryFractal3" width="1024" height="160" class="aligncenter size-full wp-image-1164" /></a>
 
-<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal4.png"><img src="https://demofox2.files.wordpress.com/2014/08/BinaryFractal4.png" alt="BinaryFractal4" width="1024" height="160" class="aligncenter size-full wp-image-1165" /></a>
+<a href="https://demofox2.files.wordpress.com/2014/08/BinaryFractal4.png"><img src="https://demofox2.files.wordpress.com/2014/08/binaryfractal4.png" alt="BinaryFractal4" width="1024" height="160" class="aligncenter size-full wp-image-1165" /></a>
 
 <h1>Real Time Demo</h1>
 To see it in action, check out this WebGL shadertoy:
@@ -30029,31 +30029,31 @@ what this means is that if you plug a value in for x, you will get an approximat
 For instance check out these graphs.
 
 <i><b><a href="https://www.google.com/search?q=graph+y+%3D+x%2C+y+%3D+sin(x)" target="_blank">Google: graph y = x, y = sin(x)</a></b></i>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_1.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_1.png"/>
 
 <i><b><a href="https://www.google.com/search?q=graph+y+%3D+x-x%5E3%2F6%2C+y+%3D+sin(x)" target="_blank">Google: graph y = x-x^3/6, y = sin(x)</a></b></i>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_2.png"/>
 
 <i><b><a href="https://www.google.com/search?q=graph+y+%3D+x-x%5E3%2F6%2Bx%5E5%2F120%2C+y+%3D+sin(x)" target="_blank">Google: graph y = x-x^3/6+x^5/120, y = sin(x)</a></b></i>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_3.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_3.png"/>
 
 <i><b><a href="https://www.google.com/search?q=graph+y+%3D+x-x%5E3%2F6%2Bx%5E5%2F120-x%5E7%2F5040%2C+y+%3D+sin(x)" target="_blank">Google: graph y = x-x^3/6+x^5/120-x^7/5040, y = sin(x)</a></b></i>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_4.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_4.png"/>
 
 <i><b><a href="https://www.google.com/search?q=graph+y+%3D+x-x%5E3%2F6%2Bx%5E5%2F120-x%5E7%2F5040%2Bx%5E9%2F362880%2C+y+%3D+sin(x)" target="_blank">Google: graph y = x-x^3/6+x^5/120-x^7/5040+x^9/362880, y = sin(x)</a></b></i>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_5.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_5.png"/>
 
 <i><b><a href="https://www.google.com/search?q=graph%20y%20%3D%20x-x%5E3%2F6%2Bx%5E5%2F120-x%5E7%2F5040%2Bx%5E9%2F362880-x%5E11%2F39916800%2C%20y%20%3D%20sin(x)" target="_blank">Google: graph y = x-x^3/6+x^5/120-x^7/5040+x^9/362880-x^11/39916800, y = sin(x)</a><br>
 (Note that I had to zoom out a bit to show where it became inaccurate)</b></i>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_6.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_6.png"/>
 
 When looking at these graphs, you'll probably notice that very early on, the approximation is pretty good between -Pi/2 and + Pi/2.  I leveraged that by only using those values (with modulus) and mirroring them to be able to get a sine value of any angle with more accuracy.
 
 When using just x-x^3/6, there was an obvious problem at the top and bottom of the sine waves:
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_8.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_8.png"/>
 
 When i boosted the equation with another term, bringing it to x-x^3/6+x^5/120, my sine approximation was much better:
-<img src="https://demofox2.files.wordpress.com/2014/11/Sin2_7.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sin2_7.png"/>
 
 You can see this method in action in this shadertoy:
 <a href="https://www.shadertoy.com/view/MdBSRt">Shadertoy: Sin without Trig II</a>
@@ -30071,13 +30071,13 @@ Anyhow, if you have a triangle wave that has values from 0 to 1 on the y axis, a
 Here is a step by step recipe:
 
 <b><i>Step 1 - Make a triangle wave that has values on the y axis from 0 to 1</i></b>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sine3_1.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sine3_1.png"/>
 
 <b><i>Step 2 - Put that triangle wave through smoothstep (3x^2 - 2x^3)</i></b>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sine3_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sine3_2.png"/>
 
 <b><i>Step 3 - Scale the result to having values from -1 to +1 on the axis.</i></b>
-<img src="https://demofox2.files.wordpress.com/2014/11/Sine3_3.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/11/sine3_3.png"/>
 
 That is pretty good isn't it?
 
@@ -30212,7 +30212,7 @@ In the above we change i - 1 to -1 + i to make the next step easier.  The real c
 (-1, 1)
 
 The diagram below shows this operation:
-<img src="https://demofox2.files.wordpress.com/2014/12/ImRot1.gif"/>
+<img src="https://demofox2.files.wordpress.com/2014/12/imrot1.gif"/>
 
 As you can see we rotated the purple vector (0,1) which has an angle of 90 degrees and length of 1, by the blue vector (1,1) which has an angle of 45 degrees and a length of sqrt(2), and as a result we got the tan vector (-1,1) which has an angle of 135 degrees and a length of sqrt(2).  So, we essentially rotated the 90 degree angle by the 45 degree angle and ended up with a 135 degree angle.
 
@@ -30234,7 +30234,7 @@ Then we multiply them:
 
 Then convert back to a vector to get: (-63, -16)
 
-<img src="https://demofox2.files.wordpress.com/2014/12/ImRot2.gif"/>
+<img src="https://demofox2.files.wordpress.com/2014/12/imrot2.gif"/>
 
 In the image, you can see that we started with the blue vector (4,3) which is about 37 degrees and has a length of 5.
 
@@ -30269,7 +30269,7 @@ Then, we multiply as per normal:
 
 Finally, we convert back to a vector to get (12, -8).
 
-<img src="https://demofox2.files.wordpress.com/2014/12/ImRot3.gif"/>
+<img src="https://demofox2.files.wordpress.com/2014/12/imrot3.gif"/>
 
 In the image above, we started with the blue vector (5,1) which is about 11 degrees and has a length of sqrt(26).
 
@@ -30456,10 +30456,10 @@ The division operator relates to the conjugate.  I have source code for it below
 If you know the line formula y=mx+b, but you don't know what a derivative is you are in luck.  Remember how "m" is the slope of the line, specifying how steep it is?  That is what the derivative is too, it's just the slope.
 
 Below is a graph of y=2x+1.  At every point on that line, the derivative (or slope) is 2.  That means that for every step we make on the x axis to the right (positive direction), we make 2 steps up on the y axis (positive direction).
-<img src="https://demofox2.files.wordpress.com/2014/12/y2xPlus1.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/12/y2xplus1.png"/>
 
 Now, check out this graph of y=x^2-0.2
-<img src="https://demofox2.files.wordpress.com/2014/12/yx2MinPoint2.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/12/yx2minpoint2.png"/>
 The derivative (or slope) at every point on this graph is 2x.  That means that the slope changes depending on where the x coordinate is!
 
 So, when x=0, the slope is 0.  You can see that in the graph where x=0, that it is horizontal, meaning that a step on the x axis becomes no steps on the y axis (only at that point where x is 0, and only if you take an infinitely small step).
@@ -30739,7 +30739,7 @@ int main (int argc, char **argv)
 [/code]
 
 Here is the program output:
-<img src="https://demofox2.files.wordpress.com/2014/12/DualNumberOutput.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/12/dualnumberoutput.png"/>
 
 <h2>Closing Info</h2>
 
@@ -30831,7 +30831,7 @@ The first step of the Bresenham line algorithm is to see if the line is longer o
 
 Then, starting at the starting point of the line, you loop across all pixels of the major axis, doing some math to decide for each pixel whether you need to move the pixel on the minor axis yet or not.  Basically you keep track of the error - or the distance the pixel is away from the true position of the line on the minor axis - and if the error is greater than or equal to 1 pixel, you move the pixel on the minor axis and subtract one pixel from the error.  If the error is smaller than 1 pixel, you keep it at the same value it was for the last pixel, and keep the error value the same, so that it can accumulate some more error for the next pixel and test again.
 
-<img src="https://demofox2.files.wordpress.com/2015/01/HorVer.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/01/horver.png"/>
 <i>The left line is longer on the X axis, so the major axis is the X axis.  The right line is longer on the Y axis, so the major axis is the Y axis.  Notice that there is one pixel for each value along the major axis of each line, but repeated pixel values along the minor axis of each line.</i>
 
 If you want the deeper details about the algorithm or the math behind it, check out this link:
@@ -31027,7 +31027,7 @@ Cool, now let's make it work for any line.
 
 Using the above functions, I wrote a little test to draw lines from the center of an image towards the edges at 100 different angles, and also a horizontal and vertical line.  Here's the results:
 
-<img src="https://demofox2.files.wordpress.com/2015/01/BresenhamTest.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/01/bresenhamtest.png"/>
 
 <h2>Run Slice Algorithm</h2>
 
@@ -31424,7 +31424,7 @@ To understand why we subtract the 1, imagine that our minimum hash value is 0.5.
 
 As another example imagine that our minimum hash is 0.3333 and that it is an accurate representation of the space between values.  If we divide 1 by 0.3333, we get 3.  We do have 3 regions if we cut the whole space into 3 parts, but we only have 2 items (we made 2 cuts to make 3 regions).
 
-<img src="https://demofox2.files.wordpress.com/2015/01/MinHash.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/01/minhash.png"/>
 
 <h2>Reducing Error</h2>
 
@@ -31961,7 +31961,7 @@ void main(void)
 [/code]
 
 Here's the output of the program:
-<img src="https://demofox2.files.wordpress.com/2015/02/KMVOutput.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/kmvoutput.png"/>
 
 <h2>Upgrading from Set to Multi Set</h2>
 
@@ -32470,7 +32470,7 @@ void main(void)
 [/code]
 
 And here is the output of that program:
-<img src="https://demofox2.files.wordpress.com/2015/02/BloomFilterOutput.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/bloomfilteroutput.png"/>
 
 In the output, you can see that all the existence checks were correct.  All the no's were actually no's like they should be, but also, all the maybe's were actually present, so there were no false positives.
 
@@ -32884,13 +32884,13 @@ This program also shows you some count estimations to show you that functionalit
 The first run of the program is with normalized vectors, the second run of the program is with unnormalized vectors, and the third run of the program, which is most accurate, is with unnormalized vectors and conservative updates.
 
 <b>First Run:  Normalized Vectors, Regular Updates</b>
-<img src="https://demofox2.files.wordpress.com/2015/02/CMS_normed_normal.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/cms_normed_normal.png"/>
 
 <b>Second Run:  Unnormalized Vectors, Regular Updates</b>
-<img src="https://demofox2.files.wordpress.com/2015/02/CMS_unnormed_normal.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/cms_unnormed_normal.png"/>
 
 <b>Third Run:  Unnormalized Vectors, Conservative Updates</b>
-<img src="https://demofox2.files.wordpress.com/2015/02/CMS_unnormed_conservative.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/cms_unnormed_conservative.png"/>
 
 <h2>Example Code</h2>
 
@@ -33489,8 +33489,8 @@ Let's say we have two bags of fruit and we want to know how similar the bags are
 
 In the first bag, we have 3 apples.  In the second bag, we have 2 oranges.
 
-<img src="https://demofox2.files.wordpress.com/2015/02/ApplesOranges1.png"/>
-<img src="https://demofox2.files.wordpress.com/2015/02/ApplesOranges2.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/applesoranges1.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/applesoranges2.png"/>
 
 If we have a 2 dimensional vector where the first component is apples and the second component is oranges, we can represent our bags of fruit with these vectors:
 
@@ -33509,8 +33509,8 @@ From this, we can see that Bag1 and Bag2 have nothing in common!
 
 What if we added an apple to bag 2 though?  let's do that and try the process again.
 
-<img src="https://demofox2.files.wordpress.com/2015/02/ApplesOranges1.png"/>
-<img src="https://demofox2.files.wordpress.com/2015/02/ApplesOranges3.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/applesoranges1.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/applesoranges3.png"/>
 
 <b>Bag1 = [3,0]
 Bag2 = [1,2]
@@ -33525,8 +33525,8 @@ Next up, we need to divide the answer by the length of our Bag1 vector which is 
 
 Lets add an orange to bag 1.  That ought to make it more similar to bag 2, so should increase our similarity value of the two bags.  Let's find out if that's true.
 
-<img src="https://demofox2.files.wordpress.com/2015/02/ApplesOranges4.png"/>
-<img src="https://demofox2.files.wordpress.com/2015/02/ApplesOranges3.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/applesoranges4.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/applesoranges3.png"/>
 
 <b>Bag1 = [3,1]
 Bag2 = [1,2]
@@ -33754,7 +33754,7 @@ int main (int argc, char **argv) {
 [/code]
 
 Here is an example run of this program:
-<img src="https://demofox2.files.wordpress.com/2015/02/HistogramDotProduct.png" target="_blank"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/histogramdotproduct.png" target="_blank"/>
 
 <h2>Improvements</h2>
 
@@ -34171,7 +34171,7 @@ int RunLambda(const function<int(void)>& f)
 
 And here is the example output of that run in visual studio 2013.  Same output in debug and release:
 
-<img src="https://demofox2.files.wordpress.com/2015/02/StdFunc.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/02/stdfunc.png"/>
 
 <h2>
 <h2>Links</h2>
@@ -34503,7 +34503,7 @@ Note that since we use bits from our hash to do register selection, that our num
 
 Here is a graph showing how number of bits used affects error.  Bits used is the x axis, and expected error is the y axis.
 
-<img src="https://demofox2.files.wordpress.com/2015/03/plotBitsError.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/03/plotbitserror.png"/>
 
 From the table and the graph you can see that adding bits (registers) gives diminishing returns in error reduction.  It's especially diminishing because whenever we add another bit, we double our storage size (double the number of registers we use).
 
@@ -35276,7 +35276,7 @@ int main (int argc, char **argv)
 [/code]
 
 Here is the output of the above program:
-<img src="https://demofox2.files.wordpress.com/2015/03/HLLOutput.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/03/hlloutput.png"/>
 
 <h2>Want More?</h2>
 
@@ -35360,7 +35360,7 @@ If you notice in step 1 the volume (amplitude of the sine wave) isn't constant t
 
 Anyhow, if you think about the sound that a drum makes when you hit it, it starts out loud right away, and then quickly fades out.  You can play with the specific values of the envelope and get a different sound, but what I went with was 10 milliseconds of fading in (0.01 seconds), 10 milliseconds of being at full volume (0.01 seconds), and 175 milliseconds of fading out (0.175 seconds).  You can see a picture of the envelope below:
 
-<img src="https://demofox2.files.wordpress.com/2015/03/Envelope.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/03/envelope.png"/>
 
 The fade in time is called the "attack", the time it remains at full volume is called the "hold" and the time that it fades out is called the "release".  There are other common stages to envelopes that you might hear about if looking up more info about them.  Two other common parts of an enveloper are "sustain" and "decay" for instance.
 
@@ -40935,11 +40935,11 @@ We immediately hit two problems, but the first is more obvious if you listen:
 
 Hear all that popping?  It's basically making a discontinuity at every IFFT window because we are changing the amplitude at the edge of each window.  We can't change it during the window (caveat: without some pretty advanced math i won't go into), so changing at the end of the window is our only option.  Check out this image to see the problem visually:
 
-<img src="https://demofox2.files.wordpress.com/2015/04/IFFTTest1.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/iffttest1.png"/>
 
 We can fix those discontinuities.  If we change the phase of the wave from cosine (0 degrees) to sine (270 degrees), we make it so that the edge of the window is always at amplitude 0 (sine(0) = 0, while cos(0) = 1!).  This means that when we change the amplitude of the wave, since it happens when the wave is at zero, there is no discontinuity, and so no more pops:
 
-<img src="https://demofox2.files.wordpress.com/2015/04/IFFTTest2.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/iffttest2.png"/>
 
 Let's have a listen:
 <a href="https://demofox2.files.wordpress.com/2015/04/IFFTTest2.wav" target="_blank">IFFTTest2.wav</a>
@@ -40955,7 +40955,7 @@ Anyways, you can also just generate the sound descibed in your IFFT bins with os
 <a href="https://demofox2.files.wordpress.com/2015/04/IFFTTest3.wav" target="_blank">IFFTTest3.wav</a>
 
 You can also see it in action:
-<img src="https://demofox2.files.wordpress.com/2015/04/IFFTTest3.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/iffttest3.png"/>
  
 Here's another failure case to check out:
 <img src="https://demofox2.files.wordpress.com/2015/04/drumsifftosc.png"/>
@@ -40971,13 +40971,13 @@ We are in the frequency domain, so how about we try some convolution?!
 
 Let's multiply the bins of a 1hz saw wave and a 1hz square wave and see what we get if we IFFT the result:
 
-<img src="https://demofox2.files.wordpress.com/2015/04/ConvolutionIFFT.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/convolutionifft.png"/>
 
 That result is definitely not right.  First of all, the convolution is the same length as the inputs, when it should be length(a)+length(b)-1 samples.  Basically it should be twice as long as it is.
 
 Secondly, that is not what the convolution looks like.  Doing convolution in the time domain of those samples looks like this:
 
-<img src="https://demofox2.files.wordpress.com/2015/04/ConvolutionLin.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/convolutionlin.png"/>
 
 So what's the deal?  Well as it turns out, when you do multiplication in the frequency domain, you are really doing CIRCULAR convolution, which is a bit different than the convolution i described before which is LINEAR convolution.  Circular convolution is essentially used for cyclical data (or functions) and basically makes it so that if you try to read "out of bounds", it will wrap around and use an in bounds value instead.  It's kind of like "texture wrap" if you are a graphics person.
 
@@ -42309,11 +42309,11 @@ If you do that though, you'll actually have two samples on each edge.  To solve 
 
 Ta-Da!  That is exactly what FlipQuad is.  Check out the sampling pattern below, which shows the samples for a 2x2 grid of pixels.  You'd just repeat this pattern for as many pixels as you had.
 
-<img src="https://demofox2.files.wordpress.com/2015/04/FlipQuadSamples.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/flipquadsamples.png"/>
 
 Here's an image that shows FlipQuad in action - anti aliased on the left, regular image on the right.  You can click on the image to see the shadertoy demo of it.
 
-<a href="https://www.shadertoy.com/view/MtSGRG" target="_blank"><img src="https://demofox2.files.wordpress.com/2015/04/FlipQuadST.png"/></a>
+<a href="https://www.shadertoy.com/view/MtSGRG" target="_blank"><img src="https://demofox2.files.wordpress.com/2015/04/flipquadst.png"/></a>
 
 It works pretty well, but it is pretty blurry, especially the textures!  Kind of makes sense because quincunx was blurry due to shared samples.  We have ONLY shared samples in this pattern, so it's understandable that it's kind of blurry.  There's less unique information per pixel than in the other SSAA techniques shown so far.
 
@@ -42325,11 +42325,11 @@ This essentially is 2 samples rendered per pixel to get 4x SSAA.
 
 Flipquad worked decently, but instead of using a quad, could we use a triangle?  Yes we can, check out the 2x2 pixel sampling pattern below:
 
-<img src="https://demofox2.files.wordpress.com/2015/04/FlipTriSamples.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/fliptrisamples.png"/>
 
 Here's an image that shows FlipTri in action - anti aliased on the left, regular image on the right.  You can click on the image to see the shadertoy demo of it.
 
-<a href="https://www.shadertoy.com/view/MtB3RG" target="_blank"><img src="https://demofox2.files.wordpress.com/2015/04/FlipTriST.png"/></a>
+<a href="https://www.shadertoy.com/view/MtB3RG" target="_blank"><img src="https://demofox2.files.wordpress.com/2015/04/fliptrist.png"/></a>
 
 This essentially is 1.25 samples rendered per pixel to get 3x SSAA!  It really doesn't look that different to my eyes than the flipquad method, but it uses quite a fewer number of samples!
 
@@ -42395,7 +42395,7 @@ Antialiasing Patterns</a><br><br>
 		<description></description>
 		<content:encoded><![CDATA[Take a look at the picture below.  Can you calculate the values at points A,B and C?
 
-<img src="https://demofox2.files.wordpress.com/2015/04/Square.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/04/square.png"/>
 
 There's a technique for doing this called bilinear interpolation which extends the idea of linear interpolation into two dimensions.
 
@@ -42419,7 +42419,7 @@ So, we need to go 0.8 (80%) of the way from 3.4 to 5.6.  To calculate that we do
 
 So, the value at point A is 5.16.  The image below should help explain visually the process we went through.
 
-<img src="https://demofox2.files.wordpress.com/2015/05/PointA.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/05/pointa.png"/>
 
 <b>Point B</b>
 
@@ -43313,15 +43313,15 @@ The equation for this is super simple and something you've probably seen before:
 
 The next simplest version of a Bezier curve is a quadratic curve, which has a degree of 2 and control points $latex A,B,C$.  A quadratic curve is just a linear interpolation between two curves of degree 1 (aka linear curves).  Specifically, you take a linear interpolation between $latex A,B$, and a linear interpolation between $latex B,C$, and then take a linear interpolation between those two results.  That will give you your quadratic curve.
 
-<img src="https://demofox2.files.wordpress.com/2015/07/Bezier2.gif"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/bezier2.gif"/>
 
 The next version is a cubic curve which has a degree of 3 and control points $latex A,B,C,D$.  A cubic curve is just a linear interpolation between two quadratic curves.  Specifically, the first quadratic curve is defined by control points $latex A,B,C$ and the second quadratic curve is defined by control points $latex B,C,D$.
 
-<img src="https://demofox2.files.wordpress.com/2015/07/Bezier3.gif"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/bezier3.gif"/>
 
 The next version is a quartic curve, which has a degree of 4 and control points $latex A,B,C,D,E$.  A quartic curve is just a linear interpolation between two cubic curves.  The first cubic curve is defined by control points $latex A,B,C,D$ and the second cubic curve is defined by control points $latex B,C,D,E$.
 
-<img src="https://demofox2.files.wordpress.com/2015/07/Bezier4.gif"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/bezier4.gif"/>
 
 So yeah, an order $latex N$ Bezier curve is made by linear interpolating between two Bezier curves of order $latex N-1$.
 
@@ -43329,7 +43329,7 @@ So yeah, an order $latex N$ Bezier curve is made by linear interpolating between
 
 While simple, the De Casteljau has some redundancies in it, which is the reason that it is usually slower to calculate than the Bernstein form.  The diagram below shows how a quartic curve with control points $latex A,B,C,D,E$ is calculated via the De Casteljau algorithm.
 
-<img src="https://demofox2.files.wordpress.com/2015/07/Decasteljeau1.png-0000011.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/decasteljeau1.png-0000011.png"/>
 
 Compare that to the Bernstein form (where $latex s$ is just $latex (1-t)$)
 
@@ -43433,7 +43433,7 @@ int main(int argc, char **argv)
 
 Here's the output of the program:
 
-<img src="https://demofox2.files.wordpress.com/2015/07/BezierOut.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/bezierout.png"/>
 
 Thanks to wikipedia for the awesome Bezier animations! <a target="_blank" href="https://en.wikipedia.org/wiki/B%C3%A9zier_curve">Wikipedia: Bézier curve</a>
 ]]></content:encoded>
@@ -43745,7 +43745,7 @@ int main (int argc, char **argv)
 [/code]
 
 And here's the programs output:
-<img src="https://demofox2.files.wordpress.com/2015/07/Lag.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/lag.png"/>
 
 <h2>Final Notes</h2>
 
@@ -43829,7 +43829,7 @@ Imagine that you had a Bezier curve with some number of control points.  Now, im
 
 One way to do this would be to just have multiple sets of control points as key frames, and just linearly interpolate between the key frames over time.  You'd get something that might look like the image below (lighter red = farther back in time).
 
-<img src="https://demofox2.files.wordpress.com/2015/07/CurveAnim.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/curveanim.png"/>
 
 That is a simple and intuitive way to animate a Bezier curve, and is probably what you thought of immediately.  Interestingly though, since linear interpolation is really a degree 1 Bezier curve, this method is actually using a degree 1 Bezier curve to control each control point!
 
@@ -43851,7 +43851,7 @@ Say you made a 3d hot air baloon game and wanted to model temperature of the air
 
 Now, let's say that you wanted to animate the thermals over time.  You could use a fifth dimensional bezier hypercube solid. Let's move on, my brain hurts :P
 
-<img src="https://demofox2.files.wordpress.com/2015/07/BezierOcean.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/bezierocean.png"/>
 
 <h2>Math</h2>
 
@@ -43970,7 +43970,7 @@ int main(int argc, char **argv)
 [/code]
 
 And here is the output it gives:
-<img src="https://demofox2.files.wordpress.com/2015/07/ProgramRun.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/programrun.png"/>
 
 Note that in the program above, I evaluate the surface points by evaluating one axis and then the other.  This is basically the same as how I explained it at the top, where I'm effectively animating the control points over distance, then evaluating the curve slice of the surface at that specific distance.
 
@@ -44104,7 +44104,7 @@ $latex m = \\frac{f(x+e)-f(x-e)}{2e}$
 
 This process is visualized below.  The black line is the actual slope at 0.4 and the orange line is the estimated slope.  The orange dots are the sample points taken.  The epsilon in this case is 0.2.
 
-<img src="https://demofox2.files.wordpress.com/2015/08/CentralDifference.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/centraldifference.png"/>
 
 Interestingly, when dealing with quadratic (or linear) functions, the central difference method will give you the correct result.  The picture above uses a quadratic function, so you can see no matter what value of e we use, it will always be parallel to the actual slope at that point.  For cubic and higher functions, that won't always be true.
 
@@ -44122,7 +44122,7 @@ Also, if you are walking down a function (say, rendering a Bezier curve, and wan
 
 Check out the image below to see how different values of e result in different quality approximations. The smaller the epsilon value, the more accurate the result.  An infinitely small epsilon would give the exact right answer.
 
-<img src="https://demofox2.files.wordpress.com/2015/08/BackwardDifference.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/backwarddifference.png"/>
 
 <h3>Forward Difference</h3>
 
@@ -44134,7 +44134,7 @@ $latex m = \\frac{f(x+e)-f(x)}{e}$
 
 Below you can see it visually.  Note again that smaller values of e make the estimation closer to correct.
 
-<img src="https://demofox2.files.wordpress.com/2015/08/ForwardDifference.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/forwarddifference.png"/>
 
 <h2>On the GPU</h2>
 
@@ -44317,7 +44317,7 @@ And here is the output:
 <img src="https://demofox2.files.wordpress.com/2015/08/lagrangerectangle3.png"/>
 
 Compare that to the output of the Bezier rectangles code which used the same control points:
-<img src="https://demofox2.files.wordpress.com/2015/07/ProgramRun.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/07/programrun.png"/>
 
 <h2>Links</h2>
 
@@ -44797,7 +44797,7 @@ This technique works when making images larger as well as smaller, but when maki
 <h2>Example</h2>
 
 Here's the old man from The Legend of Zelda who gives you the sword.
-<img src="https://demofox2.files.wordpress.com/2015/08/LozMan.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/lozman.bmp"/>
 
 Here he is scaled up 4x with nearest neighbor, bilinear interpolation and bicubic interpolation.
 <img src="https://demofox2.files.wordpress.com/2015/08/lozman_4_0.bmp"/>
@@ -44814,7 +44814,7 @@ Here he is scaled up 16x with nearest neighbor, bilinear interpolation and bicub
 I made a shadertoy to show you how to do this in a GLSL pixel shader as well.  <a target="_blank" href="https://www.shadertoy.com/view/MllSzX"/>Shadertoy: Bicubic Texture Filtering</a>
 
 In the screenshot below, going from left to right it uses: Nearest Neighbor, Bilinear, Lagrange Bicubic interpolation (only interpolates values, not slopes), Hermite Bicubic interpolation.
-<img src="https://demofox2.files.wordpress.com/2015/08/Shadertoy.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/shadertoy.png"/>
 
 <h2>Sample Code</h2>
 
@@ -45200,10 +45200,10 @@ The parameters to a Gaussian blur are:
 Just like a box blur, a Gaussian blur is separable which means that you can either apply a 2d convolution kernel, or you can apply a 1d convolution kernel on each axis.  Doing a single 2d convolution means more calculations, but you only need one buffer to put the results into.  Doing two 1d convolutions (one on each axis), ends up being fewer calculations, but requires two buffers to put the results into (one intermediate buffer to hold the first axis results).
 
 Here is a 3 pixel 1d Gaussian Kernel for a sigma of 1.0:
-<img src="https://demofox2.files.wordpress.com/2015/08/Gaussian1d.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/gaussian1d.png"/>
 
 Below is a 3x3 pixel 2d Gaussian Kernel also with a sigma of 1.0.  Note that this can be calculated as an outer product (tensor product) of 1d kernels!
-<img src="https://demofox2.files.wordpress.com/2015/08/Weights.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/weights.png"/>
 
 An interesting property of Gaussian blurs is that you can apply multiple smaller blurs and it will come up with the result as if you did a larger Blur.  Unfortunately it's more calculations doing multiple smaller blurs so is not usually worth while.
 
@@ -45236,16 +45236,16 @@ That formula makes a Kernel large enough such that it cuts off when the value in
 <h2>Examples</h2>
 
 Once again, here is the unaltered image we are working with:
-<img src="https://demofox2.files.wordpress.com/2015/08/Florida.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/florida.bmp"/>
 
 Here is the image blurred with a sigma of 3,3  (3 on the x axis and 3 on the y axis):
-<img src="https://demofox2.files.wordpress.com/2015/08/FloridaBlur3_3.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/floridablur3_3.png"/>
 
 Here is the image blurred with a sigma of 20,3:
-<img src="https://demofox2.files.wordpress.com/2015/08/FloridaBlur20_3.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/floridablur20_3.png"/>
 
 Here is the image blurred with a sigma of 50,50:
-<img src="https://demofox2.files.wordpress.com/2015/08/FloridaBlur50_50.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/floridablur50_50.png"/>
 
 <h2>Shadertoy</h2>
 
@@ -45611,7 +45611,7 @@ In this post, we are going to implement a box blur by averaging pixels.
 
 For the case of a 1d box filter, let's say we wanted every data point to be the result of averaging it with it's two neighbors.  It'd be easy enough to program that by just doing it, but let's look at it a different way.  What weight would we need to multiply each of the three values by (the value and it's two neighbors) to make it come up with the average?
 
-<img src="https://demofox2.files.wordpress.com/2015/08/Boxcar3.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/boxcar3.png"/>
 
 Yep, you guessed it!  For every data value, you multiply it and it's neighbors by 1/3 to come up with the average value.  We could easily increase the size of the filter to 5 pixels, and multiply each pixel by 1/5 instead.  We could continue the pattern as high as we wanted.
 
@@ -45643,7 +45643,7 @@ The resulting 3x3 matrix is called an outer product, or a tensor product.  Somet
 Here are some examples of box blurring with different values, using the sample code provided below.
 
 The source image:
-<img src="https://demofox2.files.wordpress.com/2015/08/Florida.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/florida.bmp"/>
 
 Now blurred by a 10x10 box car convolution kernel:
 <img src="https://demofox2.files.wordpress.com/2015/08/florida_10_10.bmp"/>
@@ -46406,7 +46406,7 @@ int main (int argc, char **argv)
 [/code]
 
 Here is the output of a run of the program:
-<img src="https://demofox2.files.wordpress.com/2015/08/SuperSimpleHE.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/08/supersimplehe.png"/>
 
 <h2>What if I Need Constants?!</h2>
 
@@ -46778,7 +46778,7 @@ int main (int argc, char **argv)
 
 Here's the output of an example run.
 
-<img src="https://demofox2.files.wordpress.com/2015/09/SimpleHEBetter.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/09/simplehebetter.png"/>
 
 <h2>Links</h2>
 
@@ -47322,7 +47322,7 @@ int main(int argc, char **argv)
 [/code]
 
 Here's the output of the program:
-<img src="https://demofox2.files.wordpress.com/2015/09/CRT.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/09/crt.png"/>
 
 <h2>Links</h2>
 
@@ -47712,7 +47712,7 @@ int main(int argc, char **argv)
 
 Here's an example run, where it solves a 5 level equation.
 
-<img src="https://demofox2.files.wordpress.com/2015/09/Nested.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/09/nested.png"/>
 
 <h2>Links</h2>
 
@@ -48432,7 +48432,7 @@ int main (int argc, char **argv)
 
 Here's the output of the program, showing the qubit circuits in action:
 
-<img src="https://demofox2.files.wordpress.com/2015/10/OneQubit.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/10/onequbit.png"/>
 
 <h2>Next Up</h2>
 
@@ -48484,7 +48484,7 @@ In the next part, we'll look at how multiple qubits work together in quantum cir
 		<description></description>
 		<content:encoded><![CDATA[If you read anything on quantum computing you are extremely likely to see the Bloch sphere, so it's probably important to explain what it is and how it works.
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Bloch_Sphere.svg/423px-Bloch_Sphere.svg.png" style="background-color:white;"/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/bloch_sphere.svg/423px-bloch_sphere.svg.png" style="background-color:white;"/>
 
 Image from wikipedia: <a href="https://en.wikipedia.org/wiki/Qubit" target="_blank">Wikipedia: Qubit</a>
 
@@ -49535,7 +49535,7 @@ int main (int argc, char **argv) {
 
 Here is the first part of the output, which shows the results of the entangling circuit.  You can see that the input gave the expected output Bell states:
 
-<img src="https://demofox2.files.wordpress.com/2015/11/Output1.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/11/output1.png"/>
 
 Below is the second part of the output, which is the circuit that flips the 2nd qubit if the 4th qubit is true.
 
@@ -49547,7 +49547,7 @@ If you check all the input/output pairs, you'll see that they all follow this ru
 
 We used only whole, real numbers, no using fractional probabilities, or imaginary amplitudes.  What it does in those situations is a little bit harder to get intuition for, but rest assured that it does "the right thing" in those situations as well.
 
-<img src="https://demofox2.files.wordpress.com/2015/11/Output2.png"/>
+<img src="https://demofox2.files.wordpress.com/2015/11/output2.png"/>
 
 <h2>Next Up</h2>
 
@@ -51773,13 +51773,13 @@ Another way they can be useful is in generating procedural content, like in thes
 
 Another really cool usage case of Voronoi diagrams is in creating what is called the "Distance Transform".  The distance transform calculates and stores the distance from each pixel to the closest seed, whichever one that may be.  Doing that, you may get an image like this (note that the distance is clamped at a maximum and mapped to the 0 to 1 range to make this image).
 
-<img src="https://demofox2.files.wordpress.com/2016/02/DistanceTexture.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/02/distancetexture.png"/>
 
 That is what is called a distance texture and can be used for a very cool technique where you have texture based images that can be zoomed into / enlarged quite a ways before breaking down and looking bad.  The mustache in the image below was made with a 32x16 single channel 8bpp image for instance! (ignore the white fog, this was a screenshot from inside a project I was working on)
 
 Distance field textures are the next best thing to vector graphics (great for scalable fonts in games, as well as decals!) and you can read about it here: <a href="http://blog.demofox.org/2014/06/30/distance-field-textures/">blog.demofox.org: Distance Field Textures</a>
 
-<img src="https://demofox2.files.wordpress.com/2014/06/MoustacheSmooth_64x64.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/06/moustachesmooth_64x64.png"/>
 
 Now that you know what Voronoi diagrams and distance transforms are used for, let's talk about one way to generate them.
 
@@ -52257,7 +52257,7 @@ For graphical examples, a little more info and some links to some shadertoys che
 
 Here is an example I made.  The graphics are programmer art but hopefully you get the idea.  This was made with 16 tiles, where there were two different edge types per edge.
 
-<img src="https://demofox2.files.wordpress.com/2014/08/Wang2Grid.png"/>
+<img src="https://demofox2.files.wordpress.com/2014/08/wang2grid.png"/>
 
 <h2>Turing Machine Overview</h2>
 
@@ -52299,13 +52299,13 @@ Let's walk through a simple example where we have the following state machine lo
 
 The first thing we need is persistent storage of memory for the tape.  For this, we'll need the following two tiles: 
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTile_0_x_0_x_2.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/WangTile_1_x_1_x_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtile_0_x_0_x_2.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/wangtile_1_x_1_x_2.png"/>
 
 To see this working, we can set up a section of tape with some values (make a column of wang tiles), and we can see that the only valid wang tiles to place next to the starting column are tiles which propogate the 0 and the 1 values forward in time without modifying them.
 
 In the diagram below, we initialize the tape to 0101 in the left most column (time 0).  By only placing down tiles with compatible edges you can see that our memory values persist forever.  Our memory storage is implemented, huzzah!
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTileMemory4_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtilememory4_2.png"/>
 
 We'll start our example with all memory initialized to 0, but the above shows that we can have persistent memory.
 
@@ -52317,7 +52317,7 @@ Our example uses two states (besides the halt state): A and B.  If a 1 is read i
 
 To handle that, we need the tiles below:
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTile_A1_x_H1_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/WangTile_B1_x_H1_x.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtile_a1_x_h1_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/wangtile_b1_x_h1_x.png"/>
 
 Now that we have the rules for entering the halt state done (rule #2 and rule #4), we have to figure out how to implement the rules that control switching from one state to another (rule #1 and rule #3).
 
@@ -52327,17 +52327,17 @@ Rule #1 says that if we are in state A and read a 0, we should write a 1, move t
 
 We'll need this tile to cause reading a 0 in state A to write a 1 as output, and to tell the tile below to move to state B.
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTile_A0_x_1_B.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtile_a0_x_1_b.png"/>
 
 The tile below that one could either be a 0 or a 1, and without knowing which, we want it to keep it's value but accept the read/write head and be in state B.  To do that we need two tiles, one for if there is a 0 on the tape at that position, and another for if there is a 1 on the tape.
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTile_0_B_B0_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/WangTile_1_B_B1_x.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtile_0_b_b0_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/wangtile_1_b_b1_x.png"/>
 
 Rule #3 says that if we are in state B and read a 0, we should write a 1, move the read/write head up and move to state A.
 
 To do that, we'll need a similar construction as for rule #1 but we are moving up instead of down.  These 3 tiles will give us what we need:
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTile_B0_A_1_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/WangTile_0_x_A0_A.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/WangTile_1_x_A1_A.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtile_b0_a_1_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/wangtile_0_x_a0_a.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/wangtile_1_x_a1_a.png"/>
 
 <h2>Starting Column Tiles</h2>
 
@@ -52347,7 +52347,7 @@ This means that to make our starting column (the Turing machine at time 0), we a
 
 Here are those two tiles:
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTile_x_x_0_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/WangTile_x_x_A0_x.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtile_x_x_0_x.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/wangtile_x_x_a0_x.png"/>
 
 <h2>Final Tileset</h2>
 
@@ -52358,19 +52358,19 @@ Here's the full set of 12 tiles that we are going to use:
 
 Here is the initial setup at time 0 for our Turing machine.  Note that this is one possible starting state, but this is the starting state we are choosing.  We are not leaving it up to chance where the read/write head starts, or if it is even present at all.  If we only followed edge rules we may get 4 read/write heads or 0, or anything in between.
 
-<img src="https://demofox2.files.wordpress.com/2016/03/Time0_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/time0_2.png"/>
 
 From here, to build the second column, we start from the top and work towards the bottom, choosing the tile that fits the constraints of the edge it touches.  In this first step, the head reads a 0, writes a 1, moves down, and moves to state B.
 
-<img src="https://demofox2.files.wordpress.com/2016/03/Time1_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/time1_2.png"/>
 
 Heres is the second step, where the read reads a 0, writes a 1, moves up, and moves to state A.
 
-<img src="https://demofox2.files.wordpress.com/2016/03/Time2_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/time2_2.png"/>
 
 Here is the final step, where the head reads a 1 and enters the halt state, signifying that the program has terminated.
 
-<img src="https://demofox2.files.wordpress.com/2016/03/Time3_2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/time3_2.png"/>
 
 The program halted, and gave an output value of "0110" or 6.  This output isn't really meaningful but other programs can give output that is meaningful.  For instance you could have a Turing machine add two numbers, and the output would be the sum of those two numbers.
 
@@ -52380,7 +52380,7 @@ There is an important detail that the above doesn't address, and that many expla
 
 When placing the second tile for time 2, the only constraint from the edges is that the tile must have an x on top and a 1 on the left.  This actually makes it ambiguous which tile should be chosen between the two tiles below.
 
-<img src="https://demofox2.files.wordpress.com/2016/03/WangTile_1_x_1_x_2.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/WangTile_1_x_A1_A.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/03/wangtile_1_x_1_x_2.png"/> <img src="https://demofox2.files.wordpress.com/2016/03/wangtile_1_x_a1_a.png"/>
 
 How do we choose the right one then?
 
@@ -53417,7 +53417,7 @@ int main (int argc, char **argv)
 <h2>Example Output</h2>
 
 Here is some example output of the program:
-<img src="https://demofox2.files.wordpress.com/2016/04/SSS.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/04/sss.png"/>
 
 <h2>Links</h2>
 
@@ -53504,7 +53504,7 @@ Let's say that we have a bunch of free memory starting at address 0.  Let's anal
 
 First let's see what happens when we double a buffer's size when it gets full.
 
-<img src="https://demofox2.files.wordpress.com/2016/05/BufferDouble.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/05/bufferdouble.png"/>
 
 We start by allocating 16 bytes.  The allocator gives us address 0 for our pointer.
 
@@ -53520,7 +53520,7 @@ As you can see, doubling the buffer size causes our pointer to keep moving furth
 
 Let's see what happens when we make a buffer 1.5x as large when it gets full.
 
-<img src="https://demofox2.files.wordpress.com/2016/05/Buffer15.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/05/buffer15.png"/>
 
 We start by allocating 16 bytes.  The allocator gives us address 0 for our pointer.
 
@@ -54471,29 +54471,29 @@ And here is the zero phase:
 Lastly, here are some simple images, along with their frequency magnitude and phases.  Sorry that they are so small, but hopefully you get the idea.
 
 Horizontal Stripes:
-<img src="https://demofox2.files.wordpress.com/2016/07/StripesH.raw_.idft_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripesH.raw_.mag_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripesH.raw_.phase_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripesh.raw_.idft_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripesh.raw_.mag_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripesh.raw_.phase_.bmp"/>
 
 Horizontal Stripe:
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeH.raw_.idft_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeH.raw_.mag_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeH.raw_.phase_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripeh.raw_.idft_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripeh.raw_.mag_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripeh.raw_.phase_.bmp"/>
 
 Vertical Stripes:
-<img src="https://demofox2.files.wordpress.com/2016/07/StripesV.raw_.idft_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripesV.raw_.mag_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripesV.raw_.phase_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripesv.raw_.idft_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripesv.raw_.mag_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripesv.raw_.phase_.bmp"/>
 
 Vertical Stripe:
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeV.raw_.idft_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeV.raw_.mag_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeV.raw_.phase_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripev.raw_.idft_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripev.raw_.mag_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/stripev.raw_.phase_.bmp"/>
 
 Diagonal Stripe:
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeD.raw_.idft_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeD.raw_.mag_.bmp"/>
-<img src="https://demofox2.files.wordpress.com/2016/07/StripeD.raw_.phase_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/striped.raw_.idft_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/striped.raw_.mag_.bmp"/>
+<img src="https://demofox2.files.wordpress.com/2016/07/striped.raw_.phase_.bmp"/>
 
 You might notice that the Fourier transform frequency amplitudes actually run perpendicular to the orientation of the stripes.  Look for a post soon which makes use of this property (:
 
@@ -55219,7 +55219,7 @@ Let's see how that works.
 
 For this example We'll take a cosine wave and shift it 0.25 radians to give us samples: 0.97, -0.25, -0.97, 0.25.  (The formula is <a target="_blank" href="http://www.wolframalpha.com/input/?i=cos(x*2*pi%2F4%2B0.25)+from+0+to+3">cos(x*2*pi/4+0.25) from 0 to 3</a>)
 
-<img src="https://demofox2.files.wordpress.com/2016/08/cosShifted4Samples.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/08/cosshifted4samples.png"/>
 
 When we multiply that by a cosine wave we get: 0.97*1 + -0.25*0 + -0.97*-1 + 0.25*0 = 1.94
 When we multiply it by a sine wave we get: 0.97*0 + -0.25*1 + -0.97*0 + 0.25*-1 = -0.5
@@ -55777,7 +55777,7 @@ Here's an incremental (aka online) algorithm that gives you the average as well 
 		<guid isPermaLink="false">http://blog.demofox.org/?p=4744</guid>
 		<description></description>
 		<content:encoded><![CDATA[The images below were path traced using 100,000 samples per pixel, using the sample code provided in this post.
-<img src="https://demofox2.files.wordpress.com/2016/09/HeaderImage2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/09/headerimage2.png"/>
 
 Path tracing is a specific type of ray tracing that aims to make photo realistic images by solving something called the rendering equation.  Path tracing relies heavily on a method called Monte Carlo integration to get an approximate solution.  In fact, it's often called "Monte Carlo Path Tracing", but I'll refer to it as just "Path Tracing".
 
@@ -55933,10 +55933,10 @@ A relevant quote from <a target="_blank" href="https://twitter.com/CasualEffects
 
 Below are a few scenes rendered at various samples per pixel (spp) and their corresponding rendering times.  They are rendered at 128x128 with 5 bounces.  I used 8 threads to utilize my 8 cpu cores. Exact machine specs aren't really important here, I just want to show how sample count affects render quality and render times in a general way.
 
-<img src="https://demofox2.files.wordpress.com/2016/09/Scene0_spp2.png"/>
-<img src="https://demofox2.files.wordpress.com/2016/09/Scene1_spp.png"/>
-<img src="https://demofox2.files.wordpress.com/2016/09/Scene2_spp.png"/>
-<img src="https://demofox2.files.wordpress.com/2016/09/Scene3_spp.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/09/scene0_spp2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/09/scene1_spp.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/09/scene2_spp.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/09/scene3_spp.png"/>
 
 There's a couple things worth noting.
 
@@ -56102,7 +56102,7 @@ I actually have to confess that I did a bit of bait and switch.  The images at t
 
 And the ones at the top for comparison:
 
-<img src="https://demofox2.files.wordpress.com/2016/09/HeaderImage2.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/09/headerimage2.png"/>
 
 While making this post I received a lot of good information from the twitter graphics community (see the people I'm following and follow them too! <a target="_blank" href="https://twitter.com/Atrix256">@Atrix256</a>) as well as the <a target="_blank" href="http://computergraphics.stackexchange.com/">Computer Graphics Stack Exchange</a>.
 
@@ -58090,7 +58090,7 @@ All secret data was hidden in lists of 10,000,000 random values. That made the f
 
 Here are the timing of the above tests:
 
-<img src="https://demofox2.files.wordpress.com/2016/10/LTHE.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/10/lthe.png"/>
 
 <h2>Sample Code</h2>
 
@@ -59639,7 +59639,7 @@ Here's the 1d texture:
 <img src="https://demofox2.files.wordpress.com/2016/12/texture1d.png"/>
 
 Here's a linear curve:
-<img src="https://demofox2.files.wordpress.com/2016/12/Bezier1.gif"/>
+<img src="https://demofox2.files.wordpress.com/2016/12/bezier1.gif"/>
 
 Going to a 2d texture it gets more interesting.  We now have two texture coordinates to sample along (u,v).  Using linear sampling, the hardware will do bilinear interpolation (linear interpolation across each axis) to get the value at a specific (u,v) texture coordinate.
 
@@ -59704,7 +59704,7 @@ In the section above we showed a 1d texture that stored a linear curve.  it had 
 
 Let's add another color channel.  A,B will be stored in the red channel, and B,C will be stored in the green channel:
 
-<img src="https://demofox2.files.wordpress.com/2016/12/texture1dRG.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/12/texture1drg.png"/>
 
 When we read that texture at location (t), we will get the following values:
 <ol>
@@ -59718,7 +59718,7 @@ Pretty cool right?
 
 What happens if we add another color channel, blue?
 
-<img src="https://demofox2.files.wordpress.com/2016/12/texture1dRGB.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/12/texture1drgb.png"/>
 
 Well, when we sample the texture at time t, we get the following values:
 <ol>
@@ -59790,7 +59790,7 @@ Note: there is another type of Bezier surface called a <a href="https://en.wikip
 Hopefully it should come as no surprise that a 2d texture using regular bilinear interpolation is in fact a Bezier rectangle which is linear on the x axis and linear on the y axis.  It has a degree of (1,1) and is stored in a 2d texture (2x2 pixels), where the four control points are just stored in the four pixels.  You just sample the texture at (u,v) to get that point on the surface. Pretty simple stuff.
 
 Order (1,1) Bezier Rectangle:
-<img src="https://demofox2.files.wordpress.com/2016/12/surface11B.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/12/surface11b.png"/>
 
 Something interesting to note is that while the isolines (edges) of the rectangle are linear, the surface itself is curved.  In fact, we know that the diagonal of this surface is in fact a quadratic Bezier curve because we calculate curves by sampling along the diagonal! (if the middle corners are different, it's the same as if they were both replaced with the average of their values).
 
@@ -59846,12 +59846,12 @@ Extending the generalization of surfaces, you once again figure out requirements
 The simplest case for volumes is the trilinear case, aka the Degree (1,1,1) Bezier rectangle.
 
 Order (1,1,1) Bezier Cube:
-<img src="https://demofox2.files.wordpress.com/2016/12/volume111A.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/12/volume111a.png"/>
 
 It's a bit difficult to understand what's going on in that picture by seeing the data as just fog density, so the demos let you specify a surface threshold such that if the fog is denser than that amount, it shows it as a surface.  Here is the same trilinear Bezier volume with a surface threshold.
 
 Order (1,1,1) Bezier Cube:
-<img src="https://demofox2.files.wordpress.com/2016/12/volume111B.png"/>
+<img src="https://demofox2.files.wordpress.com/2016/12/volume111b.png"/>
 
 You just store your 8 values in the 8 corners of the 2x2x2 texture cube, and sample at (u,v,w) to get your trilinear result.
 
@@ -61750,7 +61750,7 @@ There isn't a whole lot to say about this, because you can see that this is even
 However, if you are ever under water in a swimming pool and look up to see the water surface looking like a mirror, that is total internal reflection in action.
 
 You can also see it in the render below, where you can see reflections on the inside of the walls of the object, especially on the bottom (floor) of the object:
-<img src="https://demofox2.files.wordpress.com/2017/01/TIR.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/01/tir.png"/>
 
 <h1>Beer's Law</h1>
 
@@ -61975,10 +61975,10 @@ Each layer has some number of neurons in it.
 Every neuron is connected to every neuron in the previous and next layer.
 
 Below is a diagram of a neural network, courtesy of wikipedia. Every circle is a neuron.
-<img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Colored_neural_network.svg" style="background:white"/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/4/46/colored_neural_network.svg" style="background:white"/>
 
 To calculate the output value of a neuron, you multiply every input into that neuron by a weight for that input, and add a bias.  This value is fed into an activation function (more on activation functions shortly) and the result is the output value of that neuron.  Here is a diagram for a single neuron:
-<img src="https://demofox2.files.wordpress.com/2017/02/Neuron.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/02/neuron.png"/>
 
 A more formal definition of a neuron's output is below. $latex b$ is the bias, $latex w_j$ is the j'th weight and $latex i_j$ is the j'th input.
 $latex Output = b+\\sum_{j=0}^nw_ji_j $
@@ -62121,10 +62121,10 @@ I can't think of any good ways to correct that problem in the context of a neura
 The sigmoid function is basically a softer version of the step function and gives output between 0 and 1.  The hyperbolic tangent activation function is also a softer version of the step function but gives output between -1 and 1.
 
 Sigmoid:
-<img src="https://demofox2.files.wordpress.com/2017/02/SigmoidFunction_7011.gif" style="background:white"/>
+<img src="https://demofox2.files.wordpress.com/2017/02/sigmoidfunction_7011.gif" style="background:white"/>
 
 Hyperbolic Tangent:
-<img src="https://demofox2.files.wordpress.com/2017/02/TanhReal1.gif"/>
+<img src="https://demofox2.files.wordpress.com/2017/02/tanhreal1.gif"/>
 (images from <a href="http://mathworld.wolfram.com/" target="_blank">Wolfram Mathworld</a>)
 
 They have different uses in machine learning, but I've found them to be visibly indistinguishable in my experiments after compensating for the different range of output values.  It makes me think that <a href="https://en.wikipedia.org/wiki/Smoothstep" target="_blank">smoothstep</a> could probably be a decent activation function too, so long as your input was in the 0 to 1 range (maybe you could clamp input to 0 and 1?).
@@ -62854,10 +62854,10 @@ Every neuron is connected to every neuron in the previous and next layer.
 
 Below is a diagram of a neural network, courtesy of wikipedia. Every circle is a neuron.  This network takes 3 floating point values as input, passes them through 4 neurons in a hidden layer and outputs two floating point values.  The hidden layer neurons and the output layer neurons do processing of the values they are giving, but the input neurons do not.
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Colored_neural_network.svg" style="background:white"/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/4/46/colored_neural_network.svg" style="background:white"/>
 
 To calculate the output value of a single neuron, you multiply every input into that neuron by a weight for that input, sum them up, and add a bias that is set for the neuron.  This "weighted input" value is fed into an activation function and the result is the output value of that neuron.  Here is a diagram for a single neuron:
-<img src="https://demofox2.files.wordpress.com/2017/02/Neuron.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/02/neuron.png"/>
 
 The code for calculating the output of a single neuron could look like this:
 [code language="cpp"]
@@ -62882,7 +62882,7 @@ This is one type of pitfall to watch out for when dealing with neural networks -
 <h1>Neural Networks Learn Using Gradient Descent</h1>
 
 Let's take a look at a simple neural network where we've chosen random values for the weights and the bias:
-<img src="https://demofox2.files.wordpress.com/2017/03/NN1.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/03/nn1.png"/>
 
 If given two floating point inputs, we'd calculate the output of the network like this:
 
@@ -63043,7 +63043,7 @@ Now that we understand all the basic parts of back propagation, I think it'd be 
 
 This example takes one input and uses a single neuron to make one output.  The neuron is only trained to output a 0 when given a 1 as input, all other behavior is undefined.  This is implemented as the Example1() function in the sample code.  
 
-<img src="https://demofox2.files.wordpress.com/2017/03/Example1.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/03/example1.png"/>
 
 Let's work through the training process manually.
 
@@ -63141,7 +63141,7 @@ You could also try adjusting the learning rate parameter to see if you can make 
 <h1>Backpropagation Example 2: Single Neuron, Two Training Examples</h1>
 
 Let's start with the same neural network from last time: 
-<img src="https://demofox2.files.wordpress.com/2017/03/Example1.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/03/example1.png"/>
 
 This time, we are going to teach it not only that it should output 0 when given a 1, but also that it should output 1 when given a 0.
 
@@ -63175,7 +63175,7 @@ In this example, after 100,000 iterations, the error is 0.007141.  At that point
 
 Here is the next example, implemented as Example3() in the sample code.  Two input neurons feed to two neurons in a single layer giving two outputs.
 
-<img src="https://demofox2.files.wordpress.com/2017/03/Example3.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/03/example3.png"/>
 
 Let's look at how we'd calculate the derivatives needed to train this network using the training example that when we give the network 01 as input that it should give out 10 as output.
 
@@ -63285,7 +63285,7 @@ It takes 520,000 learning iterations to get to an error of 0.007223.
 
 This is the last example, implemented as Example4() in the sample code. Two input neurons feed to two neurons in a hidden layer, feeding into two neurons in the output layer giving two outputs.  This is the exact same network that is walked through on this page which is also linked to at the end of this post: <a href="https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/" target="_blank">A Step by Step Backpropagation Example</a>
 
-<img src="https://demofox2.files.wordpress.com/2017/03/Example4.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/03/example4.png"/>
 
 
 First comes the forward pass where we calculate the network's output.  We'll give it 0.05 and 0.1 as input, and we'll say our desired output is 0.01 and 0.99.
@@ -64258,7 +64258,7 @@ If you want an explanation of finite differences, check out this post:
 Since the fundamentals are explained in the links above, we'll go straight to the code.
 
 We'll be getting the gradient (learning values) for the network in example 4 in the backpropagation post:
-<img src="https://demofox2.files.wordpress.com/2017/03/Example4.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/03/example4.png"/>
 
 Note that I am using "central differences" for the gradient, but it would be more efficient to do a forward or backward difference, at the cost of some accuracy.  I'm using an epsilon of 0.001.
 
@@ -66460,7 +66460,7 @@ What you may notice is that the two values in the corners of the 2x2 bilinear in
 
 This is interesting because to encode two different piecewise quadratic curves (C0-C2 and C3-C5) into a 2d texture before this extension, I would do it like this:
 
-<img src="https://demofox2.files.wordpress.com/2017/04/2x4ABCDEF.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/04/2x4abcdef.png"/>
 
 $latex
 A = C_0 \\\\
@@ -66475,7 +66475,7 @@ That uses 8 pixels to store the 6 control points of the two quadratic curves.
 
 With the ideas of this extension, one way it could look now is this:
 
-<img src="https://demofox2.files.wordpress.com/2017/04/2x3ABCDEF.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/04/2x3abcdef.png"/>
 
 $latex
 A = C_0 \\\\
@@ -66498,7 +66498,7 @@ We are going to number the pixels by their texture coordinate location (in the f
 
 Looking at a single quadratic curve we have this texture which has these constraints on it's pixel values:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x2P0-3.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x2p0-3.png"/>
 
 $latex
 P_{00} = C_0 \\\\
@@ -66529,7 +66529,7 @@ If we choose the value C1 for P10, that means that P01 must equal C1 too (this i
 
 Let's add a row of pixels and try encoding a second quadratic curve:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x3P00-21.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x3p00-21.png"/>
 
 $latex
 P_{00} = C_0 \\\\
@@ -66585,7 +66585,7 @@ We were successful!  We can store two piecewise Bezier curves in 6 pixels by set
 
 The last example we'll show is the next stage, where it falls apart.  We'll add another row of pixels and try to encode 3 Bezier curves (9 control points) into those 8 pixels.
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x4P00-P31.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x4p00-p31.png"/>
 
 $latex
 P_{00} = C_0 \\\\
@@ -66667,7 +66667,7 @@ This isn't the end of the story though, so let's continue (:
 
 If we add the requirement that our piecewise curves must be connected (aka that they have C0 continuity), we can actually do something pretty interesting.  Take a look at this setup:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x3P00-21ZigZag.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x3p00-21zigzag.png"/>
 
 $latex
 P_{00} = C_0 \\\\
@@ -66725,7 +66725,7 @@ That last equation says 0 = C2-C3 which can be rearranged into C2 = C3.  That ju
 
 So, it worked!  Let's try adding a row of pixels and another curve to see what happens.
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x4P00-31ZigZag.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x4p00-31zigzag.png"/>
 
 $latex
 P_{00} = C_0 \\\\
@@ -66909,7 +66909,7 @@ In the original technique, B,C,E would have to be equal to the second control po
 
 Here is the setup, again using texture coordinates (in the form Pzyx) for the pixels instead of letters.
 
-<img src="https://demofox2.files.wordpress.com/2017/05/3dP000-P111.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/3dp000-p111.png"/>
 
 $latex
 P_{000} = C_0\\\\
@@ -66934,7 +66934,7 @@ P010 and P100 are free variables and so are P101 and P110, making a total of fou
 
 Let's add another piecewise cubic Bezier curve, and another row of pixels to the texture to see what happens.
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x3x2_P000-121.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x3x2_p000-121.png"/>
 
 $latex
 P_{000} = C_{0}\\\\
@@ -67004,7 +67004,7 @@ Looking at the 3d texture case of 2x2x2 storing a single curve, I saw that there
 
 Here's a setup where the x axis is flipped for the second curve.  It's a little bit hard to tell from the diagram, but the blue line does still go through the center of the 3d cube. It goes from P001 to P110, while the first curve still goes from P000 to P111.
 
-<img src="https://demofox2.files.wordpress.com/2017/05/3dP000-P111Dual.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/3dp000-p111dual.png"/>
 
 Here's what the equations look like:
 
@@ -67076,7 +67076,7 @@ Since the sampling has to pass through the center of the cube, we need to flip b
 
 That gives us a setup like this:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x3x2_P000-121ZigZag.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x3x2_p000-121zigzag.png"/>
 
 Here are the constraints for the pixel values:
 
@@ -67217,7 +67217,7 @@ Let's check out the 1d, 2d and 3d cases to see what patterns we might be able to
 
 1d Texture / linear Bezier / linear interpolation:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x1P0-P1new.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x1p0-p1new.png"/>
 
 $latex
 P_{0} = C_0 \\\\
@@ -67234,7 +67234,7 @@ $
 
 2d Texture / Quadratic Bezier:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/2x2P0-3.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/2x2p0-3.png"/>
 
 $latex
 P_{00} = C_0 \\\\
@@ -67253,7 +67253,7 @@ $
 
 3d Texture / Cubic Bezier:
 
-<img src="https://demofox2.files.wordpress.com/2017/05/3dP000-P111.png"/>
+<img src="https://demofox2.files.wordpress.com/2017/05/3dp000-p111.png"/>
 
 $latex
 P_{000} = C_0\\\\
