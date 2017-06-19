@@ -1,23 +1,16 @@
-! upload what you have so far to demofox.org?
 
-! need to read through the whole normal mapping article, make sure you understand it all and are doing right space work etc
- * https://learnopengl.com/#!Advanced-Lighting/Normal-Mapping
+* check todos
+
+* then move to specular IBL!
+
+* after IBL, make it so PBR grid can use roughness of 0, not the minimum value it has.
+
+* Make a PBR renderer in WebGL:
+ * https://learnopengl.com/#!PBR/Theory
 
 * add a model to the shape drop down list
 
 * profile code to see where time is going so far
-
-* understand the PBR so far
-
-? is it normal for colors to show up on metal when it shouldn't? ask SE. like red metal showing a green light.
-
-! internalize how tangents are calculated from UVs again
- * https://learnopengl.com/#!Advanced-Lighting/Normal-Mapping
-
-* then move to IBL!
-
-* Make a PBR renderer in WebGL:
- * https://learnopengl.com/#!PBR/Theory
 
 * TODO's!
 
@@ -28,6 +21,10 @@
 
 * ambient occlusion of meshes, if using more complex meshes.
  * a program that does it, with a blog post about it!
+
+! upload what you have so far to demofox.org?
+
+? add an emissive texture? or get rid of emissive display maybe?
 
 * after IBL, get rid of ambient light? or have a mode to turn off IBL and use ambient in that case?
 
@@ -50,6 +47,14 @@
  * Yes get rid of untextured shader permutations after this and just use white textures etc?
   * or allow untextured still
 
+* blog post on diffuse IBL at this point, with screenshots?
+ * maybe save it for later when you understand the whole picture better.
+
+? is it normal for colors to show up on metal when it shouldn't? ask SE. like red metal showing a green light.
+
+* the PBR images you have are gigantic, at 9MB a pop.  Can you find some smaller ones? Or do they need to be this huge? Could be affecting perf.
+ * maybe shrink em down to whatever you can get away with
+
 ===== LATER =====
 
 * blog post with links to resources, basic shell webgl pbr program, any programs you made or used.
@@ -64,11 +69,14 @@
 * subsurface scattering
 * reflection / refraction / absorption / etc
 * second specular lobe like in disney brdf
+* parallax bump mapping
 * and so on!
 
 ? blend normals / tangent / bitangent across faces to make smoother normals?
  * make a flag to allow this or not.  The sphere would like it, but box and tetrahedron for example wouldn't.
  * probably need to move to index buffers if doing this, to find all faces to average across. a good idea anyways likely
+
+* when surfaces get wet: https://seblagarde.wordpress.com/2013/04/14/water-drop-3b-physically-based-wet-surfaces/
 
 ===== LINKS =====
 
@@ -77,6 +85,23 @@
 
 https://webgl2fundamentals.org/
 
-==================== LANDFILL ====================
 
-https://webgl2fundamentals.org/
+http://blog.selfshadow.com/publications/s2014-shading-course/frostbite/s2014_pbs_frostbite_slides.pdf
+
+https://learnopengl.com/#!PBR/Theory
+
+http://renderwonk.com/publications/s2010-shading-course/hoffman/s2010_physically_based_shading_hoffman_b_notes.pdf
+
+https://disney-animation.s3.amazonaws.com/library/s2012_pbs_disney_brdf_notes_v2.pdf
+
+http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_slides.pdf
+
+===== NOTES =====
+
+* Normal Mapping:
+ * We could transform light positions etc into tangent space, in the vertex shader and pass as interpolants.
+ * Instead of doing the TBN matrix multiply to transform the texture normal into world space.
+ * That would save a matrix multiply in the pixel shader.
+ * The goal is to go deferred at some point though, which would need world space normals, so leaving it like it is.
+
+==================== LANDFILL ====================
