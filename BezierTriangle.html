@@ -1,0 +1,1234 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Analytical Surfaces Evaluated by the GPU Texture Sampler</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas#RenderWindow {border:2px solid #00FF00;width:700px; height:700px;}
+table {
+    border-collapse: collapse;
+}
+table, td {
+    border: 1px solid #00FF00;
+}
+table.NoBorder td {
+    border: 1px solid black;
+}
+</style>
+<script>
+/*=========================================================================================
+Created by Alan Wolfe December 2016
+http://demofox.org
+http://blog.demofox.org
+https://twitter.com/Atrix256
+=========================================================================================*/
+
+//=========================================================================================
+var vertexShaderSource = ` 
+// inputs
+in vec4 a_position;
+
+// outputs
+out vec2 v_screenPosition;  // in [-0.5, 0.5]
+
+// logic 
+void main() {
+    v_screenPosition = a_position.xy / 2.0;
+    gl_Position = vec4(a_position.xy, 0.0, 1.0);
+}
+`;
+ 
+//=========================================================================================
+var fragmentShaderSource = `
+#define NUM_RAY_STEPS 20
+
+#define CONTROL_POINT_SIZE 0.01
+
+precision mediump float;
+precision mediump sampler2D;
+precision mediump sampler3D;
+
+// inputs
+in vec2 v_screenPosition;  // in [-0.5, 0.5]
+
+// uniforms
+uniform vec2 u_mouse;             // z,y:  percent of screen. z: mouse button down or not.
+uniform bool u_lit;               // false = show uv. true = do lighting.
+uniform vec3 u_boxColor;          // color of the bounding box.
+uniform bool u_isolines;          // whether isolines should be drawn or not
+uniform bool u_drawControlPoints; // whether we should draw control points
+
+// outputs
+out vec4 outColor;
+
+float RayIntersectSphere (vec4 sphere, in vec3 rayPos, in vec3 rayDir)
+{
+    //get the vector from the center of this circle to where the ray begins.
+    vec3 m = rayPos - sphere.xyz;
+
+    //get the dot product of the above vector and the ray's vector
+    float b = dot(m, rayDir);
+
+    float c = dot(m, m) - sphere.w * sphere.w;
+
+    //exit if r's origin outside s (c > 0) and r pointing away from s (b > 0)
+    if(c > 0.0 && b > 0.0)
+        return -1.0;
+
+    //calculate discriminant
+    float discr = b * b - c;
+
+    //a negative discriminant corresponds to ray missing sphere
+    if(discr < 0.0)
+        return -1.0;
+
+    //ray now found to intersect sphere, compute smallest t value of intersection
+    float collisionTime = -b - sqrt(discr);
+
+    //if t is negative, ray started inside sphere so clamp t to zero and remember that we hit from the inside
+    if(collisionTime < 0.0)
+        collisionTime = -b + sqrt(discr);
+    
+    return collisionTime;
+}
+
+// ----- STATIC_BRANCH_DEGREE 0: (1,1) HW Interpolation -----
+#if STATIC_BRANCH_DEGREE == 0
+
+    #define DEGREE_X 1
+    #define DEGREE_Y 1
+
+    uniform sampler2D u_texture2d;
+
+    uniform vec4 u_controlPoints11;
+
+    float SurfaceHeight (vec2 uv)
+    {
+        return texture(u_texture2d, (uv + 0.5) / 2.0).r;
+    }
+
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0, u_controlPoints11.x, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.y, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints11.z, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.w, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }
+        return false;
+    }
+
+// ----- STATIC_BRANCH_DEGREE 1: (1,1) SW Interpolation -----
+#elif STATIC_BRANCH_DEGREE == 1
+
+    #define DEGREE_X 1
+    #define DEGREE_Y 1
+
+    uniform sampler2D u_texture2d;
+
+    uniform vec4 u_controlPoints11;    
+
+    float SurfaceHeight (vec2 uv)
+    {
+        float A = texture(u_texture2d, vec2(0.25, 0.25)).r;
+        float B = texture(u_texture2d, vec2(0.75, 0.25)).r;
+        float C = texture(u_texture2d, vec2(0.25, 0.75)).r;
+        float D = texture(u_texture2d, vec2(0.75, 0.75)).r;   
+
+        // bilinearly combine the values
+        float a = mix(A, B, uv.x); 
+        float b = mix(C, D, uv.x);
+        return mix(a, b, uv.y);
+    }
+
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0, u_controlPoints11.x, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.y, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints11.z, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints11.w, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }
+        return false;
+    }
+
+// ----- STATIC_BRANCH_DEGREE 2: (2,1) -----
+#elif STATIC_BRANCH_DEGREE == 2
+
+    #define DEGREE_X 2
+    #define DEGREE_Y 1
+
+    uniform sampler3D u_texture3d;
+
+    uniform vec3 u_controlPoints21A;    
+    uniform vec3 u_controlPoints21B;    
+
+    float SurfaceHeight (vec2 uv)
+    {
+        return texture(u_texture3d, (uv.xxy + 0.5) / 2.0).r;
+    }
+
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0, u_controlPoints21A.x, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints21A.y, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints21A.z, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints21B.x, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints21B.y, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints21B.z, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));  
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }
+        
+        return false;
+    }    
+
+// ----- STATIC_BRANCH_DEGREE 3: (2,2) -----
+#elif STATIC_BRANCH_DEGREE == 3
+
+    #define DEGREE_X 2
+    #define DEGREE_Y 2
+
+    uniform sampler2D u_texture2d;
+
+    uniform vec3 u_controlPoints22A;    
+    uniform vec3 u_controlPoints22B;
+    uniform vec3 u_controlPoints22C;
+
+    float SurfaceHeight (vec2 uv)
+    {
+        vec3 value = texture(u_texture2d, (uv.xx + 0.5) / 2.0).rgb;
+
+        // Quadratic Bezier combine the values
+        float t = uv.y;
+        float s = 1.0 - t;
+        return value.r*s*s+value.g*2.0*s*t+value.b*t*t;
+    }
+
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0, u_controlPoints22A.x, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints22A.y, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints22A.z, 0.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints22B.x, 0.5, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints22B.y, 0.5, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints22B.z, 0.5, CONTROL_POINT_SIZE), rayPos, rayDir));  
+
+        time = max(time, RayIntersectSphere(vec4(0.0, u_controlPoints22C.x, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(0.5, u_controlPoints22C.y, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0, u_controlPoints22C.z, 1.0, CONTROL_POINT_SIZE), rayPos, rayDir));              
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }
+        
+        return false;
+    }
+
+// ----- STATIC_BRANCH_DEGREE 4: (3,3) -----
+#elif STATIC_BRANCH_DEGREE == 4
+
+    #define DEGREE_X 3
+    #define DEGREE_Y 3
+
+    uniform sampler3D u_texture3d;    
+
+    uniform vec4 u_controlPoints33A;    
+    uniform vec4 u_controlPoints33B;
+    uniform vec4 u_controlPoints33C;
+    uniform vec4 u_controlPoints33D;    
+
+    float SurfaceHeight (vec2 uv)
+    {
+        vec4 value = texture(u_texture3d, (uv.xxx + 0.5) / 2.0);
+
+        // Cubic Bezier combine the values
+        float t = uv.y;
+        float s = 1.0 - t;
+        return value.r*s*s*s + value.g*3.0*s*s*t + value.b*3.0*s*t*t + value.a*t*t*t;
+    }
+
+    bool HitCP(vec3 rayPos, vec3 rayDir, inout float rayMaxTime)
+    {
+        if (!u_drawControlPoints)
+            return false;
+
+        float time =     RayIntersectSphere(vec4(0.0 / 3.0, u_controlPoints33A.x, 0.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir);
+        time = max(time, RayIntersectSphere(vec4(1.0 / 3.0, u_controlPoints33A.y, 0.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(2.0 / 3.0, u_controlPoints33A.z, 0.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(3.0 / 3.0, u_controlPoints33A.w, 0.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        time = max(time, RayIntersectSphere(vec4(0.0 / 3.0, u_controlPoints33B.x, 1.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0 / 3.0, u_controlPoints33B.y, 1.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(2.0 / 3.0, u_controlPoints33B.z, 1.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(3.0 / 3.0, u_controlPoints33B.w, 1.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        time = max(time, RayIntersectSphere(vec4(0.0 / 3.0, u_controlPoints33C.x, 2.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0 / 3.0, u_controlPoints33C.y, 2.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(2.0 / 3.0, u_controlPoints33C.z, 2.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(3.0 / 3.0, u_controlPoints33C.w, 2.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        time = max(time, RayIntersectSphere(vec4(0.0 / 3.0, u_controlPoints33D.x, 3.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(1.0 / 3.0, u_controlPoints33D.y, 3.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(2.0 / 3.0, u_controlPoints33D.z, 3.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+        time = max(time, RayIntersectSphere(vec4(3.0 / 3.0, u_controlPoints33D.w, 3.0 / 3.0, CONTROL_POINT_SIZE), rayPos, rayDir));
+
+        if (time >= 0.0)
+        {
+            rayMaxTime = time;
+            return true;
+        }        
+
+        return false;
+    }        
+
+#endif
+
+bool RayIntersectAABox (vec3 boxMin, vec3 boxMax, in vec3 rayPos, in vec3 rayDir, out vec2 time)
+{
+    vec3 roo = rayPos - (boxMin+boxMax)*0.5;
+    vec3 rad = (boxMax - boxMin)*0.5;
+
+    vec3 m = 1.0/rayDir;
+    vec3 n = m*roo;
+    vec3 k = abs(m)*rad;
+    
+    vec3 t1 = -n - k;
+    vec3 t2 = -n + k;
+
+    time = vec2( max( max( t1.x, t1.y ), t1.z ),
+                 min( min( t2.x, t2.y ), t2.z ) );
+    
+    return time.y>time.x && time.y>0.0;
+}
+
+vec3 SurfaceNormal (vec2 uv)
+{
+    float eps = 0.1;
+    vec3 n = vec3( SurfaceHeight(vec2(uv.x-eps,uv.y)) - SurfaceHeight(vec2(uv.x+eps,uv.y)),
+             2.0*eps,
+             SurfaceHeight(vec2(uv.x,uv.y-eps)) - SurfaceHeight(vec2(uv.x,uv.y+eps)));
+    return normalize( n );
+}
+
+vec3 SurfaceDiffuse (vec2 uv)
+{
+    vec3 ret;
+
+    // anti aliased (smoothstepped) checkerboard pattern if lit
+    if (u_lit)
+    {
+        // 10 cells on each axis
+        const float cells = 10.0;
+        vec2 uvCells = uv * cells;
+
+        // Make a grid where it does half a smoothstep at the border of each cell from 1 to 0, but not the edge of the space.
+        // But make an envelope to stop the edge tiles from blending to a tile that isn't there.
+        float xaxisBorder = step(uvCells.x, 0.5) + step(cells - 0.5, uvCells.x);
+        float yaxisBorder = step(uvCells.y, 0.5) + step(cells - 0.5, uvCells.y);        
+        vec2 fractuvCells = fract(uvCells);
+        float xaxis = clamp(smoothstep(0.0, 0.025, fractuvCells.x) * smoothstep(1.0, 0.975, fractuvCells.x) + xaxisBorder, 0.0, 1.0);
+        float yaxis = clamp(smoothstep(0.0, 0.025, fractuvCells.y) * smoothstep(1.0, 0.975, fractuvCells.y) + yaxisBorder, 0.0, 1.0);
+        float value = (xaxis * yaxis * 0.5) + 0.5;
+        float cellAA = mix(0.0, 1.0, value);
+
+        // figure out if this is a bright or dark cell
+        bool onoff = mod(floor(uvCells.x) + floor(uvCells.y), 2.0) < 1.0;
+
+        // colorize the checkerboard
+        float color1 = onoff ? 1.0 : 0.4;
+        float color2 = onoff ? 0.4 : 1.0;
+        ret = vec3(mix(color1, color2, cellAA), 0.0, 0.0);
+    }
+    // uv coordinates if unlit 
+    else
+    {
+        ret = vec3(uv, 0.0);
+    }
+
+    // isolines
+    if (u_isolines)
+    {
+        float distx = abs(0.5 - fract(uv.x * float(DEGREE_X) + 0.5)) / float(DEGREE_X);
+        distx = smoothstep(0.005, 0.0075, distx);
+        ret = mix(vec3(1.0, 1.0, 0.0), ret, distx);
+
+        float disty = abs(0.5 - fract(uv.y * float(DEGREE_Y) + 0.5)) / float(DEGREE_Y);
+        disty = smoothstep(0.005, 0.0075, disty);
+        ret = mix(vec3(0.0, 0.0, 1.0), ret, disty);
+    }
+
+    return ret;
+}
+
+// logic
+vec3 CalculateColor() {
+
+    //-------------------------
+    //----- Camera Setup ------
+    //-------------------------
+
+    vec3 cameraAt   = vec3(0.5,0.5,0.5);
+
+    float angleX = 6.28 * (u_mouse.x - 0.5) + 3.54;
+    float angleY = ((u_mouse.y - 0.5) * 6.28) + 0.5;
+    vec3 cameraPos  = (vec3(sin(angleX)*cos(angleY), sin(angleY), cos(angleX)*cos(angleY))) * 3.0;
+    cameraPos += vec3(0.5,0.5,0.5);
+
+    vec3 cameraFwd  = normalize(cameraAt - cameraPos);
+    vec3 cameraLeft  = normalize(cross(normalize(cameraAt - cameraPos), vec3(0.0,sign(cos(angleY)),0.0)));
+    vec3 cameraUp   = normalize(cross(cameraLeft, cameraFwd));
+
+    float cameraViewWidth   = 6.0;
+    float cameraViewHeight  = cameraViewWidth;
+    float cameraDistance    = 10.0;  // intuitively backwards!
+
+    //-------------------------
+    //------ Ray Setup --------
+    //-------------------------
+    
+    vec3 rayTarget = (cameraFwd * vec3(cameraDistance,cameraDistance,cameraDistance))
+                   - (cameraLeft * v_screenPosition.x * cameraViewWidth)
+                   + (cameraUp * v_screenPosition.y * cameraViewHeight);
+    vec3 rayDir = normalize(rayTarget);
+
+    //-------------------------
+    //------ Ray Trace --------
+    //-------------------------
+    
+    // if the ray misses the bounding box, bail out
+    vec2 rayMinMax;
+    if (!RayIntersectAABox(vec3(0.0, 0.0, 0.0), vec3(1.0,1.0,1.0), cameraPos, rayDir, rayMinMax))
+    {
+        float maxDist = 1000.0;
+        if (HitCP(cameraPos, rayDir, maxDist))
+            return vec3(1.0, 0.0, 1.0);
+        else
+            return vec3(0.0, 0.0, 0.0);
+    }
+
+    // test the ray against control points and remember if we hit one. Also shorten max distance if we did.
+    bool hitCP = HitCP(cameraPos, rayDir, rayMinMax.y);
+
+    //-------------------------
+    //------ Ray March --------
+    //-------------------------
+
+    vec3 rayPos = clamp(cameraPos + rayDir * rayMinMax.x, 0.0, 1.0);
+    vec3 rayStop = clamp(cameraPos + rayDir * rayMinMax.y, 0.0, 1.0);
+    vec3 rayDelta = (rayStop - rayPos) / float(NUM_RAY_STEPS-1);
+    float hitTime = rayMinMax.x;
+    float deltaT = (rayMinMax.y - rayMinMax.x) / float(NUM_RAY_STEPS-1);
+    float lastHeight = 0.0;
+    float lastY = 0.0;
+    float height = 0.0;
+
+    bool startedAbove = rayPos.y > SurfaceHeight(rayPos.xz);
+    bool hit = false;
+    for (int i = 0; i < NUM_RAY_STEPS; ++i)
+    {
+        height = SurfaceHeight(rayPos.xz);
+
+        bool isAbove = rayPos.y > height;
+        hit = (startedAbove != isAbove);
+        if (hit)
+          break;
+
+        lastHeight = height;
+        lastY = rayPos.y;     
+        rayPos = clamp(rayPos + rayDelta, 0.0, 1.0);
+        hitTime += deltaT;
+    }
+
+    // If the surface in the box is missed, set to dark green to show where the box is.
+    // If we previously hit a control point, set it to the control point color though.
+    if (!hit)
+    {
+        if (hitCP)
+            return vec3(1.0, 0.0, 1.0);
+        else
+            return u_boxColor;
+    }    
+
+    // estimate where the hit was
+    hitTime = hitTime - deltaT + deltaT*(lastHeight-lastY)/(rayPos.y-lastY-height+lastHeight);
+    vec3 rayHitPos = cameraPos + rayDir * hitTime;
+
+    //-------------------------
+    //------- Shading ---------
+    //-------------------------
+    vec3 ret = vec3(0.0);
+
+    vec3 diffuseColor = SurfaceDiffuse(rayHitPos.xz);
+
+    if (!u_lit)
+        return diffuseColor;
+
+    vec3 reverseLightDir = normalize(vec3(2.0, 2.0, 1.5));
+
+    vec3 normal = SurfaceNormal(rayHitPos.xz);
+    if (dot(normal, rayDir) > 0.0)
+      normal *= -1.0;
+
+    // ambient
+    ret = diffuseColor * vec3(0.01);
+
+    // diffuse
+    float dp = clamp(dot(normal, reverseLightDir), 0.0, 1.0);
+    ret += diffuseColor * dp;
+
+    // specular
+    vec3 reflection = reflect(reverseLightDir, normal);
+    dp = clamp(dot(rayDir, reflection), 0.0, 1.0);
+    ret += pow(dp, 60.0); 
+
+    return ret;
+}
+
+void main() {
+    // get the color, gamma correct and clamp
+    outColor.rgb = clamp(sqrt(CalculateColor()), 0.0, 1.0);
+    outColor.w = 1.0;
+}
+
+`;
+
+var gl = null;
+var canvas = null;
+var uniformMouse = null;
+var uniformLit = null;
+var uniformBoxColor = null;
+var uniformIsolines = null;
+var uniformDrawControlpoints = null;
+var uniformControlpoints11 = null;
+var uniformControlpoints21A = null;
+var uniformControlpoints21B = null;
+var uniformControlpoints22A = null;
+var uniformControlpoints22B = null;
+var uniformControlpoints22C = null;
+var uniformControlpoints33A = null;
+var uniformControlpoints33B = null;
+var uniformControlpoints33C = null;
+var uniformControlpoints33D = null;
+var uniformTexture2d = null;
+var uniformTexture3d = null;
+var mouse = {PosX:0, PosX:0, IsDown: false};
+var mouseClicked = false;
+var shaderPrograms = [];
+var currentShaderProgram = null;
+
+var texture2d = null;
+var texture3d = null;
+
+//=========================================================================================
+function createShader (gl, type, source, staticBranches) {
+  var shader = gl.createShader(type);
+  gl.shaderSource(shader, "#version 300 es\n" + staticBranches + source);
+  gl.compileShader(shader);
+  var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (success) {
+    return shader;
+  }
+ 
+  console.log(gl.getShaderInfoLog(shader));
+  gl.deleteShader(shader);
+}
+
+//=========================================================================================
+function createProgram (gl, vertexShader, fragmentShader) {
+  var program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+  if (success) {
+    return program;
+  }
+ 
+  console.log(gl.getProgramInfoLog(program));
+  gl.deleteProgram(program);
+}
+
+//=========================================================================================
+function createTexture2dRGBA (texture, byteArrayWithRGBAData, width, height) {
+    if (texture == null)
+        texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(byteArrayWithRGBAData));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return texture;
+}
+
+//=========================================================================================
+function createTexture3dRGBA (texture, byteArrayWithRGBAData, width, height, depth) {
+    if (texture == null)
+        texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_3D, texture);
+    gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA, width, height, depth, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(byteArrayWithRGBAData));
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_3D, null);
+    return texture;
+}
+
+//=========================================================================================
+function resize (canvas) {
+  // Lookup the size the browser is displaying the canvas.
+  var displayWidth  = canvas.clientWidth;
+  var displayHeight = canvas.clientHeight;
+ 
+  // Check if the canvas is not the same size.
+  if (canvas.width  !== displayWidth ||
+      canvas.height !== displayHeight) {
+ 
+    // Make the canvas the same size
+    canvas.width  = displayWidth;
+    canvas.height = displayHeight;
+  }
+}
+
+//=========================================================================================
+function SetVertexAttributeData (gl, program, name, type, count, values)
+{
+    var attributeLocation = gl.getAttribLocation(program, name);
+    if (attributeLocation == -1)
+        return;
+
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(values), gl.STATIC_DRAW);        
+
+    gl.enableVertexAttribArray(attributeLocation);
+    var size = count; 
+    var type = type;   
+    var normalize = false; 
+    var stride = 0;        
+    var offset = 0;        
+    gl.vertexAttribPointer(attributeLocation, size, type, normalize, stride, offset);      
+}
+
+//=========================================================================================
+function DrawScene ()
+{
+    // set which shader we are using
+    SelectShaderProgram();
+
+    // hacky work around for some unknown thing changing the mouse value in the first couple frames!
+    // I did a console.log at each place the mouse value is modified, and it wasn't any of them!!
+    if (!mouseClicked)
+    {
+        mouse.PosX = gl.canvas.width / 2;
+        mouse.PosY = gl.canvas.height / 2;
+    }
+
+    // update uniforms
+    gl.uniform2fv(uniformMouse, [mouse.PosX / gl.canvas.width, mouse.PosY / gl.canvas.height]);
+    var e = document.getElementById("u_lit");
+    gl.uniform1i(uniformLit, e.options[e.selectedIndex].value);
+    if (document.getElementById("u_boxColor").checked)
+        gl.uniform3fv(uniformBoxColor, [0,0.04,0]);
+    else
+        gl.uniform3fv(uniformBoxColor, [0,0,0]);
+    if (document.getElementById("u_isolines").checked)
+        gl.uniform1i(uniformIsolines, 1);
+    else
+        gl.uniform1i(uniformIsolines, 0);
+    if (document.getElementById("u_drawControlPoints").checked)
+        gl.uniform1i(uniformDrawControlpoints, 1);
+    else
+        gl.uniform1i(uniformDrawControlpoints, 0);
+
+    // Degree (1,1) control points
+    var cp11_00 = document.getElementById("CP11_00").value / 255;
+    var cp11_10 = document.getElementById("CP11_10").value / 255;
+    var cp11_01 = document.getElementById("CP11_01").value / 255;
+    var cp11_11 = document.getElementById("CP11_11").value / 255;
+    gl.uniform4fv(uniformControlpoints11, [cp11_00, cp11_10, cp11_01, cp11_11]);
+
+    // Degree (2,1) control points
+    var cp21_00 = document.getElementById("CP21_00").value / 255;
+    var cp21_10 = document.getElementById("CP21_10").value / 255;
+    var cp21_20 = document.getElementById("CP21_20").value / 255;
+    gl.uniform3fv(uniformControlpoints21A, [cp21_00, cp21_10, cp21_20]);
+    var cp21_01 = document.getElementById("CP21_01").value / 255;
+    var cp21_11 = document.getElementById("CP21_11").value / 255;
+    var cp21_21 = document.getElementById("CP21_21").value / 255;
+    gl.uniform3fv(uniformControlpoints21B, [cp21_01, cp21_11, cp21_21]);
+
+    // Degree (2,2) control points
+    var cp22_00 = document.getElementById("CP22_00").value / 255;
+    var cp22_10 = document.getElementById("CP22_10").value / 255;
+    var cp22_20 = document.getElementById("CP22_20").value / 255;
+    gl.uniform3fv(uniformControlpoints22A, [cp22_00, cp22_10, cp22_20]);
+    var cp22_01 = document.getElementById("CP22_01").value / 255;
+    var cp22_11 = document.getElementById("CP22_11").value / 255;
+    var cp22_21 = document.getElementById("CP22_21").value / 255;
+    gl.uniform3fv(uniformControlpoints22B, [cp22_01, cp22_11, cp22_21]);
+    var cp22_02 = document.getElementById("CP22_02").value / 255;
+    var cp22_12 = document.getElementById("CP22_12").value / 255;
+    var cp22_22 = document.getElementById("CP22_22").value / 255;
+    gl.uniform3fv(uniformControlpoints22C, [cp22_02, cp22_12, cp22_22]);     
+
+    // Degree (3,3) control points
+    var cp33_00 = document.getElementById("CP33_00").value / 255;
+    var cp33_10 = document.getElementById("CP33_10").value / 255;
+    var cp33_20 = document.getElementById("CP33_20").value / 255;
+    var cp33_30 = document.getElementById("CP33_30").value / 255;
+    gl.uniform4fv(uniformControlpoints33A, [cp33_00, cp33_10, cp33_20, cp33_30]);
+    var cp33_01 = document.getElementById("CP33_01").value / 255;
+    var cp33_11 = document.getElementById("CP33_11").value / 255;
+    var cp33_21 = document.getElementById("CP33_21").value / 255;
+    var cp33_31 = document.getElementById("CP33_31").value / 255;
+    gl.uniform4fv(uniformControlpoints33B, [cp33_01, cp33_11, cp33_21, cp33_31]);
+    var cp33_02 = document.getElementById("CP33_02").value / 255;
+    var cp33_12 = document.getElementById("CP33_12").value / 255;
+    var cp33_22 = document.getElementById("CP33_22").value / 255;
+    var cp33_32 = document.getElementById("CP33_32").value / 255;
+    gl.uniform4fv(uniformControlpoints33C, [cp33_02, cp33_12, cp33_22, cp33_32]);       
+    var cp33_03 = document.getElementById("CP33_03").value / 255;
+    var cp33_13 = document.getElementById("CP33_13").value / 255;
+    var cp33_23 = document.getElementById("CP33_23").value / 255;
+    var cp33_33 = document.getElementById("CP33_33").value / 255;
+    gl.uniform4fv(uniformControlpoints33D, [cp33_03, cp33_13, cp33_23, cp33_33]);   
+
+    // make sure gl is rendering to the the right size and has the right viewport info
+    resize(gl.canvas);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    // draw our single full screen triangle
+    var primitiveType = gl.TRIANGLES;
+    var offset = 0;
+    var count = 3;
+    gl.drawArrays(primitiveType, offset, count);    
+
+    // request another frame to be drawn
+    requestAnimationFrame(DrawScene);
+}
+
+//=========================================================================================
+function GetPos ( obj )
+{
+    var x = 0;
+    var y = 0; 
+    do
+    {
+         x += obj.offsetLeft;
+         y += obj.offsetTop;
+    }while( obj = obj.offsetParent );
+
+    return { mX:x, mY:y };
+}
+
+//=========================================================================================
+function UpdateTexture ()
+{
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var degree = e.options[e.selectedIndex].value
+
+    if (degree == 0 || degree == 1)
+    {
+        var cp11_00 = document.getElementById("CP11_00").value;
+        var cp11_10 = document.getElementById("CP11_10").value;
+        var cp11_01 = document.getElementById("CP11_01").value;
+        var cp11_11 = document.getElementById("CP11_11").value;
+
+        var textureData = [
+            cp11_00, 0, 0, 0,
+            cp11_10, 0, 0, 0,
+            cp11_01, 0, 0, 0,
+            cp11_11, 0, 0, 0
+        ];
+        texture2d = createTexture2dRGBA(
+            texture2d,
+            textureData,
+            2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_2D, texture2d);
+        gl.uniform1i(uniformTexture2d, 0);    
+    }
+    else if (degree == 2)
+    {
+        var cp21_00 = document.getElementById("CP21_00").value;
+        var cp21_10 = document.getElementById("CP21_10").value;
+        var cp21_20 = document.getElementById("CP21_20").value;
+        var cp21_01 = document.getElementById("CP21_01").value;
+        var cp21_11 = document.getElementById("CP21_11").value;
+        var cp21_21 = document.getElementById("CP21_21").value;
+
+        var textureData = [
+            cp21_00, 0, 0, 0,
+            cp21_10, 0, 0, 0,
+            cp21_10, 0, 0, 0,
+            cp21_20, 0, 0, 0,
+
+            cp21_01, 0, 0, 0,
+            cp21_11, 0, 0, 0,
+            cp21_11, 0, 0, 0,
+            cp21_21, 0, 0, 0            
+        ];
+        texture3d = createTexture3dRGBA(
+            texture3d,
+            textureData,
+            2, 2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_3D, texture3d);
+        gl.uniform1i(uniformTexture3d, 0);    
+    }
+    else if (degree == 3)
+    {
+        var cp22_00 = document.getElementById("CP22_00").value;
+        var cp22_10 = document.getElementById("CP22_10").value;
+        var cp22_20 = document.getElementById("CP22_20").value;
+        var cp22_01 = document.getElementById("CP22_01").value;
+        var cp22_11 = document.getElementById("CP22_11").value;
+        var cp22_21 = document.getElementById("CP22_21").value;
+        var cp22_02 = document.getElementById("CP22_02").value;
+        var cp22_12 = document.getElementById("CP22_12").value;
+        var cp22_22 = document.getElementById("CP22_22").value;                
+
+        var textureData = [
+            cp22_00, cp22_01, cp22_02, 0,
+            cp22_10, cp22_11, cp22_12, 0,
+            cp22_10, cp22_11, cp22_12, 0,
+            cp22_20, cp22_21, cp22_22, 0
+        ];
+        texture2d = createTexture2dRGBA(
+            texture2d,
+            textureData,
+            2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_2D, texture2d);
+        gl.uniform1i(uniformTexture2d, 0);            
+    }
+    else if (degree == 4)
+    {
+        var cp33_00 = document.getElementById("CP33_00").value;
+        var cp33_10 = document.getElementById("CP33_10").value;
+        var cp33_20 = document.getElementById("CP33_20").value;
+        var cp33_30 = document.getElementById("CP33_30").value;
+
+        var cp33_01 = document.getElementById("CP33_01").value;
+        var cp33_11 = document.getElementById("CP33_11").value;
+        var cp33_21 = document.getElementById("CP33_21").value;        
+        var cp33_31 = document.getElementById("CP33_31").value;        
+
+        var cp33_02 = document.getElementById("CP33_02").value;
+        var cp33_12 = document.getElementById("CP33_12").value;
+        var cp33_22 = document.getElementById("CP33_22").value;        
+        var cp33_32 = document.getElementById("CP33_32").value;        
+
+        var cp33_03 = document.getElementById("CP33_03").value;
+        var cp33_13 = document.getElementById("CP33_13").value;
+        var cp33_23 = document.getElementById("CP33_23").value;        
+        var cp33_33 = document.getElementById("CP33_33").value;        
+
+        var textureData = [
+            cp33_00, cp33_01, cp33_02, cp33_03,
+            cp33_10, cp33_11, cp33_12, cp33_13,
+            cp33_10, cp33_11, cp33_12, cp33_13,
+            cp33_20, cp33_21, cp33_22, cp33_23,
+
+            cp33_10, cp33_11, cp33_12, cp33_13,
+            cp33_20, cp33_21, cp33_22, cp33_23,
+            cp33_20, cp33_21, cp33_22, cp33_23,
+            cp33_30, cp33_31, cp33_32, cp33_33,
+        ];
+        texture3d = createTexture3dRGBA(
+            texture3d,
+            textureData,
+            2, 2, 2
+        );
+        gl.bindTexture(gl.TEXTURE_3D, texture3d);
+        gl.uniform1i(uniformTexture3d, 0);            
+    }
+}
+
+//=========================================================================================
+function SelectShaderProgram ()
+{
+    // if we are using the same shader program that we are supposed to be using, nothing to do
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var newShaderProgram = shaderPrograms[e.options[e.selectedIndex].value];
+    if (newShaderProgram == currentShaderProgram)
+        return;
+
+    // switch to the new shader program if we need to change
+    currentShaderProgram = newShaderProgram;
+    gl.useProgram(currentShaderProgram); 
+
+    // vertex data - a single triangle that covers the screen
+    var vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    SetVertexAttributeData(gl, currentShaderProgram, "a_position", gl.FLOAT, 2,
+        [
+            -1,  3,
+             3, -1,
+            -1, -1,
+        ]
+    );   
+
+    // get uniforms for this shader program
+    uniformMouse = gl.getUniformLocation(currentShaderProgram, "u_mouse"); 
+    uniformLit = gl.getUniformLocation(currentShaderProgram, "u_lit");
+    uniformBoxColor = gl.getUniformLocation(currentShaderProgram, "u_boxColor");
+    uniformIsolines = gl.getUniformLocation(currentShaderProgram,"u_isolines");
+    uniformDrawControlpoints = gl.getUniformLocation(currentShaderProgram,"u_drawControlPoints");
+    uniformControlpoints11 = gl.getUniformLocation(currentShaderProgram, "u_controlPoints11");
+    uniformControlpoints21A = gl.getUniformLocation(currentShaderProgram, "u_controlPoints21A");
+    uniformControlpoints21B = gl.getUniformLocation(currentShaderProgram, "u_controlPoints21B");
+    uniformControlpoints22A = gl.getUniformLocation(currentShaderProgram, "u_controlPoints22A");
+    uniformControlpoints22B = gl.getUniformLocation(currentShaderProgram, "u_controlPoints22B");
+    uniformControlpoints22C = gl.getUniformLocation(currentShaderProgram, "u_controlPoints22C");
+    uniformControlpoints33A = gl.getUniformLocation(currentShaderProgram, "u_controlPoints33A");
+    uniformControlpoints33B = gl.getUniformLocation(currentShaderProgram, "u_controlPoints33B");
+    uniformControlpoints33C = gl.getUniformLocation(currentShaderProgram, "u_controlPoints33C");
+    uniformControlpoints33D = gl.getUniformLocation(currentShaderProgram, "u_controlPoints33D");
+    uniformTexture2d = gl.getUniformLocation(currentShaderProgram, "u_texture2d");     
+    uniformTexture3d = gl.getUniformLocation(currentShaderProgram, "u_texture3d");
+
+    // update the texture we are sampling from
+    UpdateTexture();
+}
+
+//=========================================================================================
+function DegreeChanged ()
+{
+    var e = document.getElementById("STATIC_BRANCH_DEGREE");
+    var degree = e.options[e.selectedIndex].value;
+
+    document.getElementById("ControlPoints11").style.visibility = (degree == 0 || degree == 1) ? "visible" : "hidden";
+    document.getElementById("ControlPoints11").style.display  = (degree == 0 || degree == 1) ? "block" : "none";
+
+    document.getElementById("ControlPoints21").style.visibility = (degree == 2) ? "visible" : "hidden";
+    document.getElementById("ControlPoints21").style.display = (degree == 2) ? "block" : "none";
+
+    document.getElementById("ControlPoints22").style.visibility = (degree == 3) ? "visible" : "hidden";
+    document.getElementById("ControlPoints22").style.display = (degree == 3) ? "block" : "none";
+
+    document.getElementById("ControlPoints33").style.visibility = (degree == 4) ? "visible" : "hidden";
+    document.getElementById("ControlPoints33").style.display = (degree == 4) ? "block" : "none";    
+}
+
+//=========================================================================================
+function Initialize ()
+{
+    // make sure the UI is setup correctly
+    DegreeChanged();
+
+    // setup webgl2
+    canvas = document.getElementById("RenderWindow");
+    gl = canvas.getContext("webgl2");
+    if (!gl)
+    {
+        alert("This page requires WebGL2, which doesn't seem to be enabled ):");
+        return;
+    }
+
+    // Setup mouse input stuff
+    mouse.PosX = gl.canvas.width / 2;
+    mouse.PosY = gl.canvas.height / 2;
+    mouse.IsDown = false;
+    canvas.onmousedown = function(ev)
+    {
+        var pos = GetPos(canvas);
+        mouse.PosX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+        mouse.PosY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+        mouse.IsDown = true;
+        mouseClicked = true;
+    }
+    canvas.onmousemove = function(ev)
+    {
+        if( mouse.IsDown )
+        {
+            var pos = GetPos( canvas );
+            mouse.PosX =                 (ev.pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+            mouse.PosY = canvas.height - (ev.pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+        }
+    }
+    canvas.onmouseup = function(ev) {mouse.IsDown = false;}
+
+    canvas.addEventListener("touchstart", function(ev)
+    {
+        ev.preventDefault();
+        var pos = GetPos(canvas);
+        if (ev.touches.length > 0)
+        {
+            mouse.PosX =                 (ev.touches[0].pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+            mouse.PosY = canvas.height - (ev.touches[0].pageY - pos.mY)*canvas.height/canvas.offsetHeight;
+            mouse.IsDown = true;
+            mouseClicked = true;            
+        }        
+    }
+    );
+    canvas.addEventListener("touchmove", function(ev)
+    {
+        ev.preventDefault();
+        var pos = GetPos(canvas);
+        if (ev.touches.length > 0)
+        {
+            mouse.PosX =                 (ev.touches[0].pageX - pos.mX)*canvas.width/canvas.offsetWidth;
+            mouse.PosY = canvas.height - (ev.touches[0].pageY - pos.mY)*canvas.height/canvas.offsetHeight;            
+        }
+    }
+    );
+    canvas.addEventListener("touchend", function(ev)
+    {
+        ev.preventDefault();
+        mouse.IsDown = false;
+    }
+    );
+    canvas.addEventListener("touchcancel", function(ev)
+    {
+        ev.preventDefault();
+        mouse.IsDown = false;
+    } 
+    );
+    
+    // set clear color to black
+    gl.clearColor(0, 0, 0, 1);
+
+    // activate texture 0
+    gl.activeTexture(gl.TEXTURE0);
+
+    // compile all shaders
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource, "");
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 0");
+    shaderPrograms[0] = createProgram(gl, vertexShader, fragmentShader);
+
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 1");
+    shaderPrograms[1] = createProgram(gl, vertexShader, fragmentShader);
+
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 2");
+    shaderPrograms[2] = createProgram(gl, vertexShader, fragmentShader);
+
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 3");
+    shaderPrograms[3] = createProgram(gl, vertexShader, fragmentShader);    
+
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource, "#define STATIC_BRANCH_DEGREE 4");
+    shaderPrograms[4] = createProgram(gl, vertexShader, fragmentShader);    
+
+    // start the render loop
+    requestAnimationFrame(DrawScene);
+}
+
+
+</script>
+</head>
+<body onLoad="Initialize()">
+<h1>Analytical Surfaces Evaluated by the GPU Texture Sampler</h1>
+
+This is a demo to go along with my blog post: <a href="http://blog.demofox.org/2016/12/16/analyticsurfacesvolumesgpu/" target="_blank">Evaluating Points on Analytical Surfaces and in Analytical Volumes Using the GPU Texture Sampler</a><br>
+<br>
+This page uses WebGL2, which will be enabled by default in chrome 56 in January 2017.<br>
+To enable WebGL2 before then, or on other browsers, see this link:
+<a href="http://webgl2fundamentals.org/webgl/lessons/webgl-getting-webgl2.html" target="_blank">How to use WebGL2</a><br>
+<br>
+Drag the mouse to rotate the surface.<br>
+<br>
+<table class="NoBorder">
+<tr>
+    <td><canvas id="RenderWindow"></canvas></td>
+    <td valign="top">
+        <br>
+        <table>
+        <tr>
+        <td>Degree:</td>
+        <td>
+        <select id="STATIC_BRANCH_DEGREE" onChange="DegreeChanged()">
+            <option value="0">(1,1) Bilinear</option>
+            <option value="1">(1,1) Bilinear (Software Interpolation)</option>
+            <option value="2">(2,1) Quadratic / Linear</option>
+            <option value="3">(2,2) Biquadratic</option>
+            <option value="4">(3,3) Bicubic</option>
+        </select>
+        </td>
+        </tr>
+        <tr>
+        <td>Shading Mode:</td>
+        <td>
+        <select id="u_lit">
+            <option value="0">UV</option>
+            <option value="1" selected="true">Lit</option>
+        </select>
+        </td>
+        </tr>
+        <tr><td>Draw Bounding Box:</td><td><input type="checkbox" id="u_boxColor" checked="true"/></td></tr>
+        <tr><td>Draw Control Points:</td><td><input type="checkbox" id="u_drawControlPoints" checked="true"/></td></tr>
+        <tr><td>Draw Isolines:</td><td><input type="checkbox" id="u_isolines" checked="true"/></td></tr>
+        </table>
+        <br>
+        Control Points:<br>        
+        <table class="NoBorder" id="ControlPoints11">
+        <tr><td colspan=3>Row 0</td></tr>        
+        <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP11_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP11_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td colspan=3>Row 1</td></tr>
+        <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP11_01" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP11_11" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        </table>
+        <table class="NoBorder" id="ControlPoints21">
+        <tr><td colspan=3>Row 0</td></tr>
+        <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP21_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP21_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>20:</td><td><input type="range" min="0" max="255" id="CP21_20" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td colspan=3>Row 1</td></tr>
+        <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP21_01" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP21_11" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>21:</td><td><input type="range" min="0" max="255" id="CP21_21" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        </table>        
+        <table class="NoBorder" id="ControlPoints22">
+        <tr><td colspan=3>Row 0</td></tr>
+        <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP22_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP22_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>20:</td><td><input type="range" min="0" max="255" id="CP22_20" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td colspan=3>Row 1</td></tr>
+        <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP22_01" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP22_11" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>21:</td><td><input type="range" min="0" max="255" id="CP22_21" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td colspan=3>Row 2</td></tr>
+        <tr><td>&nbsp;</td><td>02:</td><td><input type="range" min="0" max="255" id="CP22_02" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>12:</td><td><input type="range" min="0" max="255" id="CP22_12" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>22:</td><td><input type="range" min="0" max="255" id="CP22_22" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
+        </table>        
+        <table class="NoBorder" id="ControlPoints33">
+        <tr><td colspan=3>Row 0</td></tr>
+        <tr><td>&nbsp;</td><td>00:</td><td><input type="range" min="0" max="255" id="CP33_00" value="64" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>10:</td><td><input type="range" min="0" max="255" id="CP33_10" value="192" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>20:</td><td><input type="range" min="0" max="255" id="CP33_20" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>30:</td><td><input type="range" min="0" max="255" id="CP33_30" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td colspan=3>Row 1</td></tr>
+        <tr><td>&nbsp;</td><td>01:</td><td><input type="range" min="0" max="255" id="CP33_01" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>11:</td><td><input type="range" min="0" max="255" id="CP33_11" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>21:</td><td><input type="range" min="0" max="255" id="CP33_21" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>31:</td><td><input type="range" min="0" max="255" id="CP33_31" value="160" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>        
+        <tr><td colspan=3>Row 2</td></tr>
+        <tr><td>&nbsp;</td><td>02:</td><td><input type="range" min="0" max="255" id="CP33_02" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>12:</td><td><input type="range" min="0" max="255" id="CP33_12" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>22:</td><td><input type="range" min="0" max="255" id="CP33_22" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
+        <tr><td>&nbsp;</td><td>32:</td><td><input type="range" min="0" max="255" id="CP33_32" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
+        <tr><td colspan=3>Row 3</td></tr>
+        <tr><td>&nbsp;</td><td>03:</td><td><input type="range" min="0" max="255" id="CP33_03" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>13:</td><td><input type="range" min="0" max="255" id="CP33_13" value="128" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>
+        <tr><td>&nbsp;</td><td>23:</td><td><input type="range" min="0" max="255" id="CP33_23" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                
+        <tr><td>&nbsp;</td><td>33:</td><td><input type="range" min="0" max="255" id="CP33_33" value="255" oninput="UpdateTexture();" onchange="UpdateTexture();"/></td></tr>                        
+        </table>  
+
+    </td>
+</tr>
+</table>
+
+<h2>How It's Rendered</h2>
+The rendering is done by doing a ray trace of the bounding cube to see which rays might intersect the surface.
+<br><br>
+The rays that hit the cube then ray march from the start of the cube to the end of the cube to see if they hit the surface.  If they do hit the surface, they are shaded, else they are not.
+<br><br>
+Instead of doing the initial ray trace, the cube could be rendered with triangles so that it would become a rasterization process instead of a full screen raytrace vs a box.  The ray marching would still be done in the pixel shader like it is now.  The ray marching could be improved by using the gradient to take varying sized steps instead of constant sized steps.
+<br><br>
+There is some non smoothness of the normals (seen best in the specular highlight) and the surface positions that is due to the fact that the texture interpolator works in X.8 fixed point numbers.  You can verify this by using the software interpolated dreeg selection to see it smooth out.
+<br><br>
+The GPU texture sampler is used to calculate the y axis value (height) of the surface at a given u,v (or x,z) position, as described below.
+<h2>Bilinear</h2>
+The four control points are stored in a 2x2 2d texture's R channel in this pattern:<br><br>
+<table>
+<tr><td>00</td><td>10</td></tr>
+<tr><td>01</td><td>11</td></tr>
+</table><br><br>
+For a u,v coordinate, the texture is sampled at (uv + 0.5) / 2.0, with the R component of the result having the surface height.
+
+<h2>Bilinear (Software Interpolation)</h2>
+The texture is the same as above, but the pixel shader samples the texture at (0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75, 0.75) to get the control points, and then does bilinear interpolation manually using three mix operations.
+
+<h2>Quadratic / Linear</h2>
+
+The 6 control points are stored in a 2x2x2 3d volume texture's R channel in this pattern:<br><br>
+<table>
+<tr><td colspan = 2>Slice 0</td></tr>
+<tr><td>00</td><td>10</td></tr>
+<tr><td>10</td><td>20</td></tr>
+<tr><td colspan = 2>Slice 1</td></tr>
+<tr><td>01</td><td>11</td></tr>
+<tr><td>11</td><td>21</td></tr>
+</table><br><br>
+For a u,v coordinate, the texture is sampled at (uv.xxy + 0.5) / 2.0, with the R component of the result having the surface height.
+
+<h2>Biquadratic</h2>
+
+The 9 control points are stored in a 2x2 2d texture's RGB channels.  Each color channel contains a quadratic curve across the u axis like below:<br><br>
+<table>
+<tr><td colspan = 2>Red</td></tr>
+<tr><td>00</td><td>10</td></tr>
+<tr><td>10</td><td>20</td></tr>
+<tr><td colspan = 2>Green</td></tr>
+<tr><td>01</td><td>11</td></tr>
+<tr><td>11</td><td>21</td></tr>
+<tr><td colspan = 2>Blue</td></tr>
+<tr><td>02</td><td>12</td></tr>
+<tr><td>12</td><td>22</td></tr>
+</table><br><br>
+For a u,v coordinate, the texture is sampled at (uv.xx + 0.5) / 2.0 to get 3 quadratic curves in R,G,B.  The R,G,B results are then combined with the quadratic Bezier equation using uv.y to get the surface height.
+
+<h2>Bicubic</h2>
+
+The 16 control points are stored in a 2x2x2 3d volume texture's RGBA channels.  Each color channel contains a cubic curve across the u axis like below:<br><br>
+<table>
+<tr><td colspan = 2>Red Layer 0</td></tr>
+<tr><td>00</td><td>10</td></tr>
+<tr><td>10</td><td>20</td></tr>
+<tr><td colspan = 2>Green Layer 0</td></tr>
+<tr><td>01</td><td>11</td></tr>
+<tr><td>11</td><td>21</td></tr>
+<tr><td colspan = 2>Blue Layer 0</td></tr>
+<tr><td>02</td><td>12</td></tr>
+<tr><td>12</td><td>22</td></tr>
+<tr><td colspan = 2>Alpha Layer 0</td></tr>
+<tr><td>03</td><td>13</td></tr>
+<tr><td>13</td><td>23</td></tr>
+<tr><td colspan = 2>Red Layer 1</td></tr>
+<tr><td>10</td><td>20</td></tr>
+<tr><td>20</td><td>30</td></tr>
+<tr><td colspan = 2>Green Layer 1</td></tr>
+<tr><td>11</td><td>21</td></tr>
+<tr><td>21</td><td>31</td></tr>
+<tr><td colspan = 2>Blue Layer 1</td></tr>
+<tr><td>12</td><td>22</td></tr>
+<tr><td>22</td><td>32</td></tr>
+<tr><td colspan = 2>Alpha Layer 1</td></tr>
+<tr><td>13</td><td>23</td></tr>
+<tr><td>23</td><td>33</td></tr>
+</table><br><br>
+For a u,v coordinate, the texture is sampled at (uv.xxx + 0.5) / 2.0 to get 4 cubic curves across u in R,G,B,A.  The R,G,B,A results are then combined with the cubic Bezier equation using uv.y to get the surface height.
+</body>
+</html>
