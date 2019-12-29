@@ -7,4 +7,5 @@ clang ^
   -Wl,--export-all ^
   -Wl,--lto-O3 ^
   -o hello.wasm ^
+  -Wl,-z,stack-size=8388608 ^
   *.c

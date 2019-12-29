@@ -17,6 +17,10 @@ table.NoBorder td {
 </style>
 
 <script type="module">
+
+    // TODO: are these values correct?
+    const memory = new WebAssembly.Memory({initial: 256, maximum: 256});
+
     function DrawGraph(instance)
     {
         var canvas = document.getElementById('canvas');
@@ -25,10 +29,14 @@ table.NoBorder td {
         var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         var data = imageData.data;
 
-        alert(data);
+        alert(instance.exports.SetByteZero(42));
+        alert(instance.exports.SetByteZero(43));
 
-        const heights = instance.exports.GetGraphHeights();
+        //new Uint8Array(memory.buffer, exports._board_ref());
 
+        const heights = new Uint8Array(memory.buffer, instance.exports.GetGraphHeights());
+        alert(heights);
+        
         for (var i = 0; i < data.length; i += 4)
         {
           var pixelIndex = i / 4;
@@ -47,9 +55,20 @@ table.NoBorder td {
 
     async function init()
     {
-      const { instance } = await WebAssembly.instantiateStreaming(
-        fetch("hello.wasm")
-      );
+      // TODO: do we need an import object? Probably
+
+    const env = {
+      'abortStackOverflow': _ => { throw new Error('overflow'); },
+      'table': new WebAssembly.Table({initial: 0, maximum: 0, element: 'anyfunc'}),
+      'tableBase': 0,
+      'memory': memory,
+      'memoryBase': 1024,
+      'STACKTOP': 0,
+      'STACK_MAX': memory.buffer.byteLength,
+    };
+    const importObject = {env};
+
+      const { instance } = await WebAssembly.instantiateStreaming(fetch("hello.wasm"), importObject);
       // TODO: get rid of this
       //alert(instance.exports.Add(4, 1));
 

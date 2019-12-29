@@ -4,7 +4,15 @@ typedef unsigned char byte;
 
 static const int c_numHeights = 1024;
 
-static byte s_graphHeight[c_numHeights];
+byte s_graphHeight[c_numHeights];
+
+// TODO: get rid of this. debugging only
+byte SetByteZero(byte A)
+{
+	byte ret = s_graphHeight[0];
+	s_graphHeight[0] = A;
+	return ret;
+}
 
 byte* GetGraphHeights()
 {
