@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script type="module">
+  async function init() {
+    const { instance } = await WebAssembly.instantiateStreaming(
+      fetch("hello.wasm")
+    );
+    alert(instance.exports.add(4, 1));
+  }
+  init();
+</script>
+
+</head>
+<body>
+
+<canvas id="canvas" style="image-rendering: pixelated; border: 2px solid blue;"></canvas>
+
+</body>
+</html>
