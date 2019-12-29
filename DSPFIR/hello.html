@@ -91,8 +91,6 @@ table.NoBorder td {
 
         // TODO: this. DrawGraph()?
         //  requestAnimationFrame(DrawScene);
-
-        // TODO: maybe try tick marks etc? https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range
     }
 
     init();
@@ -104,6 +102,15 @@ table.NoBorder td {
 <input type="range" min="0" max="100" id="A0Value" value="0" oninput="document.getElementById('A0Label').innerText='A0: ' + this.value;"/>
 <span id="A0Label">A0: 0</span>
 <br>
+
+<input type="range" min="0" max="100" id="A1Value" value="0" oninput="document.getElementById('A1Label').innerText='A1: ' + this.value;"/>
+<span id="A1Label">A1: 0</span>
+<br>
+
+<input type="range" min="0" max="100" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText='A2: ' + this.value;"/>
+<span id="A2Label">A2: 0</span>
+<br>
+
 <canvas id="canvas" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
 
 </body>
