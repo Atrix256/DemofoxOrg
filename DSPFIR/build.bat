@@ -4,7 +4,7 @@ clang ^
   -flto ^
   -nostdlib ^
   -Wl,--no-entry ^
-  -Wl,--export-all ^
+  -Wl,--export-dynamic ^
   -Wl,--lto-O3 ^
   -o hello.wasm ^
   -Wl,-z,stack-size=8388608 ^

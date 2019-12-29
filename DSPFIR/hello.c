@@ -1,52 +1,47 @@
+#define export __attribute__((visibility("default")))
+
 typedef unsigned char byte;
 
-// TODO: could we return float maybe?
+static const int c_graphWidth = 512;
 
-static const int c_numHeights = 1024;
+byte s_graphHeight[c_graphWidth];
 
-byte s_graphHeight[c_numHeights];
-
-double radians(double degrees)
+export int GetGraphWidth()
 {
-	return degrees * 3.14159265359 / 180.0;
+	return c_graphWidth;
 }
 
-double fract(double f)
+export int GetGraphHeight()
 {
-	return f - (double)((int)(f));
+	return c_graphWidth / 4;
 }
 
-double absval(double f)
+double absval(double x)
 {
-	return f < 0.0f ? -f : f;
+	return x < 0.0f ? -x : x;
 }
 
-float Sin(const float _x)
+double fract(double x)
 {
-	// from #3 at https://blog.demofox.org/2014/11/04/four-ways-to-calculate-sine-without-trig/
-
-    // make a triangle wave that has y values from 0-1, where y is 0 at x=0
-	float x = absval(fract((_x - radians(90.0)) / radians(360.0))*2.0-1.0);
-
-	// smoothstep
-    return x * x * (3.0 - 2.0 * x) * 2.0 - 1.0;
+	return x - (double)((int)x);
 }
 
-byte* GetGraphHeights()
+double Triangle(double phase)
 {
-	for (int i = 0; i < c_numHeights; ++i)
+    return absval(fract(phase)-0.5)*4.0-1.0;
+}
+
+export byte* GetGraphHeights()
+{
+	for (int i = 0; i < c_graphWidth; ++i)
 	{
-		double phase = 45 * (double)(i) / (double)(c_numHeights);
-		double value = (Sin(phase) * 0.5 + 0.5) * 128.0;
-		s_graphHeight[i] = (byte)(value);
+		double phase = 10.0 * (double)(i) / (double)(c_graphWidth);
+		double value = (Triangle(phase)) * 0.5 + 0.5;
+		s_graphHeight[i] = (byte)(value * 255.0);
 	}
 	return s_graphHeight;
 }
 
-// TODO: get rid of this
-int Add(int a, int b) {
-  return a*a + b*b + a + b;
-}
-
-// TODO: can we choose which things to export?
-// TODO: 4 spaces instead of tabs
+// TODO: can we export constants for graph width / height instead?
+// TODO: 4 spaces instead of tabs in .c files
+// TODO: could we return float maybe instead of bytes? should we? actually doubles i guess, for javascript
