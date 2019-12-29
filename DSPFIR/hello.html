@@ -27,7 +27,11 @@ table.NoBorder td {
         var canvas = document.getElementById('canvas');
         var ctx = canvas.getContext('2d');
 
-        const heights = new Uint8Array(exports.memory.buffer, exports.GetGraphHeights());
+        var A0 = document.getElementById('A0Value').value;
+        var A1 = document.getElementById('A1Value').value;
+        var A2 = document.getElementById('A2Value').value;
+
+        const heights = new Uint8Array(exports.memory.buffer, exports.GetGraphHeights(A0, A1, A2));
 
         // TODO: this is slower, get rid of it?
         if (false)
@@ -56,7 +60,7 @@ table.NoBorder td {
                 var x = pixelIndex % canvas.width;
                 var y = canvas.height - (pixelIndex / canvas.width) - 1; // flip y over
 
-                if (y < heights[x])
+                if (y < heights[x] * graphHeight / 255)
                 {
                     data[i + 0] = 0;
                     data[i + 1] = 255;
@@ -73,6 +77,8 @@ table.NoBorder td {
 
             ctx.putImageData(imageData, 0, 0);
         }
+
+        requestAnimationFrame(DrawGraph);
     }
 
     async function init()
@@ -87,10 +93,7 @@ table.NoBorder td {
         document.getElementById('canvas').width = graphWidth;
         document.getElementById('canvas').height = graphHeight;
 
-        DrawGraph();
-
-        // TODO: this. DrawGraph()?
-        //  requestAnimationFrame(DrawScene);
+        requestAnimationFrame(DrawGraph);
     }
 
     init();
@@ -99,12 +102,12 @@ table.NoBorder td {
 </head>
 <body>
 
-<input type="range" min="0" max="100" id="A0Value" value="0" oninput="document.getElementById('A0Label').innerText='A0: ' + this.value;"/>
-<span id="A0Label">A0: 0</span>
+<input type="range" min="0" max="100" id="A0Value" value="8" oninput="document.getElementById('A0Label').innerText='A0: ' + this.value;"/>
+<span id="A0Label">A0: 8</span>
 <br>
 
-<input type="range" min="0" max="100" id="A1Value" value="0" oninput="document.getElementById('A1Label').innerText='A1: ' + this.value;"/>
-<span id="A1Label">A1: 0</span>
+<input type="range" min="0" max="100" id="A1Value" value="1" oninput="document.getElementById('A1Label').innerText='A1: ' + this.value;"/>
+<span id="A1Label">A1: 1</span>
 <br>
 
 <input type="range" min="0" max="100" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText='A2: ' + this.value;"/>

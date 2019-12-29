@@ -31,13 +31,13 @@ double Triangle(double phase)
     return absval(fract(phase)-0.5)*4.0-1.0;
 }
 
-export byte* GetGraphHeights()
+export byte* GetGraphHeights(double A0, double A1, double A2)
 {
 	for (int i = 0; i < c_graphWidth; ++i)
 	{
-		double phase = 10.0 * (double)(i) / (double)(c_graphWidth);
+		double phase = A0 * (double)(i) / (double)(c_graphWidth);
 		double value = (Triangle(phase)) * 0.5 + 0.5;
-		s_graphHeight[i] = (byte)(value * 255.0);
+		s_graphHeight[i] = (byte)(value * 255.0 * A1 + A2);
 	}
 	return s_graphHeight;
 }
