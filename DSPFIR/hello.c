@@ -42,6 +42,5 @@ export byte* GetGraphHeights()
 	return s_graphHeight;
 }
 
-// TODO: can we export constants for graph width / height instead?
 // TODO: 4 spaces instead of tabs in .c files
 // TODO: could we return float maybe instead of bytes? should we? actually doubles i guess, for javascript
