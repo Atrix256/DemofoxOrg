@@ -23,7 +23,7 @@ double absval(double x)
 
 double fract(double x)
 {
-	return x - (double)((int)x);
+    return x - (double)((int)x);
 }
 
 double Triangle(double phase)
