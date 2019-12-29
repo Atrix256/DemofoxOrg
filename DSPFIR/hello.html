@@ -2,20 +2,69 @@
 <html>
 <head>
 
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas#RenderWindow {border:2px solid #00FF00;width:700px; height:700px;}
+table {
+    border-collapse: collapse;
+}
+table, td {
+    border: 1px solid #00FF00;
+}
+table.NoBorder td {
+    border: 1px solid black;
+}
+</style>
+
 <script type="module">
-  async function init() {
-    const { instance } = await WebAssembly.instantiateStreaming(
-      fetch("hello.wasm")
-    );
-    alert(instance.exports.add(4, 1));
-  }
-  init();
+    function DrawGraph(instance)
+    {
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var data = imageData.data;
+
+        alert(data);
+
+        const heights = instance.exports.GetGraphHeights();
+
+        for (var i = 0; i < data.length; i += 4)
+        {
+          var pixelIndex = i / 4;
+
+          var x = pixelIndex % canvas.width;
+          var y = pixelIndex / canvas.width;
+
+          data[i + 0] = heights[x];
+          data[i + 1] = heights[x];
+          data[i + 2] = x;
+          data[i + 3] = 255;
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    async function init()
+    {
+      const { instance } = await WebAssembly.instantiateStreaming(
+        fetch("hello.wasm")
+      );
+      // TODO: get rid of this
+      //alert(instance.exports.Add(4, 1));
+
+      DrawGraph(instance);
+    }
+
+    init();
 </script>
 
 </head>
 <body>
 
-<canvas id="canvas" style="image-rendering: pixelated; border: 2px solid blue;"></canvas>
+<canvas id="canvas" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
 
 </body>
 </html>
+
+TODO: 2 spaces, not tabs.
