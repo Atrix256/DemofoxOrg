@@ -4,7 +4,7 @@ typedef unsigned char byte;
 
 static const int c_graphWidth = 512;
 
-byte s_graphHeight[c_graphWidth];
+double s_graphHeight[c_graphWidth];
 
 export int GetGraphWidth()
 {
@@ -31,16 +31,15 @@ double Triangle(double phase)
     return absval(fract(phase)-0.5)*4.0-1.0;
 }
 
-export byte* GetGraphHeights(double A0, double A1, double A2)
+export double* GetGraphHeights(double A0, double A1, double A2)
 {
 	for (int i = 0; i < c_graphWidth; ++i)
 	{
 		double phase = A0 * (double)(i) / (double)(c_graphWidth);
 		double value = (Triangle(phase)) * 0.5 + 0.5;
-		s_graphHeight[i] = (byte)(value * 255.0 * A1 + A2);
+		s_graphHeight[i] = value * A1 + A2;
 	}
 	return s_graphHeight;
 }
 
 // TODO: 4 spaces instead of tabs in .c files
-// TODO: could we return float maybe instead of bytes? should we? actually doubles i guess, for javascript
