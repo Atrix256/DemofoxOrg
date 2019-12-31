@@ -82,6 +82,7 @@ void * memset(void * ptr, int value, unsigned long num)
 }
 */
 
+// TODO: zero is where z = -alpha1.  (real)
 
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
 // TODO: look at celphes for math (from Marc)
@@ -93,6 +94,7 @@ void * memset(void * ptr, int value, unsigned long num)
 // TODO: make sure exports in wasm file are minimal
 // TODO: 4 spaces instead of tabs in .c files
 // TODO: clean up html. naming things etc.
+// TODO: better layout / colors / etc for html
 
 /*
 Blog:
@@ -105,6 +107,7 @@ Steps for getting wasm working.
     in the end, prefered to make my own functions anyhow. That way i can make them inline and they aren't in the export list.
    Cephes looks better, and i got atan2 from it: https://www.netlib.org/cephes/  thanks https://twitter.com/marc_b_reynolds
 
+* in first order filter. the ratio of A1 / A0 controls the filter. If the values change, but the ratio is preserved, it just adjusts gain (volume control)
 
 - talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
 - talk about the link link to convolution

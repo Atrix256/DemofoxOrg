@@ -47,7 +47,7 @@ table.NoBorder td {
 
             if (heightDiff < 1) //(y < heights[x] * graphHeight)
             {
-                data[i + 0] = 0;
+                data[i + 0] = 255;
                 data[i + 1] = 255;
             }
             else
@@ -91,7 +91,7 @@ table.NoBorder td {
 
             if (heightDiff < 1) //(y < dataHeight * graphHeight)
             {
-                data[i + 0] = 0;
+                data[i + 0] = 255;
                 data[i + 1] = 255;
             }
             else
@@ -107,10 +107,33 @@ table.NoBorder td {
         ctx.putImageData(imageData, 0, 0);
     }
 
+    function DrawPolesZeroesPlot()
+    {
+        var canvas = document.getElementById('PolesZeroesPlot');
+        var ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        var A1 = document.getElementById('A1Value').value / 100;
+        ctx.lineWidth = 1;
+
+        ctx.strokeStyle = "#008000FF";
+        ctx.beginPath();
+        ctx.arc(graphWidth/2, graphWidth/2, graphWidth/4, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        var ZeroX = graphWidth/2 + A1 * graphWidth/4;
+        ctx.strokeStyle = "#FFFF00FF";
+        ctx.beginPath();
+        ctx.arc(ZeroX, graphWidth/2, graphWidth/64, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+
     function DrawGraphs()
     {
         DrawFrequencyResponseGraph();
         DrawPhaseResponseGraph();
+        DrawPolesZeroesPlot();
         requestAnimationFrame(DrawGraphs);
     }
 
@@ -123,11 +146,18 @@ table.NoBorder td {
         graphWidth = exports.GetGraphWidth();
         graphHeight = exports.GetGraphHeight();
 
+        document.getElementById('A0Value').width = graphWidth;
+        document.getElementById('A1Value').width = graphWidth;
+        document.getElementById('A2Value').width = graphWidth;
+
         document.getElementById('FrequencyResponse').width = graphWidth;
         document.getElementById('FrequencyResponse').height = graphHeight;
 
         document.getElementById('PhaseResponse').width = graphWidth;
         document.getElementById('PhaseResponse').height = graphHeight;
+
+        document.getElementById('PolesZeroesPlot').width = graphWidth;
+        document.getElementById('PolesZeroesPlot').height = graphWidth;
 
         requestAnimationFrame(DrawGraphs);
     }
@@ -138,20 +168,21 @@ table.NoBorder td {
 </head>
 <body>
 
-<input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=this.value / 100;" style="width:500px"/>
+<input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=this.value / 100;" style="width:512px"/>
 A0 (gain): <span id="A0Label">0.5</span>
 <br>
 
-<input type="range" min="-200" max="200" id="A1Value" value="0" oninput="document.getElementById('A1Label').innerText=this.value / 100;" style="width:500px"/>
-Alpha1 (zero 1): <span id="A1Label">0</span>
+<input type="range" min="-200" max="200" id="A1Value" value="100" oninput="document.getElementById('A1Label').innerText=this.value / 100;" style="width:512px"/>
+Alpha1 (zero 1): <span id="A1Label">1.0</span>
 <br>
 
-<input type="range" min="-200" max="200" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText=this.value / 100;" style="width:500px"/>
+<input type="range" min="-200" max="200" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText=this.value / 100;" style="width:512px"/>
 Alpha2 (zero 2): <span id="A2Label">0</span>
 <br>
 
-<canvas id="FrequencyResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
-<canvas id="PhaseResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
+<canvas id="FrequencyResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br>
+<canvas id="PhaseResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br>
+<canvas id="PolesZeroesPlot" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br>
 
 </body>
 </html>
