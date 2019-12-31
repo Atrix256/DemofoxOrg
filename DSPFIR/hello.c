@@ -46,7 +46,7 @@ export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
 
 		g_frequencyResponse[i] = Length(&result);
 
-		//g_frequencyResponse[i] = atan2f(1, 2);
+		//g_frequencyResponse[i] = inl_atan2f(1, 2);
 	}
 
 	// TODO: maybe only re-calculate these if the parameters changed from the last time? if it's too slow to do every frame
