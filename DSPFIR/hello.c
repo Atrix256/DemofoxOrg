@@ -54,6 +54,20 @@ export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
 }
 
 
+// Saving this here in case needed.
+/*
+void * memset(void * ptr, int value, unsigned long num)
+{
+    unsigned char v = (unsigned char)value;
+    unsigned char* p = (unsigned char*)ptr;
+    for(unsigned long i = 0; i < num; ++i)
+        p[i] = v;
+    return ptr;
+}
+*/
+
+
+
 // TODO: 4 spaces instead of tabs in .c files
 // TODO: anti alias the graph drawing
 // TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
