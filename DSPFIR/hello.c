@@ -70,31 +70,17 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 }
 
 
-// Saving this here in case needed.
-/*
-void * memset(void * ptr, int value, unsigned long num)
-{
-    unsigned char v = (unsigned char)value;
-    unsigned char* p = (unsigned char*)ptr;
-    for(unsigned long i = 0; i < num; ++i)
-        p[i] = v;
-    return ptr;
-}
-*/
-
-// TODO: zero is where z = -alpha1.  (real)
-
-// TODO: maybe reread chapters in book again to make sure you didn't miss anything
-// TODO: look at celphes for math (from Marc)
 // TODO: option for log axes vs not
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: put labels (text) and lines on graph, both horizontal and vertical.
 // TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
 // TODO: rename this stuff not to "hello" but to FIR?
 // TODO: make sure exports in wasm file are minimal
-// TODO: 4 spaces instead of tabs in .c files
 // TODO: clean up html. naming things etc.
 // TODO: better layout / colors / etc for html
+// TODO: maybe reread chapters in book again to make sure you didn't miss anything
+
+// TODO: should i get sin / cos from cephes?
 
 /*
 Blog:
@@ -106,6 +92,8 @@ Steps for getting wasm working.
     GLibc also didn't work well. Hard to separate out just the stuff i needed
     in the end, prefered to make my own functions anyhow. That way i can make them inline and they aren't in the export list.
    Cephes looks better, and i got atan2 from it: https://www.netlib.org/cephes/  thanks https://twitter.com/marc_b_reynolds
+
+* show how the delay is the functionality of the filter! doing this sample plus last sample makes nyquist disappear. similar frequencies disappear less. etc
 
 * in first order filter. the ratio of A1 / A0 controls the filter. If the values change, but the ratio is preserved, it just adjusts gain (volume control)
 
