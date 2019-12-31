@@ -18,7 +18,7 @@ export int GetGraphWidth()
 
 export int GetGraphHeight()
 {
-    return c_graphWidth / 4;
+    return c_graphWidth / 2;
 }
 
 void UpdateData_Order1(double _A0, double _Alpha1)
@@ -70,6 +70,8 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 }
 
 
+// TODO: need to get order 2 working!
+// TODO: show filter function (and transfer function? or no... maybe too confusing) on html page
 // TODO: option for log axes vs not
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: put labels (text) and lines on graph, both horizontal and vertical.
@@ -79,6 +81,10 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 // TODO: clean up html. naming things etc.
 // TODO: better layout / colors / etc for html
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
+// TODO: check html for lint errors
+// TODO: need to get a brief description and title at the top of the page
+// TODO: link to the blog post
+// TODO: use the filter in real time with web audio?
 
 // TODO: should i get sin / cos from cephes?
 

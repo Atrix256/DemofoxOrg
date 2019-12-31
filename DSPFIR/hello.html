@@ -4,20 +4,12 @@
 
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
-canvas#RenderWindow {border:2px solid #00FF00;width:700px; height:700px;}
 table {
     border-collapse: collapse;
 }
-table, td {
-    border: 1px solid #00FF00;
-}
-table.NoBorder td {
-    border: 1px solid black;
-}
 </style>
 
-<script type="module">
-
+<script>
     let exports = null;
     let graphWidth = 0;
     let graphHeight = 0;
@@ -134,7 +126,21 @@ table.NoBorder td {
         DrawFrequencyResponseGraph();
         DrawPhaseResponseGraph();
         DrawPolesZeroesPlot();
+
+        var A0 = document.getElementById('A0Value').value / 100;
+        var A1 = document.getElementById('A1Value').value / 100;
+        var A2 = document.getElementById('A2Value').value / 100;
+        document.getElementById('Equation').innerText = "y = "+ A0.toFixed(2) +" * x(n) + " + (A1*A0).toFixed(2) + " * x(n-1)";
+
         requestAnimationFrame(DrawGraphs);
+    }
+
+    function OrderChanged()
+    {
+        var e = document.getElementById("Order");
+        var order = e.options[e.selectedIndex].value;
+
+      document.getElementById("ParamA2").style.visibility = (order == 2) ? "visible" : "hidden";
     }
 
     async function init()
@@ -159,6 +165,7 @@ table.NoBorder td {
         document.getElementById('PolesZeroesPlot').width = graphWidth;
         document.getElementById('PolesZeroesPlot').height = graphWidth;
 
+        OrderChanged();
         requestAnimationFrame(DrawGraphs);
     }
 
@@ -168,21 +175,52 @@ table.NoBorder td {
 </head>
 <body>
 
+Filter Order:
+<select id="Order" onChange="OrderChanged();">
+  <option value="1" selected="true">1</option>
+  <option value="2">2</option>
+</select>
+<br/>
+
+<span id="ParamA0">
 <input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=this.value / 100;" style="width:512px"/>
 A0 (gain): <span id="A0Label">0.5</span>
-<br>
+<br/>
+</span>
 
+<span id="ParamA1">
 <input type="range" min="-200" max="200" id="A1Value" value="100" oninput="document.getElementById('A1Label').innerText=this.value / 100;" style="width:512px"/>
 Alpha1 (zero 1): <span id="A1Label">1.0</span>
-<br>
+<br/>
+</span>
 
+<span id="ParamA2">
 <input type="range" min="-200" max="200" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText=this.value / 100;" style="width:512px"/>
 Alpha2 (zero 2): <span id="A2Label">0</span>
-<br>
+<br/>
+</span>
 
-<canvas id="FrequencyResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br>
-<canvas id="PhaseResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br>
-<canvas id="PolesZeroesPlot" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br>
+<br/>
+
+Filter Equation:<br/>
+<span id="Equation"></span>
+<br/><br/><br/>
+
+<table>
+  <tr>
+    <td>
+      Frequency Response:<br/>
+      <canvas id="FrequencyResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br/>
+      Phase Response:<br/>
+      <canvas id="PhaseResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
+    </td>
+    <td>&nbsp;</td>
+    <td>
+      Poles / Zeroes Plot:<br/>
+      <canvas id="PolesZeroesPlot" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
+    </td>
+  </tr>
+</table>
 
 </body>
 </html>
