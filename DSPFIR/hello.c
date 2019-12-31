@@ -69,6 +69,9 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
     return g_phaseResponse;
 }
 
+// TODO: could put lines on zero plot to pi, pi / 2, and put the same marks on the response graph.
+// TODO: from amplitude to decibels: dB = 20 * log10(amplitude)
+
 
 // TODO: need to get order 2 working!
 // TODO: show filter function (and transfer function? or no... maybe too confusing) on html page

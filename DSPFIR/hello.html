@@ -130,7 +130,7 @@ table {
         var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
         var A2 = document.getElementById('A2Value').value / 100;
-        document.getElementById('Equation').innerText = "y = "+ A0.toFixed(2) +" * x(n) + " + (A1*A0).toFixed(2) + " * x(n-1)";
+        document.getElementById('Equation').innerText = "y = "+ A0.toFixed(3) +" * x(n) + " + (A1*A0).toFixed(3) + " * x(n-1)";
 
         requestAnimationFrame(DrawGraphs);
     }
