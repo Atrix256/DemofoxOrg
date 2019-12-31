@@ -69,7 +69,8 @@ void * memset(void * ptr, int value, unsigned long num)
 
 
 // TODO: 4 spaces instead of tabs in .c files
-// TODO: anti alias the graph drawing
+// TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
+// TODO: put labels (text) and lines on graph, both horizontal and vertical.
 // TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
 // TODO: rename this stuff not to "hello" but to FIR?
 // TODO: make sure exports in wasm file are minimal

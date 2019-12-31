@@ -43,7 +43,9 @@ table.NoBorder td {
             var x = pixelIndex % graphWidth;
             var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
 
-            if (y < heights[x] * graphHeight)
+            var heightDiff = Math.abs(y-heights[x]*graphHeight);
+
+            if (heightDiff < 1) //(y < heights[x] * graphHeight)
             {
                 data[i + 0] = 0;
                 data[i + 1] = 255;
