@@ -9,12 +9,12 @@ double g_frequencyResponse[c_graphWidth];
 
 export int GetGraphWidth()
 {
-	return c_graphWidth;
+    return c_graphWidth;
 }
 
 export int GetGraphHeight()
 {
-	return c_graphWidth / 4;
+    return c_graphWidth / 4;
 }
 
 // TODO: phase response too
@@ -22,35 +22,35 @@ export int GetGraphHeight()
 
 export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
 {
-	// transfer function of linear IIR is
-	// H(z) = A0 * (1 + Alpha1 * z^(-1))
-	//
-	// z = e^(iw)
-	//
-	// e^(ix) = cos(x) + i*sin(x)
-	//
-	// Zero of filter is where z = -Alpha1
+    // transfer function of linear IIR is
+    // H(z) = A0 * (1 + Alpha1 * z^(-1))
+    //
+    // z = e^(iw)
+    //
+    // e^(ix) = cos(x) + i*sin(x)
+    //
+    // Zero of filter is where z = -Alpha1
 
-	struct ComplexValue A0 = MakeComplexValue(_A0, 0.0);
-	struct ComplexValue Alpha1 = MakeComplexValue(_Alpha1, 0.0);
-	struct ComplexValue One = MakeComplexValue(1.0, 0.0);
+    struct ComplexValue A0 = MakeComplexValue(_A0, 0.0);
+    struct ComplexValue Alpha1 = MakeComplexValue(_Alpha1, 0.0);
+    struct ComplexValue One = MakeComplexValue(1.0, 0.0);
 
-	for (int i = 0; i < c_graphWidth; ++i)
-	{
-		double phase = c_pi * (double)(i) / (double)(c_graphWidth);
+    for (int i = 0; i < c_graphWidth; ++i)
+    {
+        double phase = c_pi * (double)(i) / (double)(c_graphWidth);
 
-		struct ComplexValue result = Z(-1, phase);
-		result = Multiply(&Alpha1, &result);
-		result = Add(&One, &result);
-		result = Multiply(&A0, &result);
+        struct ComplexValue result = Z(-1, phase);
+        result = Multiply(&Alpha1, &result);
+        result = Add(&One, &result);
+        result = Multiply(&A0, &result);
 
-		g_frequencyResponse[i] = Length(&result);
+        g_frequencyResponse[i] = Length(&result);
 
-		//g_frequencyResponse[i] = inl_atan2f(1, 2);
-	}
+        //g_frequencyResponse[i] = inl_atan2f(1, 2);
+    }
 
-	// TODO: maybe only re-calculate these if the parameters changed from the last time? if it's too slow to do every frame
-	return g_frequencyResponse;
+    // TODO: maybe only re-calculate these if the parameters changed from the last time? if it's too slow to do every frame
+    return g_frequencyResponse;
 }
 
 
@@ -68,12 +68,13 @@ void * memset(void * ptr, int value, unsigned long num)
 
 
 
-// TODO: 4 spaces instead of tabs in .c files
+
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: put labels (text) and lines on graph, both horizontal and vertical.
 // TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
 // TODO: rename this stuff not to "hello" but to FIR?
 // TODO: make sure exports in wasm file are minimal
+// TODO: 4 spaces instead of tabs in .c files
 
 /*
 Blog:
