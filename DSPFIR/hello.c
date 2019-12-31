@@ -6,6 +6,10 @@
 static const int c_graphWidth = 512;
 
 double g_frequencyResponse[c_graphWidth];
+double g_phaseResponse[c_graphWidth];
+int g_data_order = 0;
+double g_data_A0 = 0.0;
+double g_data_Alpha1 = 0.0;
 
 export int GetGraphWidth()
 {
@@ -17,11 +21,15 @@ export int GetGraphHeight()
     return c_graphWidth / 4;
 }
 
-// TODO: phase response too
-// TODO: option for log axes vs not
-
-export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
+void UpdateData_Order1(double _A0, double _Alpha1)
 {
+	// only recalculate data if the parameters have changed
+	if (g_data_order == 1 && g_data_A0 == _A0 && g_data_Alpha1 == _Alpha1)
+		return;
+	g_data_order = 1;
+	g_data_A0 = _A0;
+	g_data_Alpha1 = _Alpha1;
+
     // transfer function of linear IIR is
     // H(z) = A0 * (1 + Alpha1 * z^(-1))
     //
@@ -45,12 +53,20 @@ export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
         result = Multiply(&A0, &result);
 
         g_frequencyResponse[i] = Length(&result);
-
-        //g_frequencyResponse[i] = inl_atan2f(1, 2);
+        g_phaseResponse[i] = inl_atan2f(result.imaginary, result.real);
     }
+}
 
-    // TODO: maybe only re-calculate these if the parameters changed from the last time? if it's too slow to do every frame
+export double* GetFrequencyResponse_Order1(double A0, double Alpha1)
+{
+	UpdateData_Order1(A0, Alpha1);
     return g_frequencyResponse;
+}
+
+export double* GetPhaseResponse_Order1(double A0, double Alpha1)
+{
+	UpdateData_Order1(A0, Alpha1);
+    return g_phaseResponse;
 }
 
 
@@ -67,14 +83,15 @@ void * memset(void * ptr, int value, unsigned long num)
 */
 
 
-
-
+// TODO: look at celphes for math (from Marc)
+// TODO: option for log axes vs not
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: put labels (text) and lines on graph, both horizontal and vertical.
 // TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
 // TODO: rename this stuff not to "hello" but to FIR?
 // TODO: make sure exports in wasm file are minimal
 // TODO: 4 spaces instead of tabs in .c files
+// TODO: clean up html. naming things etc.
 
 /*
 Blog:

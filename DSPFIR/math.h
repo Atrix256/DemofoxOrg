@@ -69,6 +69,6 @@ inline float inl_atan2f( float y, float x )
     // Translate it to the proper quadrant
     uint32_t uatan_2q = (ux_s ^ uy_s) | (uint32_t)atan_1q;
     return q + (float)uatan_2q;
-} 
+}
 
 #endif // MATH_H
