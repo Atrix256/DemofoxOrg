@@ -6,6 +6,7 @@
 static const int c_graphWidth = 512;
 
 double g_frequencyResponse[c_graphWidth];
+double g_frequencyResponseEstimate[c_graphWidth];
 double g_phaseResponse[c_graphWidth];
 int g_data_order = 0;
 double g_data_A0 = 0.0;
@@ -43,6 +44,9 @@ void UpdateData_Order1(double _A0, double _Alpha1)
     struct ComplexValue Alpha1 = MakeComplexValue(_Alpha1, 0.0);
     struct ComplexValue One = MakeComplexValue(1.0, 0.0);
 
+    double zeroPosX = -_Alpha1;
+    double zeroPosY = 0.0;
+
     for (int i = 0; i < c_graphWidth; ++i)
     {
         double phase = c_pi * (double)(i) / (double)(c_graphWidth);
@@ -54,6 +58,13 @@ void UpdateData_Order1(double _A0, double _Alpha1)
 
         g_frequencyResponse[i] = Length(&result);
         g_phaseResponse[i] = inl_atan2(result.imaginary, result.real);
+
+        // Get an estimate of frequency response by getting distance from point on circle to the zero
+        double circlePosX = inl_cos(phase);
+        double circlePosY = inl_sin(phase);
+        double distX = circlePosX - zeroPosX;
+        double distY = circlePosY - zeroPosY;
+        g_frequencyResponseEstimate[i] = sqrt(distX*distX+distY*distY) * _A0;
     }
 }
 
@@ -63,18 +74,22 @@ export double* GetFrequencyResponse_Order1(double A0, double Alpha1)
     return g_frequencyResponse;
 }
 
+export double* GetFrequencyResponseEstimate_Order1(double A0, double Alpha1)
+{
+	UpdateData_Order1(A0, Alpha1);
+    return g_frequencyResponseEstimate;
+}
+
 export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 {
 	UpdateData_Order1(A0, Alpha1);
     return g_phaseResponse;
 }
 
-// TODO: could put lines on zero plot to pi, pi / 2, and put the same marks on the response graph.
 // TODO: from amplitude to decibels: dB = 20 * log10(amplitude)
 
 
 // TODO: need to get order 2 working!
-// TODO: show filter function (and transfer function? or no... maybe too confusing) on html page
 // TODO: option for log axes vs not
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: put labels (text) and lines on graph, both horizontal and vertical.
@@ -91,6 +106,11 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 
 // TODO: should i get sin / cos from cephes?
 
+// TODO: merge this into master of blog repo!
+
+// TODO: if you make up a function for a transfer function (to get desired frequency / phase response) can you turn that into a difference equation?
+
+
 /*
 Blog:
 
@@ -105,6 +125,8 @@ Steps for getting wasm working.
 * show how the delay is the functionality of the filter! doing this sample plus last sample makes nyquist disappear. similar frequencies disappear less. etc
 
 * in first order filter. the ratio of A1 / A0 controls the filter. If the values change, but the ratio is preserved, it just adjusts gain (volume control)
+
+* talk about how you can estimate frequency response on the circle by seeing how close the frequency is to the zeroes. it's an estimate (?) but seems really close
 
 - talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
 - talk about the link link to convolution

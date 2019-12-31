@@ -25,6 +25,8 @@ table {
 
         const heights = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponse_Order1(A0, A1));
 
+        const heightsEstimate = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponseEstimate_Order1(A0, A1));
+
         var imageData = ctx.getImageData(0, 0, graphWidth, graphHeight);
         var data = imageData.data;
 
@@ -35,20 +37,33 @@ table {
             var x = pixelIndex % graphWidth;
             var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
 
+            var estimateHeightDiff = 1000;
+            if (document.getElementById('ShowEstimate').checked)
+            {
+                estimateHeightDiff = Math.abs(y-heightsEstimate[x]*graphHeight);
+            }
+
             var heightDiff = Math.abs(y-heights[x]*graphHeight);
 
             if (heightDiff < 1) //(y < heights[x] * graphHeight)
             {
                 data[i + 0] = 255;
                 data[i + 1] = 255;
+                data[i + 2] = 0;
+            }
+            else if (estimateHeightDiff < 1)
+            {
+                data[i + 0] = 0;
+                data[i + 1] = 255;
+                data[i + 2] = 255;
             }
             else
             {
                 data[i + 0] = 0;
                 data[i + 1] = 0;
+                data[i + 2] = 0;
             }
 
-            data[i + 2] = 0;
             data[i + 3] = 255;
         }
 
@@ -130,7 +145,11 @@ table {
         var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
         var A2 = document.getElementById('A2Value').value / 100;
-        document.getElementById('Equation').innerText = "y = "+ A0.toFixed(3) +" * x(n) + " + (A1*A0).toFixed(3) + " * x(n-1)";
+
+        if (A1*A0 < 0.0)
+          document.getElementById('Equation').innerText = "y = "+ A0.toFixed(3) +" * x(n) - " + (A1*A0*-1.0).toFixed(3) + " * x(n-1)";
+        else
+          document.getElementById('Equation').innerText = "y = "+ A0.toFixed(3) +" * x(n) + " + (A1*A0).toFixed(3) + " * x(n-1)";
 
         requestAnimationFrame(DrawGraphs);
     }
@@ -140,7 +159,8 @@ table {
         var e = document.getElementById("Order");
         var order = e.options[e.selectedIndex].value;
 
-      document.getElementById("ParamA2").style.visibility = (order == 2) ? "visible" : "hidden";
+        document.getElementById("ParamA2").style.visibility = (order == 2) ? "visible" : "hidden";
+        document.getElementById("ParamA2").style.display = (order == 2) ? "block" : "none";
     }
 
     async function init()
@@ -181,6 +201,10 @@ Filter Order:
   <option value="2">2</option>
 </select>
 <br/>
+
+<input type="checkbox" id="ShowEstimate"/>
+Show Frequency Response Estimate (in teal)
+<br/><br/>
 
 <span id="ParamA0">
 <input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=this.value / 100;" style="width:512px"/>
