@@ -53,7 +53,7 @@ void UpdateData_Order1(double _A0, double _Alpha1)
         result = Multiply(&A0, &result);
 
         g_frequencyResponse[i] = Length(&result);
-        g_phaseResponse[i] = inl_atan2f(result.imaginary, result.real);
+        g_phaseResponse[i] = inl_atan2(result.imaginary, result.real);
     }
 }
 
@@ -83,6 +83,7 @@ void * memset(void * ptr, int value, unsigned long num)
 */
 
 
+// TODO: maybe reread chapters in book again to make sure you didn't miss anything
 // TODO: look at celphes for math (from Marc)
 // TODO: option for log axes vs not
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
@@ -102,6 +103,7 @@ Steps for getting wasm working.
   tried getting math functions from here: http://www.netlib.org/fdlibm/. i got sin and cos in, and it was giving garbage values for quite a few values! the readme mentions something about undefined behavior on some platforms.
     GLibc also didn't work well. Hard to separate out just the stuff i needed
     in the end, prefered to make my own functions anyhow. That way i can make them inline and they aren't in the export list.
+   Cephes looks better, and i got atan2 from it: https://www.netlib.org/cephes/  thanks https://twitter.com/marc_b_reynolds
 
 
 - talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
