@@ -2,36 +2,7 @@
 
 typedef unsigned int uint32_t;
 
-double fabs (double f)
-{
-    return f < 0.0f ? -f : f;
-}
 
-// TODO: rename to fmodf or something?
-double modulus(double x, double m)
-{
-    return x - ((double)((int)(x/m)))*m;
-}
-
-// sin / cos adapted from
-// https://en.wikipedia.org/wiki/Bhaskara_I's_sine_approximation_formula#Equivalent_forms_of_the_formula
-double sin(double angle)
-{
-    angle = modulus(angle, c_twoPi);
-    if (angle < 0.0f)
-        angle += c_twoPi;
-
-    double multiplier = angle >= c_pi ? -1.0 : 1.0;
-    if (angle >= c_pi)
-        angle -= c_pi;
-
-    return 16.0 * angle * (c_pi - angle) / (5.0*c_pi*c_pi - 4.0 * angle * (c_pi - angle)) * multiplier;
-}
-
-double cos(double angle)
-{
-    return sin(angle + c_pi / 2.0);
-}
 
 // atanf & atan2f adapted from https://stackoverflow.com/a/14100975/2817105
 
@@ -77,3 +48,16 @@ float atan2f( float y, float x )
     uint32_t uatan_2q = (ux_s ^ uy_s) | (uint32_t)atan_1q;
     return q + (float)uatan_2q;
 } 
+
+
+// Saving this here in case needed.
+/*
+void * memset(void * ptr, int value, unsigned long num)
+{
+    unsigned char v = (unsigned char)value;
+    unsigned char* p = (unsigned char*)ptr;
+    for(unsigned long i = 0; i < num; ++i)
+        p[i] = v;
+    return ptr;
+}
+*/

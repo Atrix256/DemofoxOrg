@@ -1,27 +1,11 @@
-#include "math.h"
-
 #define export __attribute__((visibility("default")))
 
-// TODO: i don't think we need byte
-typedef unsigned char byte;
-
-
+#include "math.h"
+#include "complex.h"
 
 static const int c_graphWidth = 512;
 
-
 double g_frequencyResponse[c_graphWidth];
-
-/*
-void * memset(void * ptr, int value, unsigned long num)
-{
-    unsigned char v = (unsigned char)value;
-    unsigned char* p = (unsigned char*)ptr;
-    for(unsigned long i = 0; i < num; ++i)
-        p[i] = v;
-    return ptr;
-}
-*/
 
 export int GetGraphWidth()
 {
@@ -33,64 +17,8 @@ export int GetGraphHeight()
 	return c_graphWidth / 4;
 }
 
-
-
-
-
 // TODO: phase response too
 // TODO: option for log axes vs not
-
-// TODO: maybe make a complex.h / .c?
-
-// TODO: probably don't need this struct? does c99 have a complex type?
-struct ComplexValue
-{
-	double real;
-	double imaginary;
-};
-
-struct ComplexValue MakeComplexValue(double real, double imaginary)
-{
-	struct ComplexValue ret;
-	ret.real = real;
-	ret.imaginary = imaginary;
-	return ret;
-}
-
-struct ComplexValue Z(int delay, double angle)
-{
-	struct ComplexValue ret;
-
-	ret.real = cos((double)delay * angle);
-	ret.imaginary = sin((double)delay * angle);
-
-	return ret;
-}
-
-struct ComplexValue Add(const struct ComplexValue* A, const struct ComplexValue* B)
-{
-	struct ComplexValue ret;
-
-	ret.real = A->real + B->real;
-	ret.imaginary = A->imaginary + B->imaginary;
-
-	return ret;
-}
-
-struct ComplexValue Multiply(const struct ComplexValue* A, const struct ComplexValue* B)
-{
-    struct ComplexValue ret;
-
-    ret.real = A->real * B->real - A->imaginary * B->imaginary;
-    ret.imaginary = A->real * B->imaginary + A->imaginary * B->real;
-
-    return ret;
-}
-
-double Length(const struct ComplexValue* V)
-{
-	return sqrt(V->real * V->real + V->imaginary * V->imaginary);
-}
 
 export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
 {
@@ -135,11 +63,15 @@ export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
 /*
 Blog:
 
-- link the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
-- link to convolution
-- source of math functions: http://www.netlib.org/fdlibm/
+Steps for getting wasm working.
+  "I'm totally stumbling in the dark w/ clang and libm etc. Please, someone correct me if you know better."
+  * nice to go here to see what's in your wasm files. ensure only minimal things exported. https://webassembly.github.io/wabt/demo/wasm2wat/
+  tried getting math functions from here: http://www.netlib.org/fdlibm/. i got sin and cos in, and it was giving garbage values for quite a few values! the readme mentions something about undefined behavior on some platforms.
+    GLibc also didn't work well. Hard to separate out just the stuff i needed
+    in the end, prefered to make my own functions anyhow. That way i can make them inline and they aren't in the export list.
 
-// tried getting math functions from here: http://www.netlib.org/fdlibm/. i got sin and cos in, and it was giving garbage values for quite a few values! the readme mentions something about undefined behavior on some platforms.
-//    GLibc also didn't work well. Hard to separate out just the stuff i needed
+
+- talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
+- talk about the link link to convolution
 
 */
