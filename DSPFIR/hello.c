@@ -25,6 +25,9 @@ double modulus(double x, double m)
 double Sine(double angle)
 {
 	angle = modulus(angle, c_twoPi);
+    if (angle < 0.0f)
+        angle += c_twoPi;
+
 	double multiplier = angle >= c_pi ? -1.0 : 1.0;
 	if (angle >= c_pi)
 		angle -= c_pi;
@@ -81,7 +84,7 @@ struct ComplexValue
 	double imaginary;
 };
 
-struct ComplexValue MakeComplexValue(float real, float imaginary)
+struct ComplexValue MakeComplexValue(double real, double imaginary)
 {
 	struct ComplexValue ret;
 	ret.real = real;
@@ -111,12 +114,12 @@ struct ComplexValue Add(const struct ComplexValue* A, const struct ComplexValue*
 
 struct ComplexValue Multiply(const struct ComplexValue* A, const struct ComplexValue* B)
 {
-	struct ComplexValue ret;
+    struct ComplexValue ret;
 
-	ret.real = A->real * B->real;
-	ret.imaginary = A->imaginary * B->imaginary;
+    ret.real = A->real * B->real - A->imaginary * B->imaginary;
+    ret.imaginary = A->real * B->imaginary + A->imaginary * B->real;
 
-	return ret;
+    return ret;
 }
 
 
@@ -182,3 +185,4 @@ export double* GetGraphHeights(double A0, double A1, double A2)
 
 // TODO: maybe math functions from here: http://www.netlib.org/fdlibm/
 // TODO: can i get libm somehow?
+// TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/

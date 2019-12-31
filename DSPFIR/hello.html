@@ -84,16 +84,16 @@ table.NoBorder td {
 </head>
 <body>
 
+<input type="range" min="-500" max="500" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText='A0: ' + this.value / 100;" style="width:25%"/>
 <span id="A0Label">A0: 0.5</span>
-<input type="range" min="-1000" max="1000" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText='A0: ' + this.value / 100;" style="width:100%"/>
 <br>
 
+<input type="range" min="-500" max="500" id="A1Value" value="0" oninput="document.getElementById('A1Label').innerText='Alpha1: ' + this.value / 100;" style="width:25%"/>
 <span id="A1Label">Alpha1: 0</span>
-<input type="range" min="-1000" max="1000" id="A1Value" value="0" oninput="document.getElementById('A1Label').innerText='Alpha1: ' + this.value / 100;" style="width:100%"/>
 <br>
 
+<input type="range" min="-500" max="500" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText='Alpha2: ' + this.value / 100;" style="width:25%"/>
 <span id="A2Label">Alpha2: 0</span>
-<input type="range" min="-1000" max="1000" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText='Alpha2: ' + this.value / 100;" style="width:100%"/>
 <br>
 
 <canvas id="canvas" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
