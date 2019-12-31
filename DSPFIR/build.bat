@@ -9,4 +9,4 @@ clang ^
   -o hello.wasm ^
   -Wl,-z,stack-size=8388608 ^
   -Wall ^
-  *.c fdlibm\*.c
+  *.c

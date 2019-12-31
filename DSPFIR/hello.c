@@ -1,23 +1,18 @@
-#include "fdlibm/fdlibm.h"
+#include "math.h"
 
 #define export __attribute__((visibility("default")))
 
 // TODO: i don't think we need byte
 typedef unsigned char byte;
 
+
+
 static const int c_graphWidth = 512;
 
-static const double c_pi = 3.14159265359;
-static const double c_twoPi = 2.0 * c_pi;
-
-double s_graphHeight[c_graphWidth];  // TODO: get rid of this
 
 double g_frequencyResponse[c_graphWidth];
 
-extern double sqrt(double);
-//extern double sin(double);
-//extern double cos(double);
-
+/*
 void * memset(void * ptr, int value, unsigned long num)
 {
     unsigned char v = (unsigned char)value;
@@ -25,41 +20,6 @@ void * memset(void * ptr, int value, unsigned long num)
     for(unsigned long i = 0; i < num; ++i)
         p[i] = v;
     return ptr;
-}
-
-double modulus(double x, double m)
-{
-	return x - ((double)((int)(x/m)))*m;
-}
-
-// https://en.wikipedia.org/wiki/Bhaskara_I's_sine_approximation_formula#Equivalent_forms_of_the_formula
-double Sine(double angle)
-{
-	angle = modulus(angle, c_twoPi);
-    if (angle < 0.0f)
-        angle += c_twoPi;
-
-	double multiplier = angle >= c_pi ? -1.0 : 1.0;
-	if (angle >= c_pi)
-		angle -= c_pi;
-
-	return 16.0 * angle * (c_pi - angle) / (5.0*c_pi*c_pi - 4.0 * angle * (c_pi - angle)) * multiplier;
-}
-
-double Cosine(double angle)
-{
-	return Sine(angle + c_pi / 2.0);
-}
-
-/*
-double sin(double a)
-{
-	return Sine(a);
-}
-
-double cos(double a)
-{
-	return Cosine(a);
 }
 */
 
@@ -73,23 +33,16 @@ export int GetGraphHeight()
 	return c_graphWidth / 4;
 }
 
-// TODO: standardize capitalization? maybe make a math.h header?
-double absval(double x)
-{
-	return x < 0.0f ? -x : x;
-}
 
-double fract(double x)
-{
-    return x - (double)((int)x);
-}
 
 
 
 // TODO: phase response too
-// TODO: option for log vs not
+// TODO: option for log axes vs not
 
-// TODO: probably don't need this struct
+// TODO: maybe make a complex.h / .c?
+
+// TODO: probably don't need this struct? does c99 have a complex type?
 struct ComplexValue
 {
 	double real;
@@ -134,15 +87,6 @@ struct ComplexValue Multiply(const struct ComplexValue* A, const struct ComplexV
     return ret;
 }
 
-
-/*
-double sqrt(double v)
-{
-	// TODO: implement!
-	return v;
-}
-*/
-
 double Length(const struct ComplexValue* V)
 {
 	return sqrt(V->real * V->real + V->imaginary * V->imaginary);
@@ -173,31 +117,20 @@ export double* GetFrequencyResponse_Linear(double _A0, double _Alpha1)
 		result = Multiply(&A0, &result);
 
 		g_frequencyResponse[i] = Length(&result);
+
+		//g_frequencyResponse[i] = atan2f(1, 2);
 	}
 
 	// TODO: maybe only re-calculate these if the parameters changed from the last time? if it's too slow to do every frame
 	return g_frequencyResponse;
 }
 
-export double* GetGraphHeights(double A0, double A1, double A2)
-{
-	for (int i = 0; i < c_graphWidth; ++i)
-	{
-		double phase = c_twoPi * A0 * (double)(i) / (double)(c_graphWidth);
-		double value = sin(phase) * 0.5 + 0.5;
-		//double value = (Triangle(phase)) * 0.5 + 0.5;
-		//value = sqrt(value);
-		s_graphHeight[i] = value * A1 + A2;
-	}
-	return s_graphHeight;
-}
 
 // TODO: 4 spaces instead of tabs in .c files
 // TODO: anti alias the graph drawing
-
-// TODO: maybe math functions from here: http://www.netlib.org/fdlibm/
-// TODO: can i get libm somehow?
 // TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
+// TODO: rename this stuff not to "hello" but to FIR?
+// TODO: make sure exports in wasm file are minimal
 
 /*
 Blog:
@@ -205,5 +138,8 @@ Blog:
 - link the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
 - link to convolution
 - source of math functions: http://www.netlib.org/fdlibm/
+
+// tried getting math functions from here: http://www.netlib.org/fdlibm/. i got sin and cos in, and it was giving garbage values for quite a few values! the readme mentions something about undefined behavior on some platforms.
+//    GLibc also didn't work well. Hard to separate out just the stuff i needed
 
 */
