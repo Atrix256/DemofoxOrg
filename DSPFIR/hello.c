@@ -1,3 +1,5 @@
+#include "fdlibm/fdlibm.h"
+
 #define export __attribute__((visibility("default")))
 
 // TODO: i don't think we need byte
@@ -15,6 +17,15 @@ double g_frequencyResponse[c_graphWidth];
 extern double sqrt(double);
 //extern double sin(double);
 //extern double cos(double);
+
+void * memset(void * ptr, int value, unsigned long num)
+{
+    unsigned char v = (unsigned char)value;
+    unsigned char* p = (unsigned char*)ptr;
+    for(unsigned long i = 0; i < num; ++i)
+        p[i] = v;
+    return ptr;
+}
 
 double modulus(double x, double m)
 {
@@ -40,7 +51,7 @@ double Cosine(double angle)
 	return Sine(angle + c_pi / 2.0);
 }
 
-
+/*
 double sin(double a)
 {
 	return Sine(a);
@@ -50,6 +61,7 @@ double cos(double a)
 {
 	return Cosine(a);
 }
+*/
 
 export int GetGraphWidth()
 {
@@ -186,3 +198,12 @@ export double* GetGraphHeights(double A0, double A1, double A2)
 // TODO: maybe math functions from here: http://www.netlib.org/fdlibm/
 // TODO: can i get libm somehow?
 // TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
+
+/*
+Blog:
+
+- link the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
+- link to convolution
+- source of math functions: http://www.netlib.org/fdlibm/
+
+*/
