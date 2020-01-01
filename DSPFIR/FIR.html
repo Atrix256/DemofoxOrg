@@ -324,7 +324,7 @@ table {
 
     async function init()
     {
-        const { instance } = await WebAssembly.instantiateStreaming(fetch("hello.wasm"));
+        const { instance } = await WebAssembly.instantiateStreaming(fetch("FIR.wasm"));
 
         exports = instance.exports;
 

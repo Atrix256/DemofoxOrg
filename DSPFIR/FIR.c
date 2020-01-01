@@ -89,7 +89,6 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 
 // TODO: need to get order 2 working!
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
-// TODO: rename this stuff not to "hello" but to FIR?
 // TODO: make sure exports in wasm file are minimal
 // TODO: clean up html. naming things etc.
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
