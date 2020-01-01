@@ -96,7 +96,7 @@ table {
                     if (i == 0)
                       height = 12;
                     else if (i == 8)
-                      height = graphHeight;
+                      height = graphHeight-2;
                     var db = (i - 4) * -10;
                     if (db < 0)
                       ctx.fillText("" + db + "db", 0, height);
@@ -123,7 +123,7 @@ table {
                   var width = graphWidth * i / 5;
                   if (i == 5)
                       width = graphWidth - 17;
-                  ctx.fillText((i/5).toFixed(1), width, graphHeight);
+                  ctx.fillText((i/5).toFixed(1), width, graphHeight-2);
               }
             }
         }
@@ -169,14 +169,71 @@ table {
 
     function DrawPhaseResponseGraph()
     {
-        var canvas = document.getElementById('PhaseResponse');
-        var ctx = canvas.getContext('2d');
-
         var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
         var A2 = document.getElementById('A2Value').value / 100;
 
         const heights = new Float64Array(exports.memory.buffer, exports.GetPhaseResponse_Order1(A0, A1));
+
+        var canvas = document.getElementById('PhaseResponse');
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000000FF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // draw the lines and labels
+        {
+            // lines
+            {
+              ctx.strokeStyle = "#004000FF";
+              ctx.beginPath();
+              // vertical
+              for (var i = 0; i < 4; ++i)
+              {
+                  var height = graphHeight * i / 4;
+                  ctx.moveTo(0         , height);
+                  ctx.lineTo(graphWidth, height);
+              }
+
+              // horizontal bars
+              for (var i = 1; i < 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  ctx.moveTo(width, 0);
+                  ctx.lineTo(width, graphHeight);
+              }
+
+              ctx.stroke();
+            }
+
+            // labels
+            {
+              ctx.font = '12px arial';
+              ctx.fillStyle = "#008000FF";
+
+              for (var i = 0; i < 5; ++i)
+              {
+                var height = graphHeight * i / 4 + 4;
+                if (i == 0)
+                  height = 12;
+                else if (i == 4)
+                  height = graphHeight-2;
+
+                var angle = (i - 2) * -90;
+                if (angle < 0)
+                  ctx.fillText("" + angle + "\xB0", 0, height);
+                else
+                  ctx.fillText("+" + angle + "\xB0", 0, height);
+              }
+
+              for (var i = 1; i <= 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  if (i == 5)
+                      width = graphWidth - 17;
+                  ctx.fillText((i/5).toFixed(1), width, graphHeight-2);
+              }
+            }
+        }
 
         var imageData = ctx.getImageData(0, 0, graphWidth, graphHeight);
         var data = imageData.data;
@@ -197,14 +254,9 @@ table {
             {
                 data[i + 0] = 255;
                 data[i + 1] = 255;
-            }
-            else
-            {
-                data[i + 0] = 0;
-                data[i + 1] = 0;
+                data[i + 2] = 0;
             }
 
-            data[i + 2] = 0;
             data[i + 3] = 255;
         }
 
@@ -216,14 +268,19 @@ table {
         var canvas = document.getElementById('PolesZeroesPlot');
         var ctx = canvas.getContext('2d');
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#000000FF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         var A1 = document.getElementById('A1Value').value / 100;
         ctx.lineWidth = 1;
 
-        ctx.strokeStyle = "#008000FF";
+        ctx.strokeStyle = "#004000FF";
         ctx.beginPath();
         ctx.arc(graphWidth/2, graphWidth/2, graphWidth/4, 0, 2 * Math.PI);
+        ctx.moveTo(graphWidth/2,0);
+        ctx.lineTo(graphWidth/2,graphWidth);
+        ctx.moveTo(0, graphWidth/2);
+        ctx.lineTo(graphWidth, graphWidth/2);
         ctx.stroke();
 
         var ZeroX = graphWidth/2 - A1 * graphWidth/4;
@@ -231,6 +288,11 @@ table {
         ctx.beginPath();
         ctx.arc(ZeroX, graphWidth/2, graphWidth/64, 0, 2 * Math.PI);
         ctx.stroke();
+
+        ctx.font = '12px arial';
+        ctx.fillStyle = "#008000FF";
+        ctx.fillText("Im", graphWidth/2+4, 12);
+        ctx.fillText("Re", graphWidth-18, graphWidth/2-2);
     }
 
     function DrawGraphs()

@@ -86,17 +86,12 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
     return g_phaseResponse;
 }
 
-// TODO: finish labeling the graphs! add axes to pole / zero plot too with im / re labels.
 
 // TODO: need to get order 2 working!
-// TODO: option for log axes vs not
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
-// TODO: put labels (text) and lines on graph, both horizontal and vertical.
-// TODO: an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
 // TODO: rename this stuff not to "hello" but to FIR?
 // TODO: make sure exports in wasm file are minimal
 // TODO: clean up html. naming things etc.
-// TODO: better layout / colors / etc for html
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
 // TODO: check html for lint errors
 // TODO: need to get a brief description and title at the top of the page
@@ -109,6 +104,7 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 
 // TODO: if you make up a function for a transfer function (to get desired frequency / phase response) can you turn that into a difference equation?
 
+// TODO: share on music dsp list
 
 /*
 Blog:
@@ -122,6 +118,8 @@ Steps for getting wasm working.
    Cephes looks better, and i got atan2 from it: https://www.netlib.org/cephes/  thanks https://twitter.com/marc_b_reynolds
  * Not a super compelling use of WASM. I'm sure it could have been just javascript. Oh well.
 
+* an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
+
 * show how the delay is the functionality of the filter! doing this sample plus last sample makes nyquist disappear. similar frequencies disappear less. etc
 
 * in first order filter. the ratio of A1 / A0 controls the filter. If the values change, but the ratio is preserved, it just adjusts gain (volume control)
@@ -130,5 +128,7 @@ Steps for getting wasm working.
 
 - talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
 - talk about the link link to convolution
+
+
 
 */
