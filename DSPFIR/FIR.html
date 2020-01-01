@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Finite Impulse Response Filters</title>
+<title>Finite Impulse Response Filtering</title>
 <style type="text/css">
 body { color: #00FF00; background-color:black;}
 table {
@@ -34,10 +34,12 @@ table {
         var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
         var A2 = document.getElementById('A2Value').value / 100;
+        var e = document.getElementById("Order");
+        var order = e.options[e.selectedIndex].value;
 
-        const heights = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponse_Order1(A0, A1));
+        const heights = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponse(A0, A1, A2, order));
 
-        const heightsEstimate = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponseEstimate_Order1(A0, A1));
+        const heightsEstimate = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponseEstimate(A0, A1, A2, order));
 
         // clear the canvas to opaque black
         {
@@ -172,8 +174,10 @@ table {
         var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
         var A2 = document.getElementById('A2Value').value / 100;
+        var e = document.getElementById("Order");
+        var order = e.options[e.selectedIndex].value;
 
-        const heights = new Float64Array(exports.memory.buffer, exports.GetPhaseResponse_Order1(A0, A1));
+        const heights = new Float64Array(exports.memory.buffer, exports.GetPhaseResponse(A0, A1, A2, order));
 
         var canvas = document.getElementById('PhaseResponse');
         var ctx = canvas.getContext('2d');
@@ -304,11 +308,25 @@ table {
         var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
         var A2 = document.getElementById('A2Value').value / 100;
+        var e = document.getElementById("Order");
+        var order = e.options[e.selectedIndex].value;
+
+        var text = "y = "+ A0.toFixed(3) +" * x(n)";
 
         if (A1*A0 < 0.0)
-          document.getElementById('Equation').innerText = "y = "+ A0.toFixed(3) +" * x(n) - " + (A1*A0*-1.0).toFixed(3) + " * x(n-1)";
+          text += " - " + (A1*A0*-1.0).toFixed(3) + " * x(n-1)";
         else
-          document.getElementById('Equation').innerText = "y = "+ A0.toFixed(3) +" * x(n) + " + (A1*A0).toFixed(3) + " * x(n-1)";
+          text += " + " + (A1*A0).toFixed(3) + " * x(n-1)";
+
+        if (order == 2)
+        {
+          if (A2*A0 < 0.0)
+            text += " - " + (A2*A0*-1.0).toFixed(3) + " * x(n-2)";
+          else
+            text += " + " + (A2*A0).toFixed(3) + " * x(n-2)";
+        }
+
+        document.getElementById('Equation').innerText = text;
 
         requestAnimationFrame(DrawGraphs);
     }
@@ -354,7 +372,7 @@ table {
 </head>
 <body>
 
-<h1>Finite Impulse Response Filters</h1>
+<h1>Finite Impulse Response Filtering</h1>
 
 This is a demo to go along with my blog post: TODO: put link here!<br/><br/>
 
@@ -375,7 +393,7 @@ A0 (gain): <span id="A0Label">0.5</span>
 
 <span id="ParamA1">
 <input type="range" min="-200" max="200" id="A1Value" value="100" oninput="document.getElementById('A1Label').innerText=this.value / 100;" style="width:512px"/>
-Alpha1 (zero 1): <span id="A1Label">1.0</span>
+Alpha1 (zero 1): <span id="A1Label">1</span>
 <br/>
 </span>
 

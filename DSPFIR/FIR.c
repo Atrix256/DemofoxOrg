@@ -11,6 +11,7 @@ double g_phaseResponse[c_graphWidth];
 int g_data_order = 0;
 double g_data_A0 = 0.0;
 double g_data_Alpha1 = 0.0;
+double g_data_Alpha2 = 0.0;
 
 export int GetGraphWidth()
 {
@@ -20,6 +21,64 @@ export int GetGraphWidth()
 export int GetGraphHeight()
 {
     return c_graphWidth / 2;
+}
+
+void UpdateData_Order2(double _A0, double _Alpha1, double _Alpha2)
+{
+    // only recalculate data if the parameters have changed
+    if (g_data_order == 2 && g_data_A0 == _A0 && g_data_Alpha1 == _Alpha1 && g_data_Alpha2 == _Alpha2)
+        return;
+    g_data_order = 2;
+    g_data_A0 = _A0;
+    g_data_Alpha1 = _Alpha1;
+    g_data_Alpha2 = _Alpha2;
+
+    // transfer function of quadratic FIR is
+    // H(z) = A0 * (1 + Alpha1 * z^(-1) + Alpha2 * z^(-2))
+    //
+    // z = e^(iw)
+    //
+    // e^(ix) = cos(x) + i*sin(x)
+    //
+    // Zero of filter is where z = -Alpha1
+
+    struct ComplexValue A0 = MakeComplexValue(_A0, 0.0);
+    struct ComplexValue Alpha1 = MakeComplexValue(_Alpha1, 0.0);
+    struct ComplexValue Alpha2 = MakeComplexValue(_Alpha2, 0.0);
+    struct ComplexValue One = MakeComplexValue(1.0, 0.0);
+
+    // TODO: this!
+    //double zeroPosX = -_Alpha1;
+    //double zeroPosY = 0.0;
+
+    for (int i = 0; i < c_graphWidth; ++i)
+    {
+        double phase = c_pi * (double)(i) / (double)(c_graphWidth);
+
+        struct ComplexValue result2 = Z(-2, phase);
+        result2 = Multiply(&Alpha2, &result2);
+
+        struct ComplexValue result1 = Z(-1, phase);
+        result1 = Multiply(&Alpha1, &result1);
+
+        struct ComplexValue result = Add(&One, &result1);
+        result = Add(&result, &result2);
+        result = Multiply(&A0, &result);
+
+        g_frequencyResponse[i] = Length(&result);
+        g_phaseResponse[i] = inl_atan2(result.imaginary, result.real);
+
+        // TODO: this!
+        //g_frequencyResponseEstimate[i] = 0.0;
+        /*
+        // Get an estimate of frequency response by getting distance from point on circle to the zero
+        double circlePosX = inl_cos(phase);
+        double circlePosY = inl_sin(phase);
+        double distX = circlePosX - zeroPosX;
+        double distY = circlePosY - zeroPosY;
+        g_frequencyResponseEstimate[i] = sqrt(distX*distX+distY*distY) * _A0;
+        */
+    }
 }
 
 void UpdateData_Order1(double _A0, double _Alpha1)
@@ -68,26 +127,36 @@ void UpdateData_Order1(double _A0, double _Alpha1)
     }
 }
 
-export double* GetFrequencyResponse_Order1(double A0, double Alpha1)
+export double* GetFrequencyResponse(double A0, double Alpha1, double Alpha2, int order)
 {
-	UpdateData_Order1(A0, Alpha1);
+    if (order == 1)
+        UpdateData_Order1(A0, Alpha1);
+    else
+        UpdateData_Order2(A0, Alpha1, Alpha2);
     return g_frequencyResponse;
 }
 
-export double* GetFrequencyResponseEstimate_Order1(double A0, double Alpha1)
+export double* GetFrequencyResponseEstimate(double A0, double Alpha1, double Alpha2, int order)
 {
-	UpdateData_Order1(A0, Alpha1);
+    if (order == 1)
+        UpdateData_Order1(A0, Alpha1);
+    else
+        UpdateData_Order2(A0, Alpha1, Alpha2);
     return g_frequencyResponseEstimate;
 }
 
-export double* GetPhaseResponse_Order1(double A0, double Alpha1)
+export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int order)
 {
-	UpdateData_Order1(A0, Alpha1);
+    if (order == 1)
+        UpdateData_Order1(A0, Alpha1);
+    else
+        UpdateData_Order2(A0, Alpha1, Alpha2);
     return g_phaseResponse;
 }
 
-
 // TODO: need to get order 2 working!
+// TODO: order 2 zero placement on graph & for estimates
+
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: make sure exports in wasm file are minimal
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
