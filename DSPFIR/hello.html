@@ -14,10 +14,22 @@ table {
     let graphWidth = 0;
     let graphHeight = 0;
 
+    function amplitudeToDB(x)
+    {
+      return 20 * Math.log10(x);
+    }
+
+    function amplitudeToNormalizedDB(x)
+    {
+      // +/- 40 db
+      var ret = amplitudeToDB(x) / 40;
+      return ret * 0.5 + 0.5;
+    }
+
     function DrawFrequencyResponseGraph()
     {
-        var canvas = document.getElementById('FrequencyResponse');
-        var ctx = canvas.getContext('2d');
+        var showEsimate = document.getElementById('ShowFreqResponse_Estimate').checked;
+        var showdB = document.getElementById('ShowFreqResponse_dB').checked;
 
         var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
@@ -26,6 +38,95 @@ table {
         const heights = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponse_Order1(A0, A1));
 
         const heightsEstimate = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponseEstimate_Order1(A0, A1));
+
+        // clear the canvas to opaque black
+        {
+          var canvas = document.getElementById('FrequencyResponse');
+          var ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#000000FF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // draw the lines and labels
+        {
+            // lines
+            {
+              ctx.strokeStyle = "#004000FF";
+              ctx.beginPath();
+              if (showdB)
+              {
+                for (var i = 0; i < 8; ++i)
+                {
+                    var height = graphHeight * i / 8;
+                    ctx.moveTo(0         , height);
+                    ctx.lineTo(graphWidth, height);
+                }
+              }
+              else
+              {
+                for (var i = 0; i < 10; ++i)
+                {
+                    var height = graphHeight * i / 10;
+                    ctx.moveTo(0         , height);
+                    ctx.lineTo(graphWidth, height);
+                }
+              }
+
+              // horizontal bars
+              for (var i = 1; i < 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  ctx.moveTo(width, 0);
+                  ctx.lineTo(width, graphHeight);
+              }
+
+              ctx.stroke();
+            }
+
+            // labels
+            {
+              ctx.font = '12px arial';
+              ctx.fillStyle = "#008000FF";
+              if (showdB)
+              {
+                  for (var i = 0; i <= 8; ++i)
+                  {
+                    var height = graphHeight * i / 8 + 4;
+                    if (i == 0)
+                      height = 12;
+                    else if (i == 8)
+                      height = graphHeight;
+                    var db = (i - 4) * -10;
+                    if (db < 0)
+                      ctx.fillText("" + db + "db", 0, height);
+                    else
+                      ctx.fillText("+" + db + "db", 0, height);
+                  }
+              }
+              else
+              {
+                  for (var i = 0; i <= 10; ++i)
+                  {
+                    var height = graphHeight * i / 10 + 4;
+                    if (i == 0)
+                      height = 12;
+                    else if (i == 10)
+                      height = graphHeight;
+                    var label = 1 - i / 10;
+                    ctx.fillText(label.toFixed(2), 0, height);
+                  }
+              }
+
+              for (var i = 1; i <= 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  if (i == 5)
+                      width = graphWidth - 17;
+                  ctx.fillText((i/5).toFixed(1), width, graphHeight);
+              }
+            }
+        }
 
         var imageData = ctx.getImageData(0, 0, graphWidth, graphHeight);
         var data = imageData.data;
@@ -38,12 +139,14 @@ table {
             var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
 
             var estimateHeightDiff = 1000;
-            if (document.getElementById('ShowEstimate').checked)
+            if (showEsimate)
             {
-                estimateHeightDiff = Math.abs(y-heightsEstimate[x]*graphHeight);
+                var heightEstimate = showdB ? amplitudeToNormalizedDB(heightsEstimate[x]) : heightsEstimate[x];
+                estimateHeightDiff = Math.abs(y-heightEstimate*graphHeight);
             }
 
-            var heightDiff = Math.abs(y-heights[x]*graphHeight);
+            var height = showdB ? amplitudeToNormalizedDB(heights[x]) : heights[x];
+            var heightDiff = Math.abs(y-height*graphHeight);
 
             if (heightDiff < 1) //(y < heights[x] * graphHeight)
             {
@@ -56,12 +159,6 @@ table {
                 data[i + 0] = 0;
                 data[i + 1] = 255;
                 data[i + 2] = 255;
-            }
-            else
-            {
-                data[i + 0] = 0;
-                data[i + 1] = 0;
-                data[i + 2] = 0;
             }
 
             data[i + 3] = 255;
@@ -129,7 +226,7 @@ table {
         ctx.arc(graphWidth/2, graphWidth/2, graphWidth/4, 0, 2 * Math.PI);
         ctx.stroke();
 
-        var ZeroX = graphWidth/2 + A1 * graphWidth/4;
+        var ZeroX = graphWidth/2 - A1 * graphWidth/4;
         ctx.strokeStyle = "#FFFF00FF";
         ctx.beginPath();
         ctx.arc(ZeroX, graphWidth/2, graphWidth/64, 0, 2 * Math.PI);
@@ -202,9 +299,7 @@ Filter Order:
 </select>
 <br/>
 
-<input type="checkbox" id="ShowEstimate"/>
-Show Frequency Response Estimate (in teal)
-<br/><br/>
+<br/>
 
 <span id="ParamA0">
 <input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=this.value / 100;" style="width:512px"/>
@@ -234,17 +329,24 @@ Filter Equation:<br/>
   <tr>
     <td>
       Frequency Response:<br/>
-      <canvas id="FrequencyResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas><br/>
+      <canvas id="FrequencyResponse" style="border: 1px solid #00FF00;"></canvas><br/>
       Phase Response:<br/>
-      <canvas id="PhaseResponse" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
+      <canvas id="PhaseResponse" style="border: 1px solid #00FF00;"></canvas>
     </td>
     <td>&nbsp;</td>
     <td>
       Poles / Zeroes Plot:<br/>
-      <canvas id="PolesZeroesPlot" style="image-rendering: pixelated; border: 1px solid #00FF00;"></canvas>
+      <canvas id="PolesZeroesPlot" style="border: 1px solid #00FF00;"></canvas>
     </td>
   </tr>
 </table>
+
+<input type="checkbox" id="ShowFreqResponse_Estimate"/>
+Show Frequency Response Estimate (in teal)
+<br/>
+
+<input type="checkbox" id="ShowFreqResponse_dB" checked="true"/>
+Show Frequency Response in dB
 
 </body>
 </html>

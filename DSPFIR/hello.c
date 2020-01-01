@@ -86,8 +86,7 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
     return g_phaseResponse;
 }
 
-// TODO: from amplitude to decibels: dB = 20 * log10(amplitude)
-
+// TODO: finish labeling the graphs! add axes to pole / zero plot too with im / re labels.
 
 // TODO: need to get order 2 working!
 // TODO: option for log axes vs not
@@ -121,6 +120,7 @@ Steps for getting wasm working.
     GLibc also didn't work well. Hard to separate out just the stuff i needed
     in the end, prefered to make my own functions anyhow. That way i can make them inline and they aren't in the export list.
    Cephes looks better, and i got atan2 from it: https://www.netlib.org/cephes/  thanks https://twitter.com/marc_b_reynolds
+ * Not a super compelling use of WASM. I'm sure it could have been just javascript. Oh well.
 
 * show how the delay is the functionality of the filter! doing this sample plus last sample makes nyquist disappear. similar frequencies disappear less. etc
 
