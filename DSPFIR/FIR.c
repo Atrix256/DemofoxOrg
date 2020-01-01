@@ -90,18 +90,12 @@ export double* GetPhaseResponse_Order1(double A0, double Alpha1)
 // TODO: need to get order 2 working!
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: make sure exports in wasm file are minimal
-// TODO: clean up html. naming things etc.
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
 // TODO: check html for lint errors
-// TODO: need to get a brief description and title at the top of the page
 // TODO: link to the blog post
 // TODO: use the filter in real time with web audio?
 
-// TODO: should i get sin / cos from cephes?
-
 // TODO: merge this into master of blog repo!
-
-// TODO: if you make up a function for a transfer function (to get desired frequency / phase response) can you turn that into a difference equation?
 
 // TODO: share on music dsp list
 
@@ -128,6 +122,7 @@ Steps for getting wasm working.
 - talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
 - talk about the link link to convolution
 
-
+// TODO: if you make up a function for a transfer function (to get desired frequency / phase response) can you turn that into a difference equation?
+// TODO: Next. IIR!
 
 */
