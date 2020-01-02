@@ -154,9 +154,11 @@ export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int ord
     return g_phaseResponse;
 }
 
+
 // TODO: need to get order 2 working!
 // TODO: order 2 zero placement on graph & for estimates
 
+// TODO: maybe show the transfer function at the bottom of the page? or maybe checkbox to show up?
 // TODO: anti alias the graph drawing. smoothstep the distance, using the gradient. use finite differences to get gradient for distance estimation!
 // TODO: make sure exports in wasm file are minimal
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything

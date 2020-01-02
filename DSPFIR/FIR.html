@@ -115,7 +115,7 @@ table {
                       height = 12;
                     else if (i == 10)
                       height = graphHeight;
-                    var label = 1 - i / 10;
+                    var label = 2 - 2*i / 10;
                     ctx.fillText(label.toFixed(2), 0, height);
                   }
               }
@@ -143,11 +143,11 @@ table {
             var estimateHeightDiff = 1000;
             if (showEsimate)
             {
-                var heightEstimate = showdB ? amplitudeToNormalizedDB(heightsEstimate[x]) : heightsEstimate[x];
+                var heightEstimate = showdB ? amplitudeToNormalizedDB(heightsEstimate[x]) : heightsEstimate[x] / 2;
                 estimateHeightDiff = Math.abs(y-heightEstimate*graphHeight);
             }
 
-            var height = showdB ? amplitudeToNormalizedDB(heights[x]) : heights[x];
+            var height = showdB ? amplitudeToNormalizedDB(heights[x]) : heights[x] / 2;
             var heightDiff = Math.abs(y-height*graphHeight);
 
             if (heightDiff < 1) //(y < heights[x] * graphHeight)
@@ -275,7 +275,12 @@ table {
         ctx.fillStyle = '#000000FF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        var A0 = document.getElementById('A0Value').value / 100;
         var A1 = document.getElementById('A1Value').value / 100;
+        var A2 = document.getElementById('A2Value').value / 100;
+        var e = document.getElementById("Order");
+        var order = e.options[e.selectedIndex].value;
+
         ctx.lineWidth = 1;
 
         ctx.strokeStyle = "#004000FF";
@@ -287,11 +292,47 @@ table {
         ctx.lineTo(graphWidth, graphWidth/2);
         ctx.stroke();
 
-        var ZeroX = graphWidth/2 - A1 * graphWidth/4;
         ctx.strokeStyle = "#FFFF00FF";
-        ctx.beginPath();
-        ctx.arc(ZeroX, graphWidth/2, graphWidth/64, 0, 2 * Math.PI);
-        ctx.stroke();
+        if (order == 1)
+        {
+          var ZeroX = graphWidth/2 - A1 * graphWidth/4;
+
+          ctx.beginPath();
+          ctx.arc(ZeroX, graphWidth/2, graphWidth/64, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+        else
+        {
+          var ZeroRadius = Math.sqrt(Math.abs(A2 / A0));
+          var ZeroAngle = Math.acos((A1 / A0) / (-2.0 * ZeroRadius));
+
+          {
+            var ZeroX = Math.cos(ZeroAngle) * ZeroRadius * graphWidth * 0.5;
+            var ZeroY = Math.sin(ZeroAngle) * ZeroRadius * graphWidth * 0.5;
+
+            ctx.beginPath();
+            ctx.arc(graphWidth/2 + ZeroX, graphWidth/2 + ZeroY, graphWidth/64, 0, 2 * Math.PI);
+            ctx.stroke();
+          }
+
+          {
+            var ZeroX = Math.cos(-ZeroAngle) * ZeroRadius * graphWidth * 0.5;
+            var ZeroY = Math.sin(-ZeroAngle) * ZeroRadius * graphWidth * 0.5;
+
+            ctx.beginPath();
+            ctx.arc(graphWidth/2 + ZeroX, graphWidth/2 + ZeroY, graphWidth/64, 0, 2 * Math.PI);
+            ctx.stroke();
+          }
+
+          ctx.font = '12px arial';
+          ctx.fillStyle = "#008000FF";
+          ctx.fillText("Zero: " + ZeroX + ", " + ZeroY, 0, 20);
+
+          ctx.fillText("Zero Radius: " + ZeroRadius, 0, 60);
+          ctx.fillText("Zero Angle: " + ZeroAngle, 0, 80);
+
+          ctx.fillText("Acos Value: " + ((A1 / A0) / (-2.0 * ZeroRadius)), 0, 100);
+        }
 
         ctx.font = '12px arial';
         ctx.fillStyle = "#008000FF";
