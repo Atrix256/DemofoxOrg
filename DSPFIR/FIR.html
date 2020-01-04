@@ -295,19 +295,34 @@ table {
             var x = pixelIndex % graphWidth;
             var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
 
-            // convert phase response from [-pi,+pi] to [0,1]
-            var dataHeight = (heights[x] / Math.PI) * 0.5 + 0.5;
+            var heightDiff;
+            {
+              // convert phase response from [-pi,+pi] to [0,1]
+              var height = (heights[x] / Math.PI) * 0.5 + 0.5;
+              var heightSlope;
+              if (x > 0)
+              {
+                // convert phase response from [-pi,+pi] to [0,1]
+                var otherHeight = (heights[x-1] / Math.PI) * 0.5 + 0.5;
+                heightSlope = (height - otherHeight) * graphHeight;
+              }
+              else
+              {
+                // convert phase response from [-pi,+pi] to [0,1]
+                var otherHeight = (heights[x+1] / Math.PI) * 0.5 + 0.5;
+                heightSlope = (otherHeight - height) * graphHeight;
+              }
+              heightDiff = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+              heightDiff = 1.0 - smoothstep(0.0, 2.5, heightDiff);
+            }
 
-            var heightDiff = Math.abs(y-dataHeight*graphHeight);
-
-            if (heightDiff < 1) //(y < dataHeight * graphHeight)
+            if (heightDiff > 0)
             {
                 data[i + 0] = 255;
                 data[i + 1] = 255;
                 data[i + 2] = 0;
+                data[i + 3] = heightDiff * 255;
             }
-
-            data[i + 3] = 255;
         }
 
         ctx.putImageData(imageData, 0, 0);
@@ -427,15 +442,6 @@ table {
         document.getElementById("ParamA2").style.display = (order == 2) ? "block" : "none";
     }
 
-    // TODO; temp
-      function getMousePos(canvas, evt) {
-        var rect = canvas.getBoundingClientRect();
-        return {
-          x: Math.floor(evt.clientX - rect.left),
-          y: Math.floor(evt.clientY - rect.top)
-        };
-      }
-
     async function init()
     {
         const { instance } = await WebAssembly.instantiateStreaming(fetch("FIR.wasm"));
@@ -457,12 +463,6 @@ table {
 
         document.getElementById('PolesZeroesPlot').width = graphWidth;
         document.getElementById('PolesZeroesPlot').height = graphWidth;
-
-        // TODO: temp
-        var canvas = document.getElementById('FrequencyResponse');
-        canvas.addEventListener('mousemove', function(evt) {
-          g_mousePos = getMousePos(canvas, evt);
-        }, false);
 
         OrderChanged();
         requestAnimationFrame(DrawGraphs);
