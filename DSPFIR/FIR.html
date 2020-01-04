@@ -364,12 +364,12 @@ table {
         }
         else
         {
-          var ZeroRadius = Math.sqrt(Math.abs(A2 / A0));
-          var ZeroAngle = Math.acos((A1 / A0) / (-2.0 * ZeroRadius));
+          var ZeroRadius = Math.sqrt(Math.abs(A2));
+          var ZeroAngle = Math.acos((A1) / (-2.0 * ZeroRadius));
 
           {
-            var ZeroX = Math.cos(ZeroAngle) * ZeroRadius * graphWidth * 0.5;
-            var ZeroY = Math.sin(ZeroAngle) * ZeroRadius * graphWidth * 0.5;
+            var ZeroX = Math.cos(ZeroAngle) * ZeroRadius * graphWidth * 0.25;
+            var ZeroY = Math.sin(ZeroAngle) * ZeroRadius * graphWidth * 0.25;
 
             ctx.beginPath();
             ctx.arc(graphWidth/2 + ZeroX, graphWidth/2 + ZeroY, graphWidth/64, 0, 2 * Math.PI);
@@ -377,8 +377,8 @@ table {
           }
 
           {
-            var ZeroX = Math.cos(-ZeroAngle) * ZeroRadius * graphWidth * 0.5;
-            var ZeroY = Math.sin(-ZeroAngle) * ZeroRadius * graphWidth * 0.5;
+            var ZeroX = Math.cos(-ZeroAngle) * ZeroRadius * graphWidth * 0.25;
+            var ZeroY = Math.sin(-ZeroAngle) * ZeroRadius * graphWidth * 0.25;
 
             ctx.beginPath();
             ctx.arc(graphWidth/2 + ZeroX, graphWidth/2 + ZeroY, graphWidth/64, 0, 2 * Math.PI);
