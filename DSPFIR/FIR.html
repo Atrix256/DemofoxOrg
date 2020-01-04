@@ -26,6 +26,22 @@ table {
       return ret * 0.5 + 0.5;
     }
 
+    function clamp(x, min, max)
+    {
+      if (x <= min)
+        return min;
+      else if (x >= max)
+        return max;
+      else
+        return x;
+    }
+
+    function smoothstep(edge0, edge1, x)
+    {
+      var t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+      return t * t * (3.0 - 2.0 * t);
+    }
+
     function DrawFrequencyResponseGraph()
     {
         var showEsimate = document.getElementById('ShowFreqResponse_Estimate').checked;
@@ -133,6 +149,8 @@ table {
         var imageData = ctx.getImageData(0, 0, graphWidth, graphHeight);
         var data = imageData.data;
 
+        var logging = ""; // TODO: temp!
+
         for (var i = 0; i < data.length; i += 4)
         {
             var pixelIndex = i / 4;
@@ -148,13 +166,57 @@ table {
             }
 
             var height = showdB ? amplitudeToNormalizedDB(heights[x]) : heights[x] / 2;
-            var heightDiff = Math.abs(y-height*graphHeight);
+            //var heightDiff = Math.abs(y-height*graphHeight);
 
-            if (heightDiff < 1) //(y < heights[x] * graphHeight)
+            // TODO: do SDF treatment for estimate too, once it's working for the normal line
+
+            // TODO: could the problem with the non thickness line be that the slow is for the small values?
+
+            var heightSlope;
+            var otherHeight;
+            if (x > 0)
+            {
+              otherHeight = showdB ? amplitudeToNormalizedDB(heights[x-1]) : heights[x-1] / 2;
+              heightSlope = height - otherHeight;
+            }
+            else
+            {
+              otherHeight = showdB ? amplitudeToNormalizedDB(heights[x+1]) : heights[x+1] / 2;
+              heightSlope = otherHeight - height;
+            }
+
+            var gradientX = heightSlope;
+            var gradientY = -1;
+            var gradientLength = Math.sqrt(gradientX*gradientX+gradientY*gradientY);
+
+            var func_m = heightSlope;
+            var func_b = height - (heightSlope * x);
+            var funcValue = func_m * x + func_b - (y / graphHeight);
+
+            var heightDiff = Math.abs(funcValue / gradientLength) * graphHeight;
+            heightDiff = 1.0 - smoothstep(0.0, 5.0, heightDiff);
+
+            if (Math.floor(pixelIndex % graphWidth) == g_mousePos.x && Math.floor(pixelIndex / graphWidth) == g_mousePos.y)
+            {
+              logging = "";
+              //logging += "  heightSlope: " + heightSlope.toFixed(4);
+              logging += "  height = " + height.toFixed(4);
+              logging += "  otherHeight = " + otherHeight.toFixed(4);
+              //logging += "  x = " + x.toFixed(4);
+              //logging += "  y = " + y.toFixed(4);
+              //logging += "  y/graphHeight = " + (y/graphHeight).toFixed(4);
+              logging += "  func_m = " + func_m.toFixed(4);
+              logging += "  func_b = " + func_b.toFixed(4);
+              logging += "  funcValue = " + funcValue.toFixed(4);
+            }
+
+            data[i + 3] = 255;
+            if (heightDiff > 0)
             {
                 data[i + 0] = 255;
                 data[i + 1] = 255;
                 data[i + 2] = 0;
+                data[i + 3] = heightDiff * 255;
             }
             else if (estimateHeightDiff < 1)
             {
@@ -163,11 +225,24 @@ table {
                 data[i + 2] = 255;
             }
 
-            data[i + 3] = 255;
+            
         }
 
         ctx.putImageData(imageData, 0, 0);
+
+        //logging = heights;
+        //alert(heights);
+
+        //logging = "      (" + g_mousePos.x + "     ,      " + g_mousePos.y + ")";
+
+        ctx.font = '12px arial';
+        ctx.fillStyle = "#FF00FFFF";
+        ctx.fillText("(" + g_mousePos.x + ", " + g_mousePos.y + ")", 0, 12)
+        ctx.fillText(logging, 0, 24);
     }
+
+    // TODO: temp!
+    var g_mousePos = {x : -1, y : -1};
 
     function DrawPhaseResponseGraph()
     {
@@ -381,6 +456,15 @@ table {
         document.getElementById("ParamA2").style.display = (order == 2) ? "block" : "none";
     }
 
+    // TODO; temp
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: Math.floor(evt.clientX - rect.left),
+          y: Math.floor(evt.clientY - rect.top)
+        };
+      }
+
     async function init()
     {
         const { instance } = await WebAssembly.instantiateStreaming(fetch("FIR.wasm"));
@@ -402,6 +486,12 @@ table {
 
         document.getElementById('PolesZeroesPlot').width = graphWidth;
         document.getElementById('PolesZeroesPlot').height = graphWidth;
+
+        // TODO: temp
+        var canvas = document.getElementById('FrequencyResponse');
+        canvas.addEventListener('mousemove', function(evt) {
+          g_mousePos = getMousePos(canvas, evt);
+        }, false);
 
         OrderChanged();
         requestAnimationFrame(DrawGraphs);
