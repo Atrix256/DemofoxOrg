@@ -184,17 +184,18 @@ table {
               otherHeight = showdB ? amplitudeToNormalizedDB(heights[x+1]) : heights[x+1] / 2;
               heightSlope = otherHeight - height;
             }
+            heightSlope *= graphHeight;
 
             var gradientX = heightSlope;
             var gradientY = -1;
             var gradientLength = Math.sqrt(gradientX*gradientX+gradientY*gradientY);
 
             var func_m = heightSlope;
-            var func_b = height - (heightSlope * x);
-            var funcValue = func_m * x + func_b - (y / graphHeight);
+            var func_b = height * graphHeight - (heightSlope * x);
+            var funcValue = func_m * x + func_b - y;
 
-            var heightDiff = Math.abs(funcValue / gradientLength) * graphHeight;
-            heightDiff = 1.0 - smoothstep(0.0, 5.0, heightDiff);
+            var heightDiff = Math.abs(funcValue / gradientLength);
+            heightDiff = 1.0 - smoothstep(0.0, 2.5, heightDiff);
 
             if (Math.floor(pixelIndex % graphWidth) == g_mousePos.x && Math.floor(pixelIndex / graphWidth) == g_mousePos.y)
             {
