@@ -174,9 +174,6 @@ export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int ord
     return g_phaseResponse;
 }
 
-
-// TODO: order 2 estimated frequency response!
-
 // TODO: could show a square wave gone through filter to show how it affects the shape (linear phase vs not). The source wave shape could be a drop down letting you choose: square, triangle, sine (what hz?), white noise?
 
 

@@ -431,18 +431,23 @@ table {
         var e = document.getElementById("Order");
         var order = e.options[e.selectedIndex].value;
 
-        var text = "y = "+ A0.toFixed(3) +" * x(n)";
+        var text = "y = "
+
+        if (A0 != 0.0)
+          text += A0.toFixed(3) +" * x(n)";
+        else
+          text += "0";
 
         if (A1*A0 < 0.0)
           text += " - " + (A1*A0*-1.0).toFixed(3) + " * x(n-1)";
-        else
+        else if (A1*A0 > 0.0)
           text += " + " + (A1*A0).toFixed(3) + " * x(n-1)";
 
         if (order == 2)
         {
           if (A2*A0 < 0.0)
             text += " - " + (A2*A0*-1.0).toFixed(3) + " * x(n-2)";
-          else
+          else if (A2*A0 > 0.0)
             text += " + " + (A2*A0).toFixed(3) + " * x(n-2)";
         }
 
@@ -513,13 +518,13 @@ A0 (gain): <span id="A0Label">0.5</span>
 
 <span id="ParamA1">
 <input type="range" min="-200" max="200" id="A1Value" value="100" oninput="document.getElementById('A1Label').innerText=this.value / 100;" style="width:512px"/>
-Alpha1 (zero 1): <span id="A1Label">1</span>
+Alpha1: <span id="A1Label">1</span>
 <br/>
 </span>
 
 <span id="ParamA2">
 <input type="range" min="-200" max="200" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText=this.value / 100;" style="width:512px"/>
-Alpha2 (zero 2): <span id="A2Label">0</span>
+Alpha2: <span id="A2Label">0</span>
 <br/>
 </span>
 
