@@ -364,35 +364,53 @@ table {
         }
         else
         {
-          var ZeroRadius = Math.sqrt(Math.abs(A2));
-          var ZeroAngle = Math.acos((A1) / (-2.0 * ZeroRadius));
+          /*
+            0 = (z^2 + Alpha1 * z + Alpha2) / z^2
 
+            0 = (-b +- sqrt(b^2 - 4ac)) / 2A
+
+            0 = (-Alpha1 +- sqrt(Alpha1^2 - 4*Alpha2)) / 2
+
+            0 = -Alpha1 / 2    +-   sqrt(Alpha1^2 - 4*Alpha2) / 2
+          */
+
+          var Zero1X;
+          var Zero1Y;
+          var Zero2X;
+          var Zero2Y;
+
+          var discriminant = A1 * A1 - 4 * A2;
+          if (discriminant >= 0)
           {
-            var ZeroX = Math.cos(ZeroAngle) * ZeroRadius * graphWidth * 0.25;
-            var ZeroY = Math.sin(ZeroAngle) * ZeroRadius * graphWidth * 0.25;
+            // 2 real roots
+            Zero1X = (-A1 + Math.sqrt(discriminant)) / 2;
+            Zero1Y = 0;
 
-            ctx.beginPath();
-            ctx.arc(graphWidth/2 + ZeroX, graphWidth/2 + ZeroY, graphWidth/64, 0, 2 * Math.PI);
-            ctx.stroke();
+            Zero2X = (-A1 - Math.sqrt(discriminant)) / 2;
+            Zero2Y = 0;
+          }
+          else
+          {
+            // 2 imaginary roots
+            Zero1X = -A1 / 2;
+            Zero1Y = Math.sqrt(discriminant * -1) / 2;
+
+            Zero2X = -A1 / 2;
+            Zero2Y = -Math.sqrt(discriminant * -1) / 2;
           }
 
-          {
-            var ZeroX = Math.cos(-ZeroAngle) * ZeroRadius * graphWidth * 0.25;
-            var ZeroY = Math.sin(-ZeroAngle) * ZeroRadius * graphWidth * 0.25;
+          Zero1X *= graphWidth * 0.25;
+          Zero1Y *= graphWidth * 0.25;
+          Zero2X *= graphWidth * 0.25;
+          Zero2Y *= graphWidth * 0.25;
 
-            ctx.beginPath();
-            ctx.arc(graphWidth/2 + ZeroX, graphWidth/2 + ZeroY, graphWidth/64, 0, 2 * Math.PI);
-            ctx.stroke();
-          }
+          ctx.beginPath();
+          ctx.arc(graphWidth/2 + Zero1X, graphWidth/2 + Zero1Y, graphWidth/64, 0, 2 * Math.PI);
+          ctx.stroke();
 
-          ctx.font = '12px arial';
-          ctx.fillStyle = "#008000FF";
-          ctx.fillText("Zero: " + ZeroX + ", " + ZeroY, 0, 20);
-
-          ctx.fillText("Zero Radius: " + ZeroRadius, 0, 60);
-          ctx.fillText("Zero Angle: " + ZeroAngle, 0, 80);
-
-          ctx.fillText("Acos Value: " + ((A1 / A0) / (-2.0 * ZeroRadius)), 0, 100);
+          ctx.beginPath();
+          ctx.arc(graphWidth/2 + Zero2X, graphWidth/2 + Zero2Y, graphWidth/64, 0, 2 * Math.PI);
+          ctx.stroke();
         }
 
         ctx.font = '12px arial';
@@ -538,4 +556,3 @@ Show Frequency Response in dB
 </html>
 
 <br><br>
-TODO: maybe don't have web assembly at all, and make it all javascript? for simplicity. or maybe having the c++ also will be enough?

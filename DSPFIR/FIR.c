@@ -40,16 +40,15 @@ void UpdateData_Order2(double _A0, double _Alpha1, double _Alpha2)
     //
     // e^(ix) = cos(x) + i*sin(x)
     //
-    // Zero of filter is where z = -Alpha1
+    // Zeroes are at where z is the equation below, which may be purely real, or complex.
+    // 0 = -Alpha1 / 2  +-  sqrt(Alpha1^2 - 4*Alpha2) / 2
+    // 
+    // The above assumes that A0 is 1, so instead of Alpha1 / Alpha2 we just use A1/ A2, since eg A1 = Alpha1 * A0.
 
     struct ComplexValue A0 = MakeComplexValue(_A0, 0.0);
     struct ComplexValue Alpha1 = MakeComplexValue(_Alpha1, 0.0);
     struct ComplexValue Alpha2 = MakeComplexValue(_Alpha2, 0.0);
     struct ComplexValue One = MakeComplexValue(1.0, 0.0);
-
-    // TODO: this!
-    //double zeroPosX = -_Alpha1;
-    //double zeroPosY = 0.0;
 
     for (int i = 0; i < c_graphWidth; ++i)
     {
@@ -68,16 +67,35 @@ void UpdateData_Order2(double _A0, double _Alpha1, double _Alpha2)
         g_frequencyResponse[i] = Length(&result);
         g_phaseResponse[i] = inl_atan2(result.imaginary, result.real);
 
-        // TODO: this!
-        //g_frequencyResponseEstimate[i] = 0.0;
-        /*
-        // Get an estimate of frequency response by getting distance from point on circle to the zero
+        // calculate the location of the zeroes
+        double Zero1X = -_Alpha1 / 2.0;
+        double Zero1Y = 0.0;
+        double Zero2X = -_Alpha1 / 2.0;
+        double Zero2Y = 0.0;
+        double discriminant = _Alpha1 * _Alpha1 - 4.0 * _Alpha2;
+        double sqrtDiscriminantOver2 = sqrt(fabs(discriminant)) / 2.0;
+        if (discriminant >= 0.0)
+        {
+            Zero1X += sqrtDiscriminantOver2;
+            Zero2X -= sqrtDiscriminantOver2;
+        }
+        else
+        {
+            Zero1Y += sqrtDiscriminantOver2;
+            Zero2Y -= sqrtDiscriminantOver2;
+        }
+
+        // Get an estimate of frequency response by getting distance from point on circle to the zeros and multiplying them
         double circlePosX = inl_cos(phase);
         double circlePosY = inl_sin(phase);
-        double distX = circlePosX - zeroPosX;
-        double distY = circlePosY - zeroPosY;
-        g_frequencyResponseEstimate[i] = sqrt(distX*distX+distY*distY) * _A0;
-        */
+
+        double dist1X = circlePosX - Zero1X;
+        double dist1Y = circlePosY - Zero1Y;
+
+        double dist2X = circlePosX - Zero2X;
+        double dist2Y = circlePosY - Zero2Y;
+
+        g_frequencyResponseEstimate[i] = sqrt(dist1X*dist1X+dist1Y*dist1Y) * sqrt(dist2X*dist2X+dist2Y*dist2Y) * _A0;
     }
 }
 
@@ -98,6 +116,8 @@ void UpdateData_Order1(double _A0, double _Alpha1)
     // e^(ix) = cos(x) + i*sin(x)
     //
     // Zero of filter is where z = -Alpha1
+    //
+    // The above assumes that A0 is 1, so instead of Alpha1 / Alpha2 we just use A1/ A2, since eg A1 = Alpha1 * A0.
 
     struct ComplexValue A0 = MakeComplexValue(_A0, 0.0);
     struct ComplexValue Alpha1 = MakeComplexValue(_Alpha1, 0.0);
@@ -155,8 +175,10 @@ export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int ord
 }
 
 
-// TODO: need to get order 2 working!
-// TODO: order 2 zero placement on graph & for estimates
+// TODO: order 2 estimated frequency response!
+
+// TODO: could show a square wave gone through filter to show how it affects the shape (linear phase vs not). The source wave shape could be a drop down letting you choose: square, triangle, sine (what hz?), white noise?
+
 
 // TODO: maybe show the transfer function at the bottom of the page? or maybe checkbox to show up?
 // TODO: make sure exports in wasm file are minimal
@@ -169,6 +191,11 @@ export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int ord
 
 // TODO: share on music dsp list
 
+// TODO: second order zeroes are NaN sometimes. should fix, especially since the function still works while those zeroes say they don't exist. so... ???
+
+
+// TODO: maybe get nick appleton and bart to check out the demo before you release the post, to make sure things are on the up and up
+
 /*
 Blog:
 
@@ -180,6 +207,9 @@ Steps for getting wasm working.
     in the end, prefered to make my own functions anyhow. That way i can make them inline and they aren't in the export list.
    Cephes looks better, and i got atan2 from it: https://www.netlib.org/cephes/  thanks https://twitter.com/marc_b_reynolds
  * Not a super compelling use of WASM. I'm sure it could have been just javascript. Oh well.
+
+question and answer about quadratic roots
+https://dsp.stackexchange.com/questions/63029/question-about-zeroes-of-simple-2nd-order-fir-filter/63030#63030
 
 * an example pole/zero plotter. https://www.earlevel.com/main/2013/10/28/pole-zero-placement-v2/
 
