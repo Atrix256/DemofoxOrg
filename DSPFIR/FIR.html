@@ -157,6 +157,36 @@ table {
             var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
 
             var heightDiff;
+
+            if (showEstimate)
+            {
+              {
+                var height = showdB ? amplitudeToNormalizedDB(heightsEstimate[x]) : heightsEstimate[x] / 2;
+                var heightSlope;
+                if (x > 0)
+                {
+                  var otherHeight = showdB ? amplitudeToNormalizedDB(heightsEstimate[x-1]) : heightsEstimate[x-1] / 2;
+                  heightSlope = (height - otherHeight) * graphHeight;
+                }
+                else
+                {
+                  var otherHeight = showdB ? amplitudeToNormalizedDB(heightsEstimate[x+1]) : heightsEstimate[x+1] / 2;
+                  heightSlope = (otherHeight - height) * graphHeight;
+                }
+                heightDiff = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+                heightDiff = 1.0 - smoothstep(0.0, 2.5, heightDiff);
+              }
+
+              if (heightDiff > 0)
+              {
+                  data[i + 0] = 0;
+                  data[i + 1] = 255;
+                  data[i + 2] = 255;
+                  data[i + 3] = heightDiff * 255;
+                  continue
+              }
+            }
+            
             {
               var height = showdB ? amplitudeToNormalizedDB(heights[x]) : heights[x] / 2;
               var heightSlope;
@@ -179,35 +209,6 @@ table {
                 data[i + 0] = 255;
                 data[i + 1] = 255;
                 data[i + 2] = 0;
-                data[i + 3] = heightDiff * 255;
-                continue;
-            }
-
-            if (!showEstimate)
-              continue;
-
-            {
-              var height = showdB ? amplitudeToNormalizedDB(heightsEstimate[x]) : heightsEstimate[x] / 2;
-              var heightSlope;
-              if (x > 0)
-              {
-                var otherHeight = showdB ? amplitudeToNormalizedDB(heightsEstimate[x-1]) : heightsEstimate[x-1] / 2;
-                heightSlope = (height - otherHeight) * graphHeight;
-              }
-              else
-              {
-                var otherHeight = showdB ? amplitudeToNormalizedDB(heightsEstimate[x+1]) : heightsEstimate[x+1] / 2;
-                heightSlope = (otherHeight - height) * graphHeight;
-              }
-              heightDiff = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
-              heightDiff = 1.0 - smoothstep(0.0, 2.5, heightDiff);
-            }
-
-            if (heightDiff > 0)
-            {
-                data[i + 0] = 0;
-                data[i + 1] = 255;
-                data[i + 2] = 255;
                 data[i + 3] = heightDiff * 255;
             }
         }
@@ -535,7 +536,7 @@ Filter Equation:<br/>
 <br/><br/><br/>
 
 <table>
-  <tr>
+  <tr valign="top">
     <td>
       Frequency Response:<br/>
       <canvas id="FrequencyResponse" style="border: 1px solid #00FF00;"></canvas><br/>
@@ -546,6 +547,9 @@ Filter Equation:<br/>
     <td>
       Poles / Zeroes Plot:<br/>
       <canvas id="PolesZeroesPlot" style="border: 1px solid #00FF00;"></canvas>
+    </td>
+    <td>
+
     </td>
   </tr>
 </table>
