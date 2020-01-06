@@ -533,6 +533,7 @@ table {
             var A2 = document.getElementById('A2Value').value / 100;
             var orderElement = document.getElementById("Order");
             var order = orderElement.options[orderElement.selectedIndex].value;
+            var dotanh = document.getElementById('tanhdistortion').checked;
 
             var input = e.inputBuffer.getChannelData(0);
             var output = e.outputBuffer.getChannelData(0);
@@ -541,7 +542,11 @@ table {
             {
               for (var i = 0; i < bufferSize; i++)
               {
-                  output[i] = input[i] * A0 + sampleMinus1 * (A1*A0);
+                  if (dotanh)
+                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0));
+                  else
+                    output[i] = input[i] * A0 + sampleMinus1 * (A1*A0);
+
                   sampleMinus1 = input[i];
               }
             }
@@ -549,7 +554,11 @@ table {
             {
               for (var i = 0; i < bufferSize; i++)
               {
-                  output[i] = input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0);
+                  if (dotanh)
+                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0));
+                  else
+                    output[i] = input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0);
+
                   sampleMinus2 = sampleMinus1
                   sampleMinus1 = input[i];
               }
@@ -664,10 +673,12 @@ Play Sound:
 
 <br/> <br/>
 
+<table>
+<tr valign="top">
+<td width="600">
 <span id="ParamA0">
 <input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=GetA0Value();" style="width:400px"/>
 A0 (gain): <span id="A0Label">0.5</span>
-<input type=checkbox id="overdrive" onchange="document.getElementById('A0Label').innerText=GetA0Value();"/> Overdrive (100x multiplier)
 <br/>
 </span>
 
@@ -682,6 +693,14 @@ Alpha1: <span id="A1Label">1</span>
 Alpha2: <span id="A2Label">0</span>
 <br/>
 </span>
+</td>
+<td>
+<input type=checkbox id="overdrive" onchange="document.getElementById('A0Label').innerText=GetA0Value();"/> Overdrive (100x multiplier)
+<br/>
+<input type=checkbox id="tanhdistortion"/> Tanh distortion postprocess
+</td>
+</tr>
+</table>
 
 <br/>
 
