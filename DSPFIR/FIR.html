@@ -597,7 +597,12 @@ table {
 
     async function init()
     {
-        const { instance } = await WebAssembly.instantiateStreaming(fetch("FIR.wasm"));
+      fetch('FIR.wasm').then(response =>
+        response.arrayBuffer()
+      ).then(bytes =>
+        WebAssembly.instantiate(bytes)
+      ).then(results => {
+        instance = results.instance;
 
         exports = instance.exports;
 
@@ -619,6 +624,7 @@ table {
 
         OrderChanged();
         requestAnimationFrame(DrawGraphs);
+      });
     }
 
     initAudio();
