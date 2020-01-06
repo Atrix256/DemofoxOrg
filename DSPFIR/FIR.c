@@ -174,11 +174,9 @@ export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int ord
     return g_phaseResponse;
 }
 
-    // TODO: ditch web assembly?
-    // TODO: fix steep line rendering
+// TODO: link to the blog post from the html
 
-// TODO: maybe reread chapters in book again to make sure you didn't miss anything
-// TODO: link to the blog post
+// TODO: make a simple C++ program that does this stuff and makes a csv, so people have something to copy/paste?
 
 // TODO: merge this into master of blog repo!
 
@@ -196,7 +194,7 @@ Steps for getting wasm working.
     GLibc also didn't work well. Hard to separate out just the stuff i needed
     in the end, prefered to make my own functions anyhow. That way i can make them inline and they aren't in the export list.
    Cephes looks better, and i got atan2 from it: https://www.netlib.org/cephes/  thanks https://twitter.com/marc_b_reynolds
- * Not a super compelling use of WASM. I'm sure it could have been just javascript. Oh well.
+ * Not a super compelling use of WASM. I'm sure it could have been just javascript. Oh well. Really should have just been javascript. meh.
 
 question and answer about quadratic roots
 https://dsp.stackexchange.com/questions/63029/question-about-zeroes-of-simple-2nd-order-fir-filter/63030#63030

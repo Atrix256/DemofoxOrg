@@ -164,7 +164,7 @@ table {
             var x = pixelIndex % graphWidth;
             var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
 
-            var heightDiff;
+            var heightDist;
 
             {
               var height = showdB ? amplitudeToNormalizedDB(heights[x]) : heights[x] / 2;
@@ -179,16 +179,23 @@ table {
                 var otherHeight = showdB ? amplitudeToNormalizedDB(heights[x+1]) : heights[x+1] / 2;
                 heightSlope = (otherHeight - height) * graphHeight;
               }
-              heightDiff = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
-              heightDiff = 1.0 - smoothstep(0.0, 2.5, heightDiff);
+
+              // this is a hacky thing to help address visual problems at sharp bends in the data
+              if (heightSlope > 2)
+                heightSlope = 2;
+              else if (heightSlope < -2)
+                heightSlope = -2;
+
+              heightDist = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+              heightDist = 1.0 - smoothstep(0.0, 2.5, heightDist);
             }
 
-            if (heightDiff > 0)
+            if (heightDist > 0)
             {
                 data[i + 0] = 255;
                 data[i + 1] = 255;
                 data[i + 2] = 0;
-                data[i + 3] = heightDiff * 255;
+                data[i + 3] = heightDist * 255;
             }
 
             if (showEstimate)
@@ -206,16 +213,23 @@ table {
                   var otherHeight = showdB ? amplitudeToNormalizedDB(heightsEstimate[x+1]) : heightsEstimate[x+1] / 2;
                   heightSlope = (otherHeight - height) * graphHeight;
                 }
-                heightDiff = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
-                heightDiff = 1.0 - smoothstep(0.0, 2.5, heightDiff);
+
+                // this is a hacky thing to help address visual problems at sharp bends in the data
+                if (heightSlope > 2)
+                  heightSlope = 2;
+                else if (heightSlope < -2)
+                  heightSlope = -2;
+
+                heightDist = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+                heightDist = 1.0 - smoothstep(0.0, 2.5, heightDist);
               }
 
-              if (heightDiff > 0)
+              if (heightDist > 0)
               {
                   data[i + 0] = 0;
                   data[i + 1] = 255;
                   data[i + 2] = 255;
-                  data[i + 3] = heightDiff * 255;
+                  data[i + 3] = heightDist * 255;
               }
             }
         }
@@ -303,7 +317,7 @@ table {
             var x = pixelIndex % graphWidth;
             var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
 
-            var heightDiff;
+            var heightDist;
             {
               // convert phase response from [-pi,+pi] to [0,1]
               var height = (heights[x] / Math.PI) * 0.5 + 0.5;
@@ -320,16 +334,23 @@ table {
                 var otherHeight = (heights[x+1] / Math.PI) * 0.5 + 0.5;
                 heightSlope = (otherHeight - height) * graphHeight;
               }
-              heightDiff = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
-              heightDiff = 1.0 - smoothstep(0.0, 2.5, heightDiff);
+
+              // this is a hacky thing to help address visual problems at sharp bends in the data
+              if (heightSlope > 2)
+                heightSlope = 2;
+              else if (heightSlope < -2)
+                heightSlope = -2;
+
+              heightDist = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+              heightDist = 1.0 - smoothstep(0.0, 2.5, heightDist);
             }
 
-            if (heightDiff > 0)
+            if (heightDist > 0)
             {
                 data[i + 0] = 255;
                 data[i + 1] = 255;
                 data[i + 2] = 0;
-                data[i + 3] = heightDiff * 255;
+                data[i + 3] = heightDist * 255;
             }
         }
 
