@@ -174,16 +174,15 @@ export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int ord
     return g_phaseResponse;
 }
 
+    // TODO: ditch web assembly?
+    // TODO: fix steep line rendering
+
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
 // TODO: link to the blog post
 
 // TODO: merge this into master of blog repo!
 
 // TODO: share on music dsp list when done
-
-    // TODO: put the sound play stuff to the right of the parameters?
-    // TODO: ditch web assembly?
-    // TODO: fix steep line rendering
 
 // TODO: Thanks to bart and nick appleton plus others?
 
@@ -209,6 +208,11 @@ https://dsp.stackexchange.com/questions/63029/question-about-zeroes-of-simple-2n
 * in first order filter. the ratio of A1 / A0 controls the filter. If the values change, but the ratio is preserved, it just adjusts gain (volume control)
 
 * talk about how you can estimate frequency response on the circle by seeing how close the frequency is to the zeroes. it's an estimate (?) but seems really close
+
+* The zeroes mean there is a cap to how boosted a frequency can be.  Distortion due to clipping sounds rad though, so it seems like a secret to FIR is to crank it real loud.
+ * for instance: Harp. Order 2 filter.  A0 = 33 (overdrive on!).  A1 = -1.34, A2 = 1.  Slide A1 back and forth slowly.
+
+* filtering white noise is fun. You can make it sound like wind, ocean, etc, especially as you move the sliders around so it's dynamic.
 
 - talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
 - talk about the link link to convolution
