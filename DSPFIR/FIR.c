@@ -174,24 +174,18 @@ export double* GetPhaseResponse(double A0, double Alpha1, double Alpha2, int ord
     return g_phaseResponse;
 }
 
-// TODO: could show a square wave gone through filter to show how it affects the shape (linear phase vs not). The source wave shape could be a drop down letting you choose: square, triangle, sine (what hz?), white noise?
-
-
-// TODO: maybe show the transfer function at the bottom of the page? or maybe checkbox to show up?
-// TODO: make sure exports in wasm file are minimal
 // TODO: maybe reread chapters in book again to make sure you didn't miss anything
-// TODO: check html for lint errors
 // TODO: link to the blog post
-// TODO: use the filter in real time with web audio?
 
 // TODO: merge this into master of blog repo!
 
-// TODO: share on music dsp list
+// TODO: share on music dsp list when done
 
-// TODO: second order zeroes are NaN sometimes. should fix, especially since the function still works while those zeroes say they don't exist. so... ???
+    // TODO: put the sound play stuff to the right of the parameters?
+    // TODO: ditch web assembly?
+    // TODO: fix steep line rendering
 
-
-// TODO: maybe get nick appleton and bart to check out the demo before you release the post, to make sure things are on the up and up
+// TODO: Thanks to bart and nick appleton plus others?
 
 /*
 Blog:
@@ -219,7 +213,11 @@ https://dsp.stackexchange.com/questions/63029/question-about-zeroes-of-simple-2n
 - talk about the link to the "roll dice A and take A+B, roll dice B and take A+B, for LPF, subtraction for HPF" to this order 1 filter. show how it's the same thing. 1 for A, +1 or -1 for B
 - talk about the link link to convolution
 
+- talk about box filter in both order 2 and order 3
+- talk about filtering saw, square, triangle, sine, white noise
+
 // TODO: if you make up a function for a transfer function (to get desired frequency / phase response) can you turn that into a difference equation?
 // TODO: Next. IIR!
+// TODO: Soon: image filter analysis?
 
 */

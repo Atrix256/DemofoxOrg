@@ -529,8 +529,8 @@ table {
         return node;
     };
 
-    function PlaySound() {
-
+    function PlaySound()
+    {
       var soundElement = document.getElementById("Sound");
       var url = soundElement.options[soundElement.selectedIndex].value;
       var request = new XMLHttpRequest();
@@ -555,6 +555,12 @@ table {
         }, onError);
       }
       request.send();
+    }
+
+    function SoundChanged()
+    {
+      if (g_audioSource != null)
+        PlaySound();
     }
 
     async function init()
@@ -585,10 +591,6 @@ table {
 
     initAudio();
     init();
-
-    // TODO: how to play the sound looping?
-    // TODO: make sound drop down
-    // TODO: put the sound play stuff to the right of the parameters?
 </script>
 
 </head>
@@ -598,12 +600,20 @@ table {
 
 This is a demo to go along with my blog post: TODO: put link here!<br/><br/>
 
-<select id="Sound">
-  <option value="vintage.wav" selected="true">Vintage</option>
+<select id="Sound" onChange="SoundChanged();">
+  <option value="vintage.wav" selected="true">Drums</option>
   <option value="cymbals.wav">Cymbals</option>
-  <option value="plucked.mp3">Plucked</option>
+  <option value="plucked.mp3">Harp</option>
   <option value="synth.mp3">Synth</option>
-  <option value="party.mp3">Party</option>
+  <option value="party.mp3">Time To Party</option>
+  <option value="sine.wav">Sine Wave</option>
+  <option value="noise.wav">White Noise</option>
+  <option value="saw.wav">Saw Wave</option>
+  <option value="sawbl.wav">Saw Wave (Band Limited)</option>
+  <option value="square.wav">Square Wave</option>
+  <option value="squarebl.wav">Square Wave (Band Limited)</option>
+  <option value="triangle.wav">Triangle Wave</option>
+  <option value="trianglebl.wav">Triangle Wave (Band Limited)</option>
 </select>
 
 <input type="button" onClick="PlaySound();" value="Play Sound"/>
