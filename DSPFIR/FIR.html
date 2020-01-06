@@ -535,6 +535,8 @@ table {
             var order = orderElement.options[orderElement.selectedIndex].value;
             var dotanh = document.getElementById('tanhdistortion').checked;
 
+            var TanHPostMultiplyValue = document.getElementById('TanHPostMultiplyValue').value / 10;
+
             var input = e.inputBuffer.getChannelData(0);
             var output = e.outputBuffer.getChannelData(0);
 
@@ -543,7 +545,7 @@ table {
               for (var i = 0; i < bufferSize; i++)
               {
                   if (dotanh)
-                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0));
+                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0)) * TanHPostMultiplyValue;
                   else
                     output[i] = input[i] * A0 + sampleMinus1 * (A1*A0);
 
@@ -555,7 +557,7 @@ table {
               for (var i = 0; i < bufferSize; i++)
               {
                   if (dotanh)
-                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0));
+                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0)) * TanHPostMultiplyValue;
                   else
                     output[i] = input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0);
 
@@ -695,9 +697,16 @@ Alpha2: <span id="A2Label">0</span>
 </span>
 </td>
 <td>
-<input type=checkbox id="overdrive" onchange="document.getElementById('A0Label').innerText=GetA0Value();"/> Overdrive (100x multiplier)
+<input type=checkbox id="overdrive" onchange="document.getElementById('A0Label').innerText=GetA0Value();"/> Gain Overdrive (100x multiplier)
 <br/>
 <input type=checkbox id="tanhdistortion"/> Tanh distortion postprocess
+<br/>
+<span id="TanHPostMultiply">
+<input type="range" min="0" max="200" id="TanHPostMultiplyValue" value="10" oninput="document.getElementById('TanHPostMultiplyLabel').innerText=this.value / 10;" style="width:400px"/>
+Post TanH Gain: <span id="TanHPostMultiplyLabel">1</span>
+<br/>
+</span>
+
 </td>
 </tr>
 </table>
