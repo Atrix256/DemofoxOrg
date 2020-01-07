@@ -545,7 +545,7 @@ table {
               for (var i = 0; i < bufferSize; i++)
               {
                   if (dotanh)
-                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0)) * TanHPostMultiplyValue;
+                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0)) * TanHPostMultiplyValue / A0;
                   else
                     output[i] = input[i] * A0 + sampleMinus1 * (A1*A0);
 
@@ -557,7 +557,7 @@ table {
               for (var i = 0; i < bufferSize; i++)
               {
                   if (dotanh)
-                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0)) * TanHPostMultiplyValue;
+                    output[i] = Math.tanh(input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0)) * TanHPostMultiplyValue / A0;
                   else
                     output[i] = input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0);
 
@@ -649,6 +649,10 @@ table {
 
 This is a demo to go along with my blog post: <a href="https://blog.demofox.org/2020/01/05/fir-audio-data-filters/" target="blank">FIR Audio & Data Filters</a><br/><br/>
 
+<table>
+<tr valign="top">
+<td width="600">
+
 Filter Order:
 <select id="Order" onChange="OrderChanged();">
   <option value="1" selected="true">1</option>
@@ -675,9 +679,6 @@ Play Sound:
 
 <br/> <br/>
 
-<table>
-<tr valign="top">
-<td width="600">
 <span id="ParamA0">
 <input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=GetA0Value();" style="width:400px"/>
 A0 (gain): <span id="A0Label">0.5</span>
@@ -696,14 +697,15 @@ Alpha2: <span id="A2Label">0</span>
 <br/>
 </span>
 </td>
-<td>
+<td style="border: 1px solid #00FF00;">
+Off Topic Controls:<br/><br/>
 <input type=checkbox id="overdrive" onchange="document.getElementById('A0Label').innerText=GetA0Value();"/> Gain Overdrive (100x multiplier)
 <br/>
 <input type=checkbox id="tanhdistortion"/> Tanh distortion postprocess
 <br/>
 <span id="TanHPostMultiply">
-<input type="range" min="0" max="200" id="TanHPostMultiplyValue" value="10" oninput="document.getElementById('TanHPostMultiplyLabel').innerText=this.value / 10;" style="width:400px"/>
-Post TanH Gain: <span id="TanHPostMultiplyLabel">1</span>
+<input type="range" min="0" max="200" id="TanHPostMultiplyValue" value="80" oninput="document.getElementById('TanHPostMultiplyLabel').innerText=this.value / 10;" style="width:400px"/>
+Post TanH Gain: <span id="TanHPostMultiplyLabel">8</span>
 <br/>
 </span>
 
