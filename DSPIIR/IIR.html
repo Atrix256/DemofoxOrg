@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Infinite Impulse Response Filtering (Biquad)</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+table {
+    border-collapse: collapse;
+}
+</style>
+
+<script>
+    let exports = null;
+    let graphWidth = 0;
+    let graphHeight = 0;
+
+    function amplitudeToDB(x)
+    {
+      return 20 * Math.log10(x);
+    }
+
+    function amplitudeToNormalizedDB(x)
+    {
+      // +/- 40 db
+      var ret = amplitudeToDB(x) / 40;
+      return ret * 0.5 + 0.5;
+    }
+
+    function clamp(x, min, max)
+    {
+      if (x <= min)
+        return min;
+      else if (x >= max)
+        return max;
+      else
+        return x;
+    }
+
+    function smoothstep(edge0, edge1, x)
+    {
+      var t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+      return t * t * (3.0 - 2.0 * t);
+    }
+
+    function GetA0Value()
+    {
+      if (document.getElementById('overdrive').checked)
+        return document.getElementById('A0Value').value / 1;
+      else
+        return document.getElementById('A0Value').value / 100;
+    }
+
+    function DrawFrequencyResponseGraph()
+    {
+        var showEstimate = document.getElementById('ShowFreqResponse_Estimate').checked;
+        var showdB = document.getElementById('ShowFreqResponse_dB').checked;
+
+        var A0 = GetA0Value();
+        var A1 = document.getElementById('A1Value').value / 100;
+        var A2 = document.getElementById('A2Value').value / 100;
+        var B1 = document.getElementById('B1Value').value / 100;
+        var B2 = document.getElementById('B2Value').value / 100;
+
+        const heights = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponse(A0, A1, A2, B1, B2));
+
+        const heightsEstimate = new Float64Array(exports.memory.buffer, exports.GetFrequencyResponseEstimate(A0, A1, A2, B1, B2));
+
+        // clear the canvas to opaque black
+        {
+          var canvas = document.getElementById('FrequencyResponse');
+          var ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#000000FF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // draw the lines and labels
+        {
+            // lines
+            {
+              ctx.strokeStyle = "#004000FF";
+              ctx.beginPath();
+              if (showdB)
+              {
+                for (var i = 0; i < 8; ++i)
+                {
+                    var height = graphHeight * i / 8;
+                    ctx.moveTo(0         , height);
+                    ctx.lineTo(graphWidth, height);
+                }
+              }
+              else
+              {
+                for (var i = 0; i < 10; ++i)
+                {
+                    var height = graphHeight * i / 10;
+                    ctx.moveTo(0         , height);
+                    ctx.lineTo(graphWidth, height);
+                }
+              }
+
+              // horizontal bars
+              for (var i = 1; i < 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  ctx.moveTo(width, 0);
+                  ctx.lineTo(width, graphHeight);
+              }
+
+              ctx.stroke();
+            }
+
+            // labels
+            {
+              ctx.font = '12px arial';
+              ctx.fillStyle = "#008000FF";
+              if (showdB)
+              {
+                  for (var i = 0; i <= 8; ++i)
+                  {
+                    var height = graphHeight * i / 8 + 4;
+                    if (i == 0)
+                      height = 12;
+                    else if (i == 8)
+                      height = graphHeight-2;
+                    var db = (i - 4) * -10;
+                    if (db < 0)
+                      ctx.fillText("" + db + "db", 0, height);
+                    else
+                      ctx.fillText("+" + db + "db", 0, height);
+                  }
+              }
+              else
+              {
+                  for (var i = 0; i <= 10; ++i)
+                  {
+                    var height = graphHeight * i / 10 + 4;
+                    if (i == 0)
+                      height = 12;
+                    else if (i == 10)
+                      height = graphHeight;
+                    var label = 2 - 2*i / 10;
+                    ctx.fillText(label.toFixed(2), 0, height);
+                  }
+              }
+
+              for (var i = 1; i <= 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  if (i == 5)
+                      width = graphWidth - 17;
+                  ctx.fillText((i/5).toFixed(1), width, graphHeight-2);
+              }
+            }
+        }
+
+        var imageData = ctx.getImageData(0, 0, graphWidth, graphHeight);
+        var data = imageData.data;
+
+        for (var i = 0; i < data.length; i += 4)
+        {
+            var pixelIndex = i / 4;
+
+            var x = pixelIndex % graphWidth;
+            var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
+
+            var heightDist;
+
+            {
+              var height = showdB ? amplitudeToNormalizedDB(heights[x]) : heights[x] / 2;
+              var heightSlope;
+              if (x > 0)
+              {
+                var otherHeight = showdB ? amplitudeToNormalizedDB(heights[x-1]) : heights[x-1] / 2;
+                heightSlope = (height - otherHeight) * graphHeight;
+              }
+              else
+              {
+                var otherHeight = showdB ? amplitudeToNormalizedDB(heights[x+1]) : heights[x+1] / 2;
+                heightSlope = (otherHeight - height) * graphHeight;
+              }
+
+              // this is a hacky thing to help address visual problems at sharp bends in the data
+              if (heightSlope > 2)
+                heightSlope = 2;
+              else if (heightSlope < -2)
+                heightSlope = -2;
+
+              heightDist = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+              heightDist = 1.0 - smoothstep(0.0, 2.5, heightDist);
+            }
+
+            if (heightDist > 0)
+            {
+                data[i + 0] = 255;
+                data[i + 1] = 255;
+                data[i + 2] = 0;
+                data[i + 3] = heightDist * 255;
+            }
+
+            if (showEstimate)
+            {
+              {
+                var height = showdB ? amplitudeToNormalizedDB(heightsEstimate[x]) : heightsEstimate[x] / 2;
+                var heightSlope;
+                if (x > 0)
+                {
+                  var otherHeight = showdB ? amplitudeToNormalizedDB(heightsEstimate[x-1]) : heightsEstimate[x-1] / 2;
+                  heightSlope = (height - otherHeight) * graphHeight;
+                }
+                else
+                {
+                  var otherHeight = showdB ? amplitudeToNormalizedDB(heightsEstimate[x+1]) : heightsEstimate[x+1] / 2;
+                  heightSlope = (otherHeight - height) * graphHeight;
+                }
+
+                // this is a hacky thing to help address visual problems at sharp bends in the data
+                if (heightSlope > 2)
+                  heightSlope = 2;
+                else if (heightSlope < -2)
+                  heightSlope = -2;
+
+                heightDist = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+                heightDist = 1.0 - smoothstep(0.0, 2.5, heightDist);
+              }
+
+              if (heightDist > 0)
+              {
+                  data[i + 0] = 0;
+                  data[i + 1] = 255;
+                  data[i + 2] = 255;
+                  data[i + 3] = heightDist * 255;
+              }
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    function DrawPhaseResponseGraph()
+    {
+        var A0 = GetA0Value();
+        var A1 = document.getElementById('A1Value').value / 100;
+        var A2 = document.getElementById('A2Value').value / 100;
+        var B1 = document.getElementById('B1Value').value / 100;
+        var B2 = document.getElementById('B2Value').value / 100;
+
+        const heights = new Float64Array(exports.memory.buffer, exports.GetPhaseResponse(A0, A1, A2, B1, B2));
+
+        var canvas = document.getElementById('PhaseResponse');
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000000FF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // draw the lines and labels
+        {
+            // lines
+            {
+              ctx.strokeStyle = "#004000FF";
+              ctx.beginPath();
+              // vertical
+              for (var i = 0; i < 4; ++i)
+              {
+                  var height = graphHeight * i / 4;
+                  ctx.moveTo(0         , height);
+                  ctx.lineTo(graphWidth, height);
+              }
+
+              // horizontal bars
+              for (var i = 1; i < 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  ctx.moveTo(width, 0);
+                  ctx.lineTo(width, graphHeight);
+              }
+
+              ctx.stroke();
+            }
+
+            // labels
+            {
+              ctx.font = '12px arial';
+              ctx.fillStyle = "#008000FF";
+
+              for (var i = 0; i < 5; ++i)
+              {
+                var height = graphHeight * i / 4 + 4;
+                if (i == 0)
+                  height = 12;
+                else if (i == 4)
+                  height = graphHeight-2;
+
+                var angle = (i - 2) * -90;
+                if (angle < 0)
+                  ctx.fillText("" + angle + "\xB0", 0, height);
+                else
+                  ctx.fillText("+" + angle + "\xB0", 0, height);
+              }
+
+              for (var i = 1; i <= 5; ++i)
+              {
+                  var width = graphWidth * i / 5;
+                  if (i == 5)
+                      width = graphWidth - 17;
+                  ctx.fillText((i/5).toFixed(1), width, graphHeight-2);
+              }
+            }
+        }
+
+        var imageData = ctx.getImageData(0, 0, graphWidth, graphHeight);
+        var data = imageData.data;
+
+        for (var i = 0; i < data.length; i += 4)
+        {
+            var pixelIndex = i / 4;
+
+            var x = pixelIndex % graphWidth;
+            var y = graphHeight - (pixelIndex / graphWidth) - 1; // flip y over
+
+            var heightDist;
+            {
+              // convert phase response from [-pi,+pi] to [0,1]
+              var height = (heights[x] / Math.PI) * 0.5 + 0.5;
+              var heightSlope;
+              if (x > 0)
+              {
+                // convert phase response from [-pi,+pi] to [0,1]
+                var otherHeight = (heights[x-1] / Math.PI) * 0.5 + 0.5;
+                heightSlope = (height - otherHeight) * graphHeight;
+              }
+              else
+              {
+                // convert phase response from [-pi,+pi] to [0,1]
+                var otherHeight = (heights[x+1] / Math.PI) * 0.5 + 0.5;
+                heightSlope = (otherHeight - height) * graphHeight;
+              }
+
+              // this is a hacky thing to help address visual problems at sharp bends in the data
+              if (heightSlope > 2)
+                heightSlope = 2;
+              else if (heightSlope < -2)
+                heightSlope = -2;
+
+              heightDist = Math.abs((heightSlope * x + (height * graphHeight - (heightSlope * x)) - y) / Math.sqrt(heightSlope*heightSlope+1));
+              heightDist = 1.0 - smoothstep(0.0, 2.5, heightDist);
+            }
+
+            if (heightDist > 0)
+            {
+                data[i + 0] = 255;
+                data[i + 1] = 255;
+                data[i + 2] = 0;
+                data[i + 3] = heightDist * 255;
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    function DrawPolesZeroesPlot()
+    {
+        var canvas = document.getElementById('PolesZeroesPlot');
+        var ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#000000FF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        var A0 = GetA0Value();
+        var A1 = document.getElementById('A1Value').value / 100;
+        var A2 = document.getElementById('A2Value').value / 100;
+        var B1 = document.getElementById('B1Value').value / 100;
+        var B2 = document.getElementById('B2Value').value / 100;
+
+        ctx.lineWidth = 1;
+
+        ctx.strokeStyle = "#004000FF";
+        ctx.beginPath();
+        ctx.arc(graphWidth/2, graphWidth/2, graphWidth/4, 0, 2 * Math.PI);
+        ctx.moveTo(graphWidth/2,0);
+        ctx.lineTo(graphWidth/2,graphWidth);
+        ctx.moveTo(0, graphWidth/2);
+        ctx.lineTo(graphWidth, graphWidth/2);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#FFFF00FF";
+
+        // zeroes
+        {
+          /*
+            0 = (z^2 + Alpha1 * z + Alpha2) / z^2
+
+            0 = (-b +- sqrt(b^2 - 4ac)) / 2A
+
+            0 = (-Alpha1 +- sqrt(Alpha1^2 - 4*Alpha2)) / 2
+
+            0 = -Alpha1 / 2    +-   sqrt(Alpha1^2 - 4*Alpha2) / 2
+          */
+
+          var Zero1X;
+          var Zero1Y;
+          var Zero2X;
+          var Zero2Y;
+
+          var discriminant = A1 * A1 - 4 * A2;
+          if (discriminant >= 0)
+          {
+            // 2 real roots
+            Zero1X = (-A1 + Math.sqrt(discriminant)) / 2;
+            Zero1Y = 0;
+
+            Zero2X = (-A1 - Math.sqrt(discriminant)) / 2;
+            Zero2Y = 0;
+          }
+          else
+          {
+            // 2 imaginary roots
+            Zero1X = -A1 / 2;
+            Zero1Y = Math.sqrt(discriminant * -1) / 2;
+
+            Zero2X = -A1 / 2;
+            Zero2Y = -Math.sqrt(discriminant * -1) / 2;
+          }
+
+          Zero1X *= graphWidth * 0.25;
+          Zero1Y *= graphWidth * 0.25;
+          Zero2X *= graphWidth * 0.25;
+          Zero2Y *= graphWidth * 0.25;
+
+          ctx.beginPath();
+          ctx.arc(graphWidth/2 + Zero1X, graphWidth/2 + Zero1Y, graphWidth/64, 0, 2 * Math.PI);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(graphWidth/2 + Zero2X, graphWidth/2 + Zero2Y, graphWidth/64, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+
+        // TODO: temp! to distinguish poles from zeroes
+        ctx.strokeStyle = "#FF0000FF";
+
+        // poles
+        {
+          /*
+            0 = (z^2 + B1 * z + B2) / z^2
+
+            0 = (-b +- sqrt(b^2 - 4ac)) / 2A
+
+            0 = (-B1 +- sqrt(B1^2 - 4*B2)) / 2
+
+            0 = -B1 / 2    +-   sqrt(B1^2 - 4*B2) / 2
+          */
+
+          var Zero1X;
+          var Zero1Y;
+          var Zero2X;
+          var Zero2Y;
+
+          var discriminant = B1 * B1 - 4 * B2;
+          if (discriminant >= 0)
+          {
+            // 2 real roots
+            Zero1X = (-B1 + Math.sqrt(discriminant)) / 2;
+            Zero1Y = 0;
+
+            Zero2X = (-B1 - Math.sqrt(discriminant)) / 2;
+            Zero2Y = 0;
+          }
+          else
+          {
+            // 2 imaginary roots
+            Zero1X = -B1 / 2;
+            Zero1Y = Math.sqrt(discriminant * -1) / 2;
+
+            Zero2X = -B1 / 2;
+            Zero2Y = -Math.sqrt(discriminant * -1) / 2;
+          }
+
+          Zero1X *= graphWidth * 0.25;
+          Zero1Y *= graphWidth * 0.25;
+          Zero2X *= graphWidth * 0.25;
+          Zero2Y *= graphWidth * 0.25;
+
+          // TODO: draw X's!
+
+          ctx.beginPath();
+          ctx.arc(graphWidth/2 + Zero1X, graphWidth/2 + Zero1Y, graphWidth/64, 0, 2 * Math.PI);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(graphWidth/2 + Zero2X, graphWidth/2 + Zero2Y, graphWidth/64, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+
+        ctx.font = '12px arial';
+        ctx.fillStyle = "#008000FF";
+        ctx.fillText("Im", graphWidth/2+4, 12);
+        ctx.fillText("Re", graphWidth-18, graphWidth/2-2);
+    }
+
+    function DrawGraphs()
+    {
+        DrawFrequencyResponseGraph();
+        DrawPhaseResponseGraph();
+        DrawPolesZeroesPlot();
+
+        var A0 = GetA0Value();
+        var A1 = document.getElementById('A1Value').value / 100;
+        var A2 = document.getElementById('A2Value').value / 100;
+        var B1 = document.getElementById('B1Value').value / 100;
+        var B2 = document.getElementById('B2Value').value / 100;
+
+        var text = "y = "
+
+        if (A0 != 0.0)
+          text += A0.toFixed(3) +" * x(n)";
+        else
+          text += "0";
+
+        if (A1*A0 < 0.0)
+          text += " - " + (A1*A0*-1.0).toFixed(3) + " * x(n-1)";
+        else if (A1*A0 > 0.0)
+          text += " + " + (A1*A0).toFixed(3) + " * x(n-1)";
+
+        if (A2*A0 < 0.0)
+          text += " - " + (A2*A0*-1.0).toFixed(3) + " * x(n-2)";
+        else if (A2*A0 > 0.0)
+          text += " + " + (A2*A0).toFixed(3) + " * x(n-2)";
+
+        if (B1 < 0.0)
+          text += " + " + (-B1).toFixed(3) + " * y(n-1)";
+        else if (B1 > 0.0)
+          text += " - " + (B1).toFixed(3) + " * y(n-1)";
+
+        if (B2 < 0.0)
+          text += " + " + (-B2).toFixed(3) + " * y(n-2)";
+        else if (B2 > 0.0)
+          text += " - " + (B2).toFixed(3) + " * y(n-2)";
+
+        document.getElementById('Equation').innerText = text;
+
+        requestAnimationFrame(DrawGraphs);
+    }
+
+    var g_audioContext;
+    var g_sound;
+    var g_audioSource = null;
+
+    function onError()
+    {
+      alert('audio error');
+    }
+
+    function initAudio()
+    {
+      try {
+        // Fix up for prefixing
+        window.AudioContext = window.AudioContext||window.webkitAudioContext;
+        g_audioContext = new AudioContext();
+      }
+      catch(e) {
+        alert('Web Audio API is not supported in this browser');
+      }
+    }
+
+    function StopSound()
+    {
+        if (g_audioSource != null)
+          g_audioSource.stop();
+    }
+
+    var bufferSize = 4096;
+    function MakeFilterNode() {
+        var sampleMinus1 = 0.0;
+        var sampleMinus2 = 0.0;
+        var outputMinus1 = 0.0;
+        var outputMinus2 = 0.0;
+        var node = g_audioContext.createScriptProcessor(bufferSize, 1, 1);
+        node.onaudioprocess = function(e) {
+
+            var A0 = GetA0Value();
+            var A1 = document.getElementById('A1Value').value / 100;
+            var A2 = document.getElementById('A2Value').value / 100;
+            var B1 = document.getElementById('B1Value').value / 100;
+            var B2 = document.getElementById('B2Value').value / 100;
+            var dotanh = document.getElementById('tanhdistortion').checked;
+
+            var TanHPostMultiplyValue = document.getElementById('TanHPostMultiplyValue').value / 10;
+
+            var input = e.inputBuffer.getChannelData(0);
+            var output = e.outputBuffer.getChannelData(0);
+
+            for (var i = 0; i < bufferSize; i++)
+            {
+                output[i] = input[i] * A0 + sampleMinus1 * (A1*A0) + sampleMinus2 * (A2*A0) - outputMinus1 * B1 - outputMinus2 * B2;
+
+                sampleMinus2 = sampleMinus1
+                sampleMinus1 = input[i];
+
+                if (isNaN(output[i]) || !isFinite(output[i]))
+                  output[i] = 0.0;
+
+                outputMinus2 = outputMinus1;
+                outputMinus1 = output[i];
+
+                if (dotanh)
+                  output[i] = Math.tanh(output[i]) * TanHPostMultiplyValue / A0;
+            }
+        }
+        return node;
+    };
+
+    function PlaySound(url)
+    {
+      var request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.responseType = 'arraybuffer';
+
+      // Decode asynchronously
+      request.onload = function() {
+        g_audioContext.decodeAudioData(request.response, function(buffer) {
+          g_sound = buffer;
+          StopSound();
+
+          var filterNode = MakeFilterNode();
+
+          g_audioSource = g_audioContext.createBufferSource(); // creates a sound source
+          g_audioSource.loop = true;
+          g_audioSource.buffer = g_sound;                    // tell the source which sound to play
+          g_audioSource.connect(filterNode);       // connect the source to the context's destination (the speakers)
+          filterNode.connect(g_audioContext.destination);
+          g_audioSource.start(0);                           // play the source now
+                                                     // note: on older systems, may have to use deprecated noteOn(time);
+        }, onError);
+      }
+      request.send();
+    }
+
+    function SoundChanged()
+    {
+      if (g_audioSource != null)
+        StopSound();
+
+      var soundElement = document.getElementById("Sound");
+      var url = soundElement.options[soundElement.selectedIndex].value;
+      if (url != "")
+        PlaySound(url);
+    }
+
+    async function init()
+    {
+      fetch('IIR.wasm').then(response =>
+        response.arrayBuffer()
+      ).then(bytes =>
+        WebAssembly.instantiate(bytes)
+      ).then(results => {
+        instance = results.instance;
+
+        exports = instance.exports;
+
+        graphWidth = exports.GetGraphWidth();
+        graphHeight = exports.GetGraphHeight();
+
+        document.getElementById('A0Value').width = graphWidth;
+        document.getElementById('A1Value').width = graphWidth;
+        document.getElementById('A2Value').width = graphWidth;
+        document.getElementById('B1Value').width = graphWidth;
+        document.getElementById('B2Value').width = graphWidth;
+
+        document.getElementById('FrequencyResponse').width = graphWidth;
+        document.getElementById('FrequencyResponse').height = graphHeight;
+
+        document.getElementById('PhaseResponse').width = graphWidth;
+        document.getElementById('PhaseResponse').height = graphHeight;
+
+        document.getElementById('PolesZeroesPlot').width = graphWidth;
+        document.getElementById('PolesZeroesPlot').height = graphWidth;
+
+        requestAnimationFrame(DrawGraphs);
+      });
+    }
+
+    initAudio();
+    init();
+</script>
+
+</head>
+<body>
+
+<h1>Infinite Impulse Response Filtering (Biquad)</h1>
+
+This is a demo to go along with my blog post: <a href="https://blog.demofox.org/2020/01/05/fir-audio-data-filters/" target="blank">FIR Audio & Data Filters</a><br/><br/>
+
+<table>
+<tr valign="top">
+<td width="600">
+
+Play Sound:
+<select id="Sound" onChange="SoundChanged();">
+  <option value="">None</option>
+  <option value="vintage.wav">Drums</option>
+  <option value="cymbals.wav">Cymbals</option>
+  <option value="plucked.mp3">Harp</option>
+  <option value="synth.mp3">Synth</option>
+  <option value="party.mp3">Time To Party (male voice)</option>
+  <option value="mad_sutherland.mp3">Soprano</option>
+  <option value="sine.wav">Sine Wave</option>
+  <option value="noise.wav">White Noise</option>
+  <option value="saw.wav">Saw Wave</option>
+  <option value="sawbl.wav">Saw Wave (Band Limited)</option>
+  <option value="square.wav">Square Wave</option>
+  <option value="squarebl.wav">Square Wave (Band Limited)</option>
+  <option value="triangle.wav">Triangle Wave</option>
+  <option value="trianglebl.wav">Triangle Wave (Band Limited)</option>
+</select>
+
+<br/> <br/>
+
+<span id="ParamA0">
+<input type="range" min="0" max="200" id="A0Value" value="50" oninput="document.getElementById('A0Label').innerText=GetA0Value();" style="width:400px"/>
+A0 (gain): <span id="A0Label">0.5</span>
+<br/>
+</span>
+
+<span id="ParamA1">
+<input type="range" min="-200" max="200" id="A1Value" value="100" oninput="document.getElementById('A1Label').innerText=this.value / 100;" style="width:400px"/>
+Alpha1: <span id="A1Label">1</span>
+<br/>
+</span>
+
+<span id="ParamA2">
+<input type="range" min="-200" max="200" id="A2Value" value="0" oninput="document.getElementById('A2Label').innerText=this.value / 100;" style="width:400px"/>
+Alpha2: <span id="A2Label">0</span>
+<br/>
+</span>
+
+<span id="ParamB1">
+<input type="range" min="-200" max="200" id="B1Value" value="0" oninput="document.getElementById('B1Label').innerText=this.value / 100;" style="width:400px"/>
+B1: <span id="B1Label">0</span>
+<br/>
+</span>
+
+<span id="ParamB2">
+<input type="range" min="-200" max="200" id="B2Value" value="0" oninput="document.getElementById('B2Label').innerText=this.value / 100;" style="width:400px"/>
+B2: <span id="B2Label">0</span>
+<br/>
+</span>
+
+</td>
+<td style="border: 1px solid #00FF00;">
+Off Topic Controls:<br/><br/>
+<input type=checkbox id="overdrive" onchange="document.getElementById('A0Label').innerText=GetA0Value();"/> Gain Overdrive (100x multiplier)
+<br/>
+<input type=checkbox id="tanhdistortion"/> Tanh distortion postprocess
+<br/>
+<span id="TanHPostMultiply">
+<input type="range" min="0" max="200" id="TanHPostMultiplyValue" value="80" oninput="document.getElementById('TanHPostMultiplyLabel').innerText=this.value / 10;" style="width:400px"/>
+Post TanH Gain: <span id="TanHPostMultiplyLabel">8</span>
+<br/>
+</span>
+
+</td>
+</tr>
+</table>
+
+<br/>
+
+Filter Equation:<br/>
+<span id="Equation"></span>
+<br/><br/>
+
+<table>
+  <tr valign="top">
+    <td>
+      Frequency Response:<br/>
+      <canvas id="FrequencyResponse" style="border: 1px solid #00FF00;"></canvas><br/>
+      Phase Response:<br/>
+      <canvas id="PhaseResponse" style="border: 1px solid #00FF00;"></canvas>
+    </td>
+    <td>&nbsp;</td>
+    <td>
+      Poles / Zeroes Plot:<br/>
+      <canvas id="PolesZeroesPlot" style="border: 1px solid #00FF00;"></canvas>
+    </td>
+  </tr>
+</table>
+
+<input type="checkbox" id="ShowFreqResponse_Estimate"/>
+Show Frequency Response Estimate (in teal)
+&nbsp;&nbsp;
+<input type="checkbox" id="ShowFreqResponse_dB" checked="true"/>
+Show Frequency Response in dB
+
+</body>
+</html>
+
+<br><br>
+TODO: update all this for IIR, instead of FIR
+TODO: can we do manual input for filter formula? https://twitter.com/estama2/status/1219030836588224515?s=20
+TODO: maybe get rid of wasm. especially if we are doing custom formulas for filtering
