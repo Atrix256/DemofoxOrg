@@ -87,7 +87,7 @@ void UpdateData(double _A0, double _Alpha1, double _Alpha2, double _B1, double _
         }
 
         struct ComplexValue result = Divide(&numerator, &denominator);
-        
+
         g_frequencyResponse[i] = Length(&result);
         g_phaseResponse[i] = inl_atan2(result.imaginary, result.real);
 
@@ -109,19 +109,45 @@ void UpdateData(double _A0, double _Alpha1, double _Alpha2, double _B1, double _
             Zero2Y -= sqrtDiscriminantOver2;
         }
 
-        // TODO: calculate poles too and also include in the estimate
-
         // Get an estimate of frequency response by getting distance from point on circle to the zeros and multiplying them
         double circlePosX = inl_cos(phase);
         double circlePosY = inl_sin(phase);
 
-        double dist1X = circlePosX - Zero1X;
-        double dist1Y = circlePosY - Zero1Y;
+        double zdist1X = circlePosX - Zero1X;
+        double zdist1Y = circlePosY - Zero1Y;
 
-        double dist2X = circlePosX - Zero2X;
-        double dist2Y = circlePosY - Zero2Y;
+        double zdist2X = circlePosX - Zero2X;
+        double zdist2Y = circlePosY - Zero2Y;
 
-        g_frequencyResponseEstimate[i] = sqrt(dist1X*dist1X+dist1Y*dist1Y) * sqrt(dist2X*dist2X+dist2Y*dist2Y) * _A0;
+        // calculate the location of the poles
+        double Pole1X = -_B1 / 2.0;
+        double Pole1Y = 0.0;
+        double Pole2X = -_B1 / 2.0;
+        double Pole2Y = 0.0;
+        discriminant = _B1 * _B1 - 4.0 * _B2;
+        sqrtDiscriminantOver2 = sqrt(fabs(discriminant)) / 2.0;
+        if (discriminant >= 0.0)
+        {
+            Pole1X += sqrtDiscriminantOver2;
+            Pole2X -= sqrtDiscriminantOver2;
+        }
+        else
+        {
+            Pole1Y += sqrtDiscriminantOver2;
+            Pole2Y -= sqrtDiscriminantOver2;
+        }
+
+        // Get an estimate of frequency response by getting distance from point on circle to the poles and dividing them
+        double pdist1X = circlePosX - Pole1X;
+        double pdist1Y = circlePosY - Pole1Y;
+
+        double pdist2X = circlePosX - Pole2X;
+        double pdist2Y = circlePosY - Pole2Y;
+
+        float zdist = sqrt(zdist1X*zdist1X+zdist1Y*zdist1Y) * sqrt(zdist2X*zdist2X+zdist2Y*zdist2Y) * _A0;
+        float pdist = sqrt(pdist1X*pdist1X+pdist1Y*pdist1Y) * sqrt(pdist2X*pdist2X+pdist2Y*pdist2Y);
+
+        g_frequencyResponseEstimate[i] = zdist / pdist;
     }
 }
 
