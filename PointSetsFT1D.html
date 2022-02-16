@@ -10,10 +10,10 @@ canvas.html5 {border:2px solid #00FF00;}
 
 var g_controlPoints =
 [
-	[0.0,0.0],
-	[0.5,0.5],
-	[0.8,0.75],
-	[1.0,0.0],
+	0.1,
+	0.5,
+	0.8,
+	0.9,
 ];
 
 var g_graphPanel;
@@ -85,10 +85,10 @@ function ScreenPointToMathPoint(x,y)
 {
 	var aspectRatio = g_graphPanel.elem.width / g_graphPanel.elem.height;
 
-	mathPointMinX = -0.2;
-	mathPointMaxX = 1.2;
-	mathPointMinY = 0.6 * aspectRatio;
-	mathPointMaxY = -0.6 * aspectRatio;
+	mathPointMinX = -0.05;
+	mathPointMaxX = 1.05;
+	mathPointMinY = 0.525 * aspectRatio;
+	mathPointMaxY = -0.525 * aspectRatio;
 
 	var point = [x / g_graphPanel.elem.width,y / g_graphPanel.elem.height];
 
@@ -96,34 +96,16 @@ function ScreenPointToMathPoint(x,y)
 	point[1] = point[1] * (mathPointMaxY - mathPointMinY) + mathPointMinY;
 
 	return point;
-
-/*
-	var aspectRatio = g_graphPanel.elem.width / g_graphPanel.elem.height;
-
-	var point = [x,y];
-	point[0] *= aspectRatio;
-	point[0] = point[0] / g_graphPanel.elem.width;
-	point[1] = point[1] / g_graphPanel.elem.height;
-	point[1] = 1.0 - point[1];
-
-	point[0] -= 0.1;
-	point[1] -= 0.1;
-
-	point[0] /= 0.7;
-	point[1] /= 0.7;
-
-	return point;
-	*/
 }
 
 function MathPointToScreenPoint(x,y)
 {
 	var aspectRatio = g_graphPanel.elem.width / g_graphPanel.elem.height;
 
-	mathPointMinX = -0.2;
-	mathPointMaxX = 1.2;
-	mathPointMinY = 0.6 * aspectRatio;
-	mathPointMaxY = -0.6 * aspectRatio;
+	mathPointMinX = -0.05;
+	mathPointMaxX = 1.05;
+	mathPointMinY = 0.525 * aspectRatio;
+	mathPointMaxY = -0.525 * aspectRatio;
 
 	var point = [x,y];
 	point[0] = (point[0] - mathPointMinX) / (mathPointMaxX - mathPointMinX);
@@ -147,7 +129,12 @@ function OnMouseMove(evt)
 
 	g_lastDragPos = g_mousePos;
 
-	g_controlPoints[g_pointDragged][0] += delta[0];
+	g_controlPoints[g_pointDragged] += delta[0];
+
+	if(g_controlPoints[g_pointDragged] < 0.0)
+		g_controlPoints[g_pointDragged] = 0.0;
+	else if(g_controlPoints[g_pointDragged] > 1.0)
+		g_controlPoints[g_pointDragged] = 1.0;
 }
 
 function OnMouseDown()
@@ -156,7 +143,7 @@ function OnMouseDown()
 
 	for (i = 0; i < g_controlPoints.length; ++i)
 	{
-		var point = MathPointToScreenPoint(g_controlPoints[i][0], 0.0);
+		var point = MathPointToScreenPoint(g_controlPoints[i], 0.0);
 		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
 		if (dist < 23)
 		{
@@ -189,7 +176,7 @@ function OnDoubleClick()
 
 	for (i = 0; i < g_controlPoints.length; ++i)
 	{
-		var point = MathPointToScreenPoint(g_controlPoints[i][0], 0.0);
+		var point = MathPointToScreenPoint(g_controlPoints[i], 0.0);
 		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
 		if (dist < 23)
 		{
@@ -199,7 +186,7 @@ function OnDoubleClick()
 		}		
 	}
 	var mathPoint = ScreenPointToMathPoint(g_mousePos[0], 0.0);
-	g_controlPoints.push([mathPoint[0], 0.0]);
+	g_controlPoints.push(mathPoint[0]);
 }
 
 //hook up our event listener
@@ -241,106 +228,44 @@ function RedrawGraph()
 	g_graphPanel.context.lineWidth = 1;
 	g_graphPanel.context.beginPath();
 
-	// draw Y axis
-	var min = MathPointToScreenPoint(0,-2);
-	var max = MathPointToScreenPoint(0, 2);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
 	// draw X axis
-	min = MathPointToScreenPoint(-2, 0);
-	max = MathPointToScreenPoint( 6, 0);
+	min = MathPointToScreenPoint( 0, 0);
+	max = MathPointToScreenPoint( 1, 0);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 	g_graphPanel.context.stroke();
 
-	// draw a tick mark at x = 0.25, 0.5, 0.75, 1
+	// draw a tick mark at x = 0, 0.25, 0.5, 0.75, 1
 	g_graphPanel.context.strokeStyle='#00FFFF';	
 	g_graphPanel.context.lineWidth = 1;
 	g_graphPanel.context.beginPath();	
-	min = MathPointToScreenPoint(0.25, -0.02);
-	max = MathPointToScreenPoint(0.25,  0.02);
+
+	min = MathPointToScreenPoint(0.0, -0.2);
+	max = MathPointToScreenPoint(0.0,  0.2);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-	min = MathPointToScreenPoint(0.5, -0.02);
-	max = MathPointToScreenPoint(0.5,  0.02);
+	min = MathPointToScreenPoint(0.25, -0.2);
+	max = MathPointToScreenPoint(0.25,  0.2);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-	min = MathPointToScreenPoint(0.75, -0.02);
-	max = MathPointToScreenPoint(0.75,  0.02);
+	min = MathPointToScreenPoint(0.5, -0.2);
+	max = MathPointToScreenPoint(0.5,  0.2);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-	min = MathPointToScreenPoint(1, -0.05);
-	max = MathPointToScreenPoint(1,  0.05);
+	min = MathPointToScreenPoint(0.75, -0.2);
+	max = MathPointToScreenPoint(0.75,  0.2);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(1, -0.2);
+	max = MathPointToScreenPoint(1,  0.2);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);	
 
-	min = MathPointToScreenPoint(1.25, -0.02);
-	max = MathPointToScreenPoint(1.25,  0.02);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(1.5, -0.02);
-	max = MathPointToScreenPoint(1.5,  0.02);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(1.75, -0.02);
-	max = MathPointToScreenPoint(1.75,  0.02);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(2, -0.05);
-	max = MathPointToScreenPoint(2,  0.05);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);		
-
-	min = MathPointToScreenPoint(2.25, -0.02);
-	max = MathPointToScreenPoint(2.25,  0.02);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(2.5, -0.02);
-	max = MathPointToScreenPoint(2.5,  0.02);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(2.75, -0.02);
-	max = MathPointToScreenPoint(2.75,  0.02);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(3, -0.05);
-	max = MathPointToScreenPoint(3,  0.05);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	// draw a tick mark at y = 0.25, 0.5, 0.75, 1
-	min = MathPointToScreenPoint(-0.02, 0.25);
-	max = MathPointToScreenPoint( 0.02, 0.25);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(-0.02, 0.5);
-	max = MathPointToScreenPoint( 0.02, 0.5);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(-0.02, 0.75);
-	max = MathPointToScreenPoint( 0.02, 0.75);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-	min = MathPointToScreenPoint(-0.05, 1);
-	max = MathPointToScreenPoint( 0.05, 1);
-	g_graphPanel.context.moveTo(min[0], min[1]);
-	g_graphPanel.context.lineTo(max[0], max[1]);
-
-
-    g_graphPanel.context.stroke();
+  g_graphPanel.context.stroke();
 
 /*
 	// start the drawing
@@ -371,7 +296,7 @@ function RedrawGraph()
 	// draw the control points
 	for (i = 0; i < g_controlPoints.length; ++i)
 	{
-		var point = MathPointToScreenPoint(g_controlPoints[i][0], g_controlPoints[i][1]);
+		var point = MathPointToScreenPoint(g_controlPoints[i], 0.0);
 		DrawControlPoint(point[0], point[1], g_pointDragged == i);
 	}
 }
