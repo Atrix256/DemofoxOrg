@@ -90,10 +90,10 @@ function ScreenPointToMathPoint(x,y)
 	mathPointMinY = 0.6 * aspectRatio;
 	mathPointMaxY = -0.6 * aspectRatio;
 
-	var point = [x / g_graphPanel.elem.width,y / g_graphPanel.elem.height]; 
+	var point = [x / g_graphPanel.elem.width,y / g_graphPanel.elem.height];
 
-	point[0] = point[0] * (mathPointMaxX - mathPointMinX) + mathPointMaxX;
-	point[1] = point[1] * (mathPointMaxY - mathPointMinY) + mathPointMaxY;
+	point[0] = point[0] * (mathPointMaxX - mathPointMinX) + mathPointMinX;
+	point[1] = point[1] * (mathPointMaxY - mathPointMinY) + mathPointMinY;
 
 	return point;
 
@@ -148,7 +148,6 @@ function OnMouseMove(evt)
 	g_lastDragPos = g_mousePos;
 
 	g_controlPoints[g_pointDragged][0] += delta[0];
-	g_controlPoints[g_pointDragged][1] += delta[1];
 }
 
 function OnMouseDown()
@@ -157,7 +156,7 @@ function OnMouseDown()
 
 	for (i = 0; i < g_controlPoints.length; ++i)
 	{
-		var point = MathPointToScreenPoint(g_controlPoints[i][0],g_controlPoints[i][1]);
+		var point = MathPointToScreenPoint(g_controlPoints[i][0], 0.0);
 		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
 		if (dist < 23)
 		{
@@ -190,7 +189,7 @@ function OnDoubleClick()
 
 	for (i = 0; i < g_controlPoints.length; ++i)
 	{
-		var point = MathPointToScreenPoint(g_controlPoints[i][0],g_controlPoints[i][1]);
+		var point = MathPointToScreenPoint(g_controlPoints[i][0], 0.0);
 		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
 		if (dist < 23)
 		{
@@ -199,8 +198,8 @@ function OnDoubleClick()
 			return;
 		}		
 	}
-	var mathPoint = ScreenPointToMathPoint(g_mousePos[0], g_mousePos[1]);
-	g_controlPoints.push(mathPoint);
+	var mathPoint = ScreenPointToMathPoint(g_mousePos[0], 0.0);
+	g_controlPoints.push([mathPoint[0], 0.0]);
 }
 
 //hook up our event listener
@@ -230,35 +229,6 @@ function DrawControlPoint(X, Y, dragging)
 	g_graphPanel.context.lineWidth = 3;
 	g_graphPanel.context.strokeStyle = dragging ? '#888888' : (highlite ? '#884030' : '#880000');
 	g_graphPanel.context.stroke();	
-}
-
-// returns l_i,j of x
-function LIJ(max,current,x)
-{
-	var numerator = 1;
-	var denominator = 1;
-
-	for (var i = 0; i <= max; ++i)
-	{
-		if (i != current)
-		{
-			numerator *= (x - g_controlPoints[i][0]);
-			denominator *= (g_controlPoints[current][0] - g_controlPoints[i][0]);
-		}
-	}
-
-	return numerator / denominator;
-}
-
-function F(x)
-{
-	var max = g_controlPoints.length - 1;
-	var sum = 0;
-
-	for (var i = 0; i <= max; ++i)
-		sum += g_controlPoints[i][1] * LIJ(max,i,x);
-
-	return sum;
 }
 
 function RedrawGraph()
