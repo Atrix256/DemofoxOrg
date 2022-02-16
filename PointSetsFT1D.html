@@ -10,10 +10,8 @@ canvas.html5 {border:2px solid #00FF00;}
 
 var g_controlPoints =
 [
-	0.1,
-	0.4,
-	0.8,
-	0.9,
+	0.0,
+	0.5,
 ];
 
 var g_graphPanel;
@@ -22,8 +20,8 @@ var g_mousePos = [0,0];
 var g_pointDragged = -1;
 var g_lastDragPos = [0,0];
 
-var g_numFrequencies = 5;
-var g_stepSize = 0.001;
+var g_numFrequencies = 8;
+var g_stepSize = 0.01;
 
 function onPageLoaded()
 {
@@ -289,8 +287,19 @@ function RedrawGraph()
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
+
+	min = MathPointToScreenPoint(0.125, -0.25);
+	max = MathPointToScreenPoint(0.125,  0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
 	min = MathPointToScreenPoint(0.25, -0.5);
 	max = MathPointToScreenPoint(0.25,  0.5);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.375, -0.25);
+	max = MathPointToScreenPoint(0.375,  0.25);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
@@ -299,10 +308,20 @@ function RedrawGraph()
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
+	min = MathPointToScreenPoint(0.625, -0.25);
+	max = MathPointToScreenPoint(0.625,  0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
 	min = MathPointToScreenPoint(0.75, -0.5);
 	max = MathPointToScreenPoint(0.75,  0.5);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.875, -0.25);
+	max = MathPointToScreenPoint(0.875,  0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);	
 
 	min = MathPointToScreenPoint(1, -2);
 	max = MathPointToScreenPoint(1,  2);
@@ -371,7 +390,6 @@ function RedrawGraph()
 
 	table.appendChild(tr);	
 
-	//table.style.border = "1px solid #00FF00";
 	for (var i = 1; i <= g_numFrequencies; i++)
 	{
 	    var tr = document.createElement('tr');   
@@ -391,19 +409,25 @@ function RedrawGraph()
 	    }
 	    mag = Math.sqrt(re*re + im*im);
 	    phase = Math.atan2(im, re);
+	    if (phase < 0)
+	    	phase += 2 * Math.PI;
+	    phase *= 180.0 / Math.PI;
 
 	    td1.appendChild(document.createTextNode(String(i)));
 	    td2.appendChild(document.createTextNode(String(mag.toFixed(2))));
-	    td3.appendChild(document.createTextNode(String(phase.toFixed(2))));
+	    td3.appendChild(document.createTextNode(String(phase.toFixed(0))+"°"));
 
-			btn = document.createElement("button");
-			btn.innerHTML = "+";
-			btn.onclick = function() { AdjustFrequency(i, 1); };
-			td2.appendChild(btn);
-			btn = document.createElement("button");
-			btn.innerHTML = "-";
-			btn.onclick = function() { AdjustFrequency(i, -1); };
-			td2.appendChild(btn);			 
+	    if (i > 0)
+	    {
+				btn = document.createElement("button");
+				btn.innerHTML = "+";
+				btn.onclick = function() { AdjustFrequency(i, 1); };
+				td2.appendChild(btn);
+				btn = document.createElement("button");
+				btn.innerHTML = "-";
+				btn.onclick = function() { AdjustFrequency(i, -1); };
+				td2.appendChild(btn);			 
+			}
 
 	    tr.appendChild(td1);
 	    tr.appendChild(td2);
@@ -418,17 +442,17 @@ function RedrawGraph()
 </head>
 <body>
 <h1>1D Point Set Fourier Transform</h1>
-<b>Click and drag points.  Double click on a point to remove it.  Double click on an empty space to add a point.</b><br/>
+<b>Click and drag points.  Double click on a point to remove it.  Double click on an empty space to add a point.</b><br/><br/>
 <canvas class="html5" id="Graph" width="1024" height="100">Your browser doesn't seem to support the necesary html5 features ):</canvas>
 <div id="Frequencies"></div>
 <table style="border: 1px solid #00FF00">
 	<tr>
 		<td>Frequency Bins:</td>
-		<td><input type="text" id="numFrequencies" value="5" onchange="val = parseInt(document.getElementById('numFrequencies').value); document.getElementById('numFrequencies').value = val; g_numFrequencies = val; RedrawGraph();" /></td>
+		<td><input type="text" id="numFrequencies" value="8" onchange="val = parseInt(document.getElementById('numFrequencies').value); document.getElementById('numFrequencies').value = val; g_numFrequencies = val; RedrawGraph();" /></td>
 	</tr>
 	<tr>
 		<td>Step Size:</td>
-		<td><input type="text" id="stepSize" value="0.001" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
+		<td><input type="text" id="stepSize" value="0.01" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
 	</tr>
 </table>
 <br>
@@ -436,3 +460,5 @@ function RedrawGraph()
 
 TODO: make the + and - buttons work
 TODO: graph the frequencies to make patterns more obvious
+TODO: if there's only one point and you click a plus button, everything goes to NaN
+TODO: why does having a point at 0 and 0.5 show 2hz, not 1hz?
