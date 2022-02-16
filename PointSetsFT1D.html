@@ -247,12 +247,13 @@ function AdjustFrequency(hz, multiplier)
 		gradient.push(dmdp);
 	}
 
+	if(length <= 0)
+		return;
+
 	length = Math.sqrt(length);
 
 	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
 		gradient[pointIndex] = gradient[pointIndex]  / length;
-
-	//alert(gradient);
 
 	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
 		g_controlPoints[pointIndex] = (g_controlPoints[pointIndex] + gradient[pointIndex] * multiplier * g_stepSize + 100) % 1;
@@ -460,5 +461,3 @@ function RedrawGraph()
 
 TODO: make the + and - buttons work
 TODO: graph the frequencies to make patterns more obvious
-TODO: if there's only one point and you click a plus button, everything goes to NaN
-TODO: why does having a point at 0 and 0.5 show 2hz, not 1hz?
