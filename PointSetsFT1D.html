@@ -11,7 +11,7 @@ canvas.html5 {border:2px solid #00FF00;}
 var g_controlPoints =
 [
 	0.1,
-	0.5,
+	0.4,
 	0.8,
 	0.9,
 ];
@@ -21,6 +21,9 @@ var g_canvas;
 var g_mousePos = [0,0];
 var g_pointDragged = -1;
 var g_lastDragPos = [0,0];
+
+var g_numFrequencies = 5;
+var g_stepSize = 0.001;
 
 function onPageLoaded()
 {
@@ -180,8 +183,7 @@ function OnDoubleClick()
 		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
 		if (dist < 23)
 		{
-			if (g_controlPoints.length > 2)
-				g_controlPoints.splice(i,1);
+			g_controlPoints.splice(i,1);
 			return;
 		}		
 	}
@@ -218,6 +220,48 @@ function DrawControlPoint(X, Y, dragging)
 	g_graphPanel.context.stroke();	
 }
 
+function DMagDPoint(hz, pointIndex)
+{
+	re = 0.0;
+	im = 0.0;
+
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		re += Math.cos(2 * Math.PI * hz * g_controlPoints[i]);
+		im += Math.sin(2 * Math.PI * hz * g_controlPoints[i]);
+	}
+
+	re *= -4 * Math.PI * hz * Math.sin(2 * Math.PI * hz * g_controlPoints[pointIndex]);
+	im *= 4 * Math.PI * hz * Math.cos(2 * Math.PI * hz * g_controlPoints[pointIndex]);
+
+	return re + im;
+}
+
+function AdjustFrequency(hz, multiplier)
+{
+	gradient = [];
+	length = 0.0;
+
+	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+	{
+		dmdp = DMagDPoint(hz, pointIndex);
+		length += dmdp * dmdp;
+		gradient.push(dmdp);
+	}
+
+	length = Math.sqrt(length);
+
+	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+		gradient[pointIndex] = gradient[pointIndex]  / length;
+
+	//alert(gradient);
+
+	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+		g_controlPoints[pointIndex] = (g_controlPoints[pointIndex] + gradient[pointIndex] * multiplier * g_stepSize + 100) % 1;
+
+	RedrawGraph();
+}
+
 function RedrawGraph()
 {
 	// clear the graph panel
@@ -240,28 +284,28 @@ function RedrawGraph()
 	g_graphPanel.context.lineWidth = 1;
 	g_graphPanel.context.beginPath();	
 
-	min = MathPointToScreenPoint(0.0, -0.2);
-	max = MathPointToScreenPoint(0.0,  0.2);
+	min = MathPointToScreenPoint(0.0, -2);
+	max = MathPointToScreenPoint(0.0,  2);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-	min = MathPointToScreenPoint(0.25, -0.2);
-	max = MathPointToScreenPoint(0.25,  0.2);
+	min = MathPointToScreenPoint(0.25, -0.5);
+	max = MathPointToScreenPoint(0.25,  0.5);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-	min = MathPointToScreenPoint(0.5, -0.2);
-	max = MathPointToScreenPoint(0.5,  0.2);
+	min = MathPointToScreenPoint(0.5, -1);
+	max = MathPointToScreenPoint(0.5,  1);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-	min = MathPointToScreenPoint(0.75, -0.2);
-	max = MathPointToScreenPoint(0.75,  0.2);
+	min = MathPointToScreenPoint(0.75, -0.5);
+	max = MathPointToScreenPoint(0.75,  0.5);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);
 
-	min = MathPointToScreenPoint(1, -0.2);
-	max = MathPointToScreenPoint(1,  0.2);
+	min = MathPointToScreenPoint(1, -2);
+	max = MathPointToScreenPoint(1,  2);
 	g_graphPanel.context.moveTo(min[0], min[1]);
 	g_graphPanel.context.lineTo(max[0], max[1]);	
 
@@ -299,13 +343,96 @@ function RedrawGraph()
 		var point = MathPointToScreenPoint(g_controlPoints[i], 0.0);
 		DrawControlPoint(point[0], point[1], g_pointDragged == i);
 	}
+
+	fq = document.getElementById("Frequencies");
+
+  while (fq.firstChild) {
+      fq.removeChild(fq.firstChild);
+  }
+
+	var table = document.createElement('table');
+	table.style.border = "1px solid #00FF00";
+
+	var tr = document.createElement('tr');   
+	var td1 = document.createElement('td');
+	var td2 = document.createElement('td');
+	var td3 = document.createElement('td');	
+
+	td1.appendChild(document.createTextNode("Hz"));
+	td2.appendChild(document.createTextNode("Mag"));
+	td3.appendChild(document.createTextNode("Phase"));
+	td1.style.border = "1px solid #00FF00";
+	td2.style.border = "1px solid #00FF00";
+	td3.style.border = "1px solid #00FF00";
+
+	tr.appendChild(td1);
+	tr.appendChild(td2);
+	tr.appendChild(td3);
+
+	table.appendChild(tr);	
+
+	//table.style.border = "1px solid #00FF00";
+	for (var i = 1; i <= g_numFrequencies; i++)
+	{
+	    var tr = document.createElement('tr');   
+
+	    var td1 = document.createElement('td');
+	    var td2 = document.createElement('td');
+	    var td3 = document.createElement('td');
+
+	    td1.style.border = "1px solid #00FF00";
+
+	    re = 0.0;
+	    im = 0.0;
+	    for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+	    {
+	    	re += Math.cos(2.0 * Math.PI * i * g_controlPoints[pointIndex]) / g_controlPoints.length;
+	    	im += Math.sin(2.0 * Math.PI * i * g_controlPoints[pointIndex]) / g_controlPoints.length;
+	    }
+	    mag = Math.sqrt(re*re + im*im);
+	    phase = Math.atan2(im, re);
+
+	    td1.appendChild(document.createTextNode(String(i)));
+	    td2.appendChild(document.createTextNode(String(mag.toFixed(2))));
+	    td3.appendChild(document.createTextNode(String(phase.toFixed(2))));
+
+			btn = document.createElement("button");
+			btn.innerHTML = "+";
+			btn.onclick = function() { AdjustFrequency(i, 1); };
+			td2.appendChild(btn);
+			btn = document.createElement("button");
+			btn.innerHTML = "-";
+			btn.onclick = function() { AdjustFrequency(i, -1); };
+			td2.appendChild(btn);			 
+
+	    tr.appendChild(td1);
+	    tr.appendChild(td2);
+	    tr.appendChild(td3);
+
+	    table.appendChild(tr);
+	}
+	fq.appendChild(table);
 }
 
 </script>
 </head>
 <body>
 <h1>1D Point Set Fourier Transform</h1>
-<b>Click and drag points.  Double click on a point to remove it.  Double click on an empty space to add a point.</b><br><br>
-<canvas class="html5" id="Graph" width="1024" height="200">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<b>Click and drag points.  Double click on a point to remove it.  Double click on an empty space to add a point.</b><br/>
+<canvas class="html5" id="Graph" width="1024" height="100">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<div id="Frequencies"></div>
+<table style="border: 1px solid #00FF00">
+	<tr>
+		<td>Frequency Bins:</td>
+		<td><input type="text" id="numFrequencies" value="5" onchange="val = parseInt(document.getElementById('numFrequencies').value); document.getElementById('numFrequencies').value = val; g_numFrequencies = val; RedrawGraph();" /></td>
+	</tr>
+	<tr>
+		<td>Step Size:</td>
+		<td><input type="text" id="stepSize" value="0.001" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
+	</tr>
+</table>
 <br>
 </body></html>
+
+TODO: make the + and - buttons work
+TODO: graph the frequencies to make patterns more obvious
