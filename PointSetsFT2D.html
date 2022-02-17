@@ -241,44 +241,15 @@ function RedrawGraph()
 		DrawControlPoint(point[0], point[1], g_pointDragged == i);
 	}
 
-	table = document.getElementById("Frequencies");
-
-  while (table.firstChild) {
-      table.removeChild(table.firstChild);
-  }
-
-	table.style.border = "1px solid #00FF00";
-
-	// make the header
-	{
-		var tr = document.createElement('tr'); 
-
-		tr.appendChild(document.createElement('td'));
-
-		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
-		{
-			var td = document.createElement('td');
-			td.style.border = "1px solid #00FF00";
-			td.appendChild(document.createTextNode(String(ix)));
-			tr.appendChild(td);
-		}
-
-		table.appendChild(tr);
-	}
+	var mags = new Array(g_numFrequenciesX);
+	for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+		mags[ix] = new Array(g_numFrequenciesY);
 
 	// make the data
 	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
 	{
-		var tr = document.createElement('tr');
-		var td1 = document.createElement('td');
-		td1.style.border = "1px solid #00FF00";
-		td1.appendChild(document.createTextNode(String(iy)));
-		tr.appendChild(td1);
-
 		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
 		{		    
-		    var td2 = document.createElement('td');
-
 		    re = 0.0;
 		    im = 0.0;
 		    for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
@@ -291,13 +262,9 @@ function RedrawGraph()
 		    if (phase < 0)
 		    	phase += 2 * Math.PI;
 		    phase *= 180.0 / Math.PI;
-		    
-		    td2.appendChild(document.createTextNode(String(mag.toFixed(2)) + " " + String(phase.toFixed(0))+"°"));
 
-		    tr.appendChild(td2);
+		    mags[ix][iy] = mag;
 		}
-
-		table.appendChild(tr);
 	}
 
 	// start the drawing
@@ -305,20 +272,26 @@ function RedrawGraph()
 	g_graphPanel2.context.strokeStyle='#008000';		
 	g_graphPanel2.context.lineWidth = 1;
 
-  g_graphPanel2.context.font = '24px serif';
-  g_graphPanel2.context.fillStyle='#008000';
-
 	g_graphPanel2.context.beginPath();
-	for (var i = 1; i <= g_numFrequenciesX; i++)
+	for (var i = 0; i <= g_numFrequenciesX; i++)
 	{
-		percent = (i-1) / (g_numFrequenciesX-1);
-  	g_graphPanel2.context.fillText(parseInt(i), percent * g_graphPanel2.elem.width, g_graphPanel2.elem.height-5);
-
+		percent = i / (g_numFrequenciesX);
   	g_graphPanel2.context.moveTo(percent * g_graphPanel2.elem.width, 0);
   	g_graphPanel2.context.lineTo(percent * g_graphPanel2.elem.width, g_graphPanel2.elem.height);
 	}
+	for (var i = 0; i <= g_numFrequenciesY; i++)
+	{
+		percent = i / (g_numFrequenciesY);
+  	g_graphPanel2.context.moveTo(0, percent * g_graphPanel2.elem.height);
+  	g_graphPanel2.context.lineTo(g_graphPanel2.elem.width, percent * g_graphPanel2.elem.height);
+	}
 	g_graphPanel2.context.stroke();	
 
+/*
+	ctx.beginPath();
+	ctx.rect(20, 20, 150, 100);
+	ctx.stroke();
+*/
 
 /*
 	g_graphPanel2.context.strokeStyle='#FFFF00';	
@@ -366,23 +339,16 @@ function RedrawGraph()
 			<canvas class="html5" id="Graph2" width="400" height="400">Your browser doesn't seem to support the necesary html5 features ):</canvas>
 		</td>
 	</tr>
+</table>
+<table style="border: 1px solid #00FF00">
 	<tr>
-		<td style="vertical-align:top">
-			<table style="border: 1px solid #00FF00">
-				<tr>
-					<td>Max Frequency X:</td>
-					<td><input type="text" id="numFrequenciesX" value="8" onchange="val = parseInt(document.getElementById('numFrequenciesX').value); document.getElementById('numFrequenciesX').value = val; g_numFrequenciesX = val; RedrawGraph();" /></td>
-				</tr>
-				<tr>
-					<td>Max Frequency Y:</td>
-					<td><input type="text" id="numFrequenciesY" value="8" onchange="val = parseInt(document.getElementById('numFrequenciesY').value); document.getElementById('numFrequenciesY').value = val; g_numFrequenciesY = val; RedrawGraph();" /></td>
-				</tr>	
-			</table>
-		</td>		
-		<td>
-			<table id="Frequencies"></table>
-		</td>
+		<td>Max Frequency X:</td>
+		<td><input type="text" id="numFrequenciesX" value="8" onchange="val = parseInt(document.getElementById('numFrequenciesX').value); document.getElementById('numFrequenciesX').value = val; g_numFrequenciesX = val; RedrawGraph();" /></td>
 	</tr>
+	<tr>
+		<td>Max Frequency Y:</td>
+		<td><input type="text" id="numFrequenciesY" value="8" onchange="val = parseInt(document.getElementById('numFrequenciesY').value); document.getElementById('numFrequenciesY').value = val; g_numFrequenciesY = val; RedrawGraph();" /></td>
+	</tr>	
 </table>
 <br>
 </body></html>
