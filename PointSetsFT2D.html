@@ -92,10 +92,10 @@ function GetMousePos(canvas, evt)
 
 function ScreenPointToMathPoint(x,y)
 {
-	mathPointMinX = 0.0;
-	mathPointMaxX = 1.0;
-	mathPointMinY = 1.0;
-	mathPointMaxY = 0.0;
+	mathPointMinX = -0.1;
+	mathPointMaxX = 1.1;
+	mathPointMinY = 1.1;
+	mathPointMaxY = -0.1;
 
 	var point = [x / g_graphPanel.elem.width,y / g_graphPanel.elem.height];
 
@@ -107,10 +107,10 @@ function ScreenPointToMathPoint(x,y)
 
 function MathPointToScreenPoint(x,y)
 {
-	mathPointMinX = 0.0;
-	mathPointMaxX = 1.0;
-	mathPointMinY = 1.0;
-	mathPointMaxY = 0.0;
+	mathPointMinX = -0.1;
+	mathPointMaxX = 1.1;
+	mathPointMinY = 1.1;
+	mathPointMaxY = -0.1;
 
 	var point = [x,y];
 	point[0] = (point[0] - mathPointMinX) / (mathPointMaxX - mathPointMinX);
@@ -146,7 +146,6 @@ function OnMouseMove(evt)
 		g_controlPoints[g_pointDragged][1] = 0.0;
 	else if(g_controlPoints[g_pointDragged][1] > 1.0)
 		g_controlPoints[g_pointDragged][1] = 1.0;
-
 }
 
 function OnMouseDown()
@@ -234,6 +233,23 @@ function RedrawGraph()
 	// clear the graph panel
 	g_graphPanel.clear();
 
+	// draw a box around [0,1]
+	g_graphPanel.context.strokeStyle='#0000FF';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();
+
+	P00 = MathPointToScreenPoint( 0, 0);
+	P10 = MathPointToScreenPoint( 1, 0);
+	P01 = MathPointToScreenPoint( 0, 1);
+	P11 = MathPointToScreenPoint( 1, 1);
+
+	g_graphPanel.context.moveTo(P00[0], P00[1]);
+	g_graphPanel.context.lineTo(P10[0], P10[1]);
+	g_graphPanel.context.lineTo(P11[0], P11[1]);
+	g_graphPanel.context.lineTo(P01[0], P01[1]);
+	g_graphPanel.context.lineTo(P00[0], P00[1]);
+	g_graphPanel.context.stroke();
+
 	// draw the control points
 	for (i = 0; i < g_controlPoints.length; ++i)
 	{
@@ -244,6 +260,7 @@ function RedrawGraph()
 	var mags = new Array(g_numFrequenciesX);
 	for (var ix = 1; ix <= g_numFrequenciesX; ix++)
 		mags[ix] = new Array(g_numFrequenciesY);
+	var maxmag = 1.0;
 
 	// make the data
 	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
@@ -264,65 +281,40 @@ function RedrawGraph()
 		    phase *= 180.0 / Math.PI;
 
 		    mags[ix][iy] = mag;
+
+		    if (mag > maxmag)
+		    	maxmag = mag;
 		}
 	}
 
+	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
+		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+			mags[ix][iy] /= maxmag;	
+
 	// start the drawing
-	g_graphPanel2.clear();
-	g_graphPanel2.context.strokeStyle='#008000';		
-	g_graphPanel2.context.lineWidth = 1;
+	g_graphPanel2.clear();	
 
-	g_graphPanel2.context.beginPath();
-	for (var i = 0; i <= g_numFrequenciesX; i++)
+	for (var iy = 0; iy < g_numFrequenciesY; iy++)
 	{
-		percent = i / (g_numFrequenciesX);
-  	g_graphPanel2.context.moveTo(percent * g_graphPanel2.elem.width, 0);
-  	g_graphPanel2.context.lineTo(percent * g_graphPanel2.elem.width, g_graphPanel2.elem.height);
+		y1 = g_graphPanel2.elem.height * iy / (g_numFrequenciesY);
+		y2 = g_graphPanel2.elem.height * (iy+1) / (g_numFrequenciesY);
+
+		for (var ix = 0; ix < g_numFrequenciesX; ix++)
+		{
+			x1 = g_graphPanel2.elem.width * ix / (g_numFrequenciesX);
+			x2 = g_graphPanel2.elem.width * (ix+1) / (g_numFrequenciesX);
+
+			var color = mags[ix+1][iy+1] * 255;
+
+	  	g_graphPanel2.context.fillStyle = "rgb(" + color + ", " + color + ", "+ color + ")";
+			g_graphPanel2.context.fillRect(x1, y1, x2-x1, y2-y1);
+
+		}
 	}
-	for (var i = 0; i <= g_numFrequenciesY; i++)
-	{
-		percent = i / (g_numFrequenciesY);
-  	g_graphPanel2.context.moveTo(0, percent * g_graphPanel2.elem.height);
-  	g_graphPanel2.context.lineTo(g_graphPanel2.elem.width, percent * g_graphPanel2.elem.height);
-	}
-	g_graphPanel2.context.stroke();	
 
-/*
-	ctx.beginPath();
-	ctx.rect(20, 20, 150, 100);
-	ctx.stroke();
-*/
-
-/*
-	g_graphPanel2.context.strokeStyle='#FFFF00';	
-	g_graphPanel2.context.beginPath();
-
-	// render each horizontal pixel
-	for (var index = 0; index <= g_graphPanel2.elem.width; ++index)
-	{
-		x = (mags.length-1) * index / g_graphPanel2.elem.width;
-		if (x > mags.length - 1)
-			x = mags.length - 1;
-
-		x1 = Math.floor(x);
-		x2 = x1 + 1;
-		t = x - x1;
-
-		y = mags[x1] * (1 - t) + mags[x2] * t;
-		y = 1 - y;
-		y *= g_graphPanel2.elem.height;
-
-		// if it's the first point, move there
-		if (index == 0)
-			g_graphPanel2.context.moveTo(index, y);
-		// else, draw to there
-		else
-			g_graphPanel2.context.lineTo(index, y);
-	}	
-	
-	// finish the line
-	g_graphPanel2.context.stroke();	
-	*/
+  g_graphPanel2.context.font = '20px serif';
+  g_graphPanel2.context.fillStyle='#00FF00';	
+	g_graphPanel2.context.fillText("(0,0)", 5, 25);  
 }
 
 </script>
