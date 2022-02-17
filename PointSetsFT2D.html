@@ -25,8 +25,6 @@ var g_lastDragPos = [0,0];
 
 var g_numFrequenciesX = 8;
 var g_numFrequenciesY = 8;
-var g_stepSize = 0.001;
-var g_stepCount = 10;
 
 var g_controlPointSize = 15
 
@@ -251,55 +249,55 @@ function RedrawGraph()
 
 	table.style.border = "1px solid #00FF00";
 
-	var tr = document.createElement('tr');   
-	var td1 = document.createElement('td');
-	var td2 = document.createElement('td');
-	var td3 = document.createElement('td');	
-
-	td2.appendChild(document.createTextNode("Mag Phase"));
-	td1.style.border = "1px solid #00FF00";
-	td2.style.border = "1px solid #00FF00";
-
-	tr.appendChild(td1);
-	tr.appendChild(td2);
-
-	table.appendChild(tr);	
-
-	mags = []
-
-	//for (var iy = )
-
-	for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+	// make the header
 	{
-	    var tr = document.createElement('tr'); 
+		var tr = document.createElement('tr'); 
 
-	    var td1 = document.createElement('td');
-	    var td2 = document.createElement('td');
+		tr.appendChild(document.createElement('td'));
 
-	    td1.style.border = "1px solid #00FF00";
+		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+		{
+			var td = document.createElement('td');
+			td.style.border = "1px solid #00FF00";
+			td.appendChild(document.createTextNode(String(ix)));
+			tr.appendChild(td);
+		}
 
-	    re = 0.0;
-	    im = 0.0;
-	    for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
-	    {
-	    	re += Math.cos(2.0 * Math.PI * ix * g_controlPoints[pointIndex][0]) / g_controlPoints.length;
-	    	im += Math.sin(2.0 * Math.PI * ix * g_controlPoints[pointIndex][0]) / g_controlPoints.length;
-	    }
-	    mag = Math.sqrt(re*re + im*im);
-	    phase = Math.atan2(im, re);
-	    if (phase < 0)
-	    	phase += 2 * Math.PI;
-	    phase *= 180.0 / Math.PI;
+		table.appendChild(tr);
+	}
 
-	    mags.push(mag);
+	// make the data
+	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
+	{
+		var tr = document.createElement('tr');
+		var td1 = document.createElement('td');
+		td1.style.border = "1px solid #00FF00";
+		td1.appendChild(document.createTextNode(String(iy)));
+		tr.appendChild(td1);
 
-	    td1.appendChild(document.createTextNode(String(ix)));
-	    td2.appendChild(document.createTextNode(String(mag.toFixed(2)) + " " + String(phase.toFixed(0))+"°"));
+		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+		{		    
+		    var td2 = document.createElement('td');
 
-	    tr.appendChild(td1);
-	    tr.appendChild(td2);
+		    re = 0.0;
+		    im = 0.0;
+		    for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+		    {
+		    	re += Math.cos(2.0 * Math.PI * ix * g_controlPoints[pointIndex][0]) * Math.cos(2.0 * Math.PI * iy * g_controlPoints[pointIndex][1]) / g_controlPoints.length;
+		    	im += Math.sin(2.0 * Math.PI * ix * g_controlPoints[pointIndex][0]) * Math.sin(2.0 * Math.PI * iy * g_controlPoints[pointIndex][1]) / g_controlPoints.length;
+		    }
+		    mag = Math.sqrt(re*re + im*im);
+		    phase = Math.atan2(im, re);
+		    if (phase < 0)
+		    	phase += 2 * Math.PI;
+		    phase *= 180.0 / Math.PI;
+		    
+		    td2.appendChild(document.createTextNode(String(mag.toFixed(2)) + " " + String(phase.toFixed(0))+"°"));
 
-	    table.appendChild(tr);
+		    tr.appendChild(td2);
+		}
+
+		table.appendChild(tr);
 	}
 
 	// start the drawing
@@ -322,6 +320,7 @@ function RedrawGraph()
 	g_graphPanel2.context.stroke();	
 
 
+/*
 	g_graphPanel2.context.strokeStyle='#FFFF00';	
 	g_graphPanel2.context.beginPath();
 
@@ -350,6 +349,7 @@ function RedrawGraph()
 	
 	// finish the line
 	g_graphPanel2.context.stroke();	
+	*/
 }
 
 </script>
@@ -376,14 +376,6 @@ function RedrawGraph()
 				<tr>
 					<td>Max Frequency Y:</td>
 					<td><input type="text" id="numFrequenciesY" value="8" onchange="val = parseInt(document.getElementById('numFrequenciesY').value); document.getElementById('numFrequenciesY').value = val; g_numFrequenciesY = val; RedrawGraph();" /></td>
-				</tr>
-				<tr>
-					<td>Step Size:</td>
-					<td><input type="text" id="stepSize" value="0.001" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
-				</tr>
-				<tr>
-					<td>Step Count:</td>
-					<td><input type="text" id="stepCount" value="10" onchange="val = parseInt(document.getElementById('stepCount').value); document.getElementById('stepCount').value = val; g_stepCount = val;  RedrawGraph();" /></td>
 				</tr>	
 			</table>
 		</td>		
