@@ -428,13 +428,25 @@ function RedrawGraph()
 
 	// start the drawing
 	g_graphPanel2.clear();
-	g_graphPanel2.context.strokeStyle='#FFFF00';	
+	g_graphPanel2.context.strokeStyle='#008000';		
 	g_graphPanel2.context.lineWidth = 1;
 
   g_graphPanel2.context.font = '24px serif';
-  g_graphPanel2.context.fillStyle='#FFFF00';	
-  g_graphPanel2.context.fillText('1 hz', 0, g_graphPanel2.elem.height-5);
+  g_graphPanel2.context.fillStyle='#008000';
 
+	g_graphPanel2.context.beginPath();
+	for (var i = 1; i <= g_numFrequencies; i++)
+	{
+		percent = (i-1) / (g_numFrequencies-1);
+  	g_graphPanel2.context.fillText(parseInt(i), percent * g_graphPanel2.elem.width, g_graphPanel2.elem.height-5);
+
+  	g_graphPanel2.context.moveTo(percent * g_graphPanel2.elem.width, 0);
+  	g_graphPanel2.context.lineTo(percent * g_graphPanel2.elem.width, g_graphPanel2.elem.height);
+	}
+	g_graphPanel2.context.stroke();	
+
+
+	g_graphPanel2.context.strokeStyle='#FFFF00';	
 	g_graphPanel2.context.beginPath();
 
 	// render each horizontal pixel
