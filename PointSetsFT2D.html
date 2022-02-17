@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>1D Point Set Frequencies</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+canvas.html5 {border:2px solid #00FF00;}
+</style>
+<script>
+
+var g_controlPoints =
+[
+	0.0,
+	0.03,
+	0.06,
+];
+
+var g_graphPanel;
+var g_canvas;
+var g_graphPanel2;
+var g_canvas2;
+var g_mousePos = [0,0];
+var g_pointDragged = -1;
+var g_lastDragPos = [0,0];
+
+var g_numFrequencies = 8;
+var g_stepSize = 0.001;
+var g_stepCount = 10;
+
+var g_controlPointSize = 15
+
+function onPageLoaded()
+{
+	g_graphPanel = setupCanvas('Graph');
+	g_canvas = document.getElementById('Graph');
+	g_canvas.addEventListener('mousemove', function(evt) {OnMouseMove(evt);RedrawGraph();}, false);
+	g_canvas.addEventListener('mousedown', function() {OnMouseDown();RedrawGraph();}, false);
+	g_canvas.addEventListener('mouseup', function() {OnMouseUp();RedrawGraph();}, false);
+	g_canvas.addEventListener('dblclick', function() {OnDoubleClick();RedrawGraph();}, false);
+
+	g_graphPanel2 = setupCanvas('Graph2');
+	g_canvas2 = document.getElementById('Graph2');	
+	RedrawGraph();
+}
+
+function setupCanvas(name)
+{
+  // Get a reference to the element.
+  var elem = document.getElementById(name);
+
+  // Always check for properties and methods, to make sure your code doesn't break 
+  // in other browsers.
+  if (elem)
+  {
+    if(elem.getContext)
+    {
+      // Get the 2d context.
+      // Remember: you can only initialize one context per element.
+      var context = elem.getContext('2d');
+
+      if (context)
+      {
+      	return {"elem":elem, "context":context, "clear":function(){ClearImageBuffer(context, elem)}, "fill":function(color){FillImageBuffer(context, color)}};
+      }
+      else
+      {
+      	alert("Could not get html5 2d context, your browser doesn't support it! Try firefox or chrome");
+      }
+    }
+    else
+    {
+      alert("The getContext function was missing, your browser doesn't support it! Try firefox or chrome"); 
+    }
+  }
+  else
+  {
+    alert("Could not get element 'MainCanvas'");	
+  }
+
+  return false;
+}
+
+function GetMousePos(canvas, evt)
+{
+	var rect = g_canvas.getBoundingClientRect();
+	var pos =
+	[
+		evt.clientX - rect.left,
+		evt.clientY - rect.top
+	];
+	return pos;
+}
+
+function ScreenPointToMathPoint(x,y)
+{
+	var aspectRatio = 3;//g_graphPanel.elem.width / g_graphPanel.elem.height;
+
+	mathPointMinX = -0.05;
+	mathPointMaxX = 1.05;
+	mathPointMinY = 0.525 * aspectRatio;
+	mathPointMaxY = -0.525 * aspectRatio;
+
+	var point = [x / g_graphPanel.elem.width,y / g_graphPanel.elem.height];
+
+	point[0] = point[0] * (mathPointMaxX - mathPointMinX) + mathPointMinX;
+	point[1] = point[1] * (mathPointMaxY - mathPointMinY) + mathPointMinY;
+
+	return point;
+}
+
+function MathPointToScreenPoint(x,y)
+{
+	var aspectRatio = 3;//g_graphPanel.elem.width / g_graphPanel.elem.height;
+
+	mathPointMinX = -0.05;
+	mathPointMaxX = 1.05;
+	mathPointMinY = 0.525 * aspectRatio;
+	mathPointMaxY = -0.525 * aspectRatio;
+
+	var point = [x,y];
+	point[0] = (point[0] - mathPointMinX) / (mathPointMaxX - mathPointMinX);
+	point[1] = (point[1] - mathPointMinY) / (mathPointMaxY - mathPointMinY);
+
+	point[0] = point[0] * g_graphPanel.elem.width;
+	point[1] = point[1] * g_graphPanel.elem.height;
+
+	return point;
+}
+
+function OnMouseMove(evt)
+{
+	g_mousePos = GetMousePos(g_canvas, evt);
+	if (g_pointDragged == -1)
+		return;
+
+	var mouseMath = ScreenPointToMathPoint(g_mousePos[0], g_mousePos[1]);
+	var lastMath = ScreenPointToMathPoint(g_lastDragPos[0], g_lastDragPos[1]);
+	var delta = [mouseMath[0] - lastMath[0], mouseMath[1] - lastMath[1]];
+
+	g_lastDragPos = g_mousePos;
+
+	g_controlPoints[g_pointDragged] += delta[0];
+
+	if(g_controlPoints[g_pointDragged] < 0.0)
+		g_controlPoints[g_pointDragged] = 0.0;
+	else if(g_controlPoints[g_pointDragged] > 1.0)
+		g_controlPoints[g_pointDragged] = 1.0;
+}
+
+function OnMouseDown()
+{
+	g_lastDragPos = g_mousePos;
+
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(g_controlPoints[i], 0.0);
+		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
+		if (dist < g_controlPointSize)
+		{
+			g_pointDragged = i;
+			return;
+		}		
+	}
+
+	g_pointDragged = -1;
+}
+
+function OnMouseUp()
+{
+	g_pointDragged = -1;
+}
+
+function clearSelection() {
+    if(document.selection && document.selection.empty) {
+        document.selection.empty();
+    } else if(window.getSelection) {
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+    }
+}
+
+function OnDoubleClick()
+{
+	clearSelection();
+	g_pointDragged = -1;
+
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(g_controlPoints[i], 0.0);
+		var dist = Math.sqrt((point[1]-g_mousePos[1])*(point[1]-g_mousePos[1]) + (point[0]-g_mousePos[0])*(point[0]-g_mousePos[0]));
+		if (dist < g_controlPointSize)
+		{
+			g_controlPoints.splice(i,1);
+			return;
+		}		
+	}
+	var mathPoint = ScreenPointToMathPoint(g_mousePos[0], 0.0);
+	g_controlPoints.push(mathPoint[0]);
+}
+
+//hook up our event listener
+window.addEventListener('load', function(){onPageLoaded();}, false);
+
+function ClearImageBuffer(context, elem)
+{
+	context.fillStyle   = "#000000";
+	context.fillRect(0, 0, elem.width, elem.height);
+}
+
+function FillImageBuffer(context, color)
+{
+	context.fillStyle   = color;
+	context.fillRect(0, 0, g_graphPanel.elem.width, g_graphPanel.elem.height);
+}
+
+function DrawControlPoint(X, Y, dragging)
+{
+	var dist = Math.sqrt((Y-g_mousePos[1])*(Y-g_mousePos[1]) +  (X-g_mousePos[0])*(X-g_mousePos[0]));
+	var highlite = dist < g_controlPointSize;
+
+	g_graphPanel.context.beginPath();
+	g_graphPanel.context.arc(X, Y, 10, 0, 2 * Math.PI, false);
+	g_graphPanel.context.fillStyle = dragging ? '#FF8888' : (highlite ? '#FF4030' : '#FF0000');
+	g_graphPanel.context.fill();
+	g_graphPanel.context.lineWidth = 3;
+	g_graphPanel.context.strokeStyle = dragging ? '#888888' : (highlite ? '#884030' : '#880000');
+	g_graphPanel.context.stroke();	
+}
+
+function DMagDPoint(hz, pointIndex)
+{
+	re = 0.0;
+	im = 0.0;
+
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		re += Math.cos(2 * Math.PI * hz * g_controlPoints[i]);
+		im += Math.sin(2 * Math.PI * hz * g_controlPoints[i]);
+	}
+
+	re *= -4 * Math.PI * hz * Math.sin(2 * Math.PI * hz * g_controlPoints[pointIndex]);
+	im *= 4 * Math.PI * hz * Math.cos(2 * Math.PI * hz * g_controlPoints[pointIndex]);
+
+	return re + im;
+}
+
+function AdjustFrequency(hz, multiplier)
+{
+	for (ij = 0; ij < g_stepCount; ij++)
+	{
+		gradient = [];
+		length = 0.0;
+
+		for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+		{
+			dmdp = DMagDPoint(hz, pointIndex);
+			length += dmdp * dmdp;
+			gradient.push(dmdp);
+		}
+
+		if(length <= 0)
+			return;
+
+		length = Math.sqrt(length);
+
+		for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+			gradient[pointIndex] = gradient[pointIndex]  / length;
+
+		for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+			g_controlPoints[pointIndex] = (g_controlPoints[pointIndex] + gradient[pointIndex] * multiplier * g_stepSize + 100) % 1;
+	}
+
+	RedrawGraph();
+}
+
+function RedrawGraph()
+{
+	// clear the graph panel
+	g_graphPanel.clear();
+
+	// draw the graph graphics
+	g_graphPanel.context.strokeStyle='#0000FF';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();
+
+	// draw X axis
+	min = MathPointToScreenPoint( 0, 0);
+	max = MathPointToScreenPoint( 1, 0);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+	g_graphPanel.context.stroke();
+
+	// draw a tick mark at x = 0, 0.25, 0.5, 0.75, 1
+	g_graphPanel.context.strokeStyle='#00FFFF';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();	
+
+	min = MathPointToScreenPoint(0.0, -1);
+	max = MathPointToScreenPoint(0.0,  1);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+
+	min = MathPointToScreenPoint(0.125, -0.25);
+	max = MathPointToScreenPoint(0.125,  0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.25, -0.5);
+	max = MathPointToScreenPoint(0.25,  0.5);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.375, -0.25);
+	max = MathPointToScreenPoint(0.375,  0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.5, -0.75);
+	max = MathPointToScreenPoint(0.5,  0.75);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.625, -0.25);
+	max = MathPointToScreenPoint(0.625,  0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.75, -0.5);
+	max = MathPointToScreenPoint(0.75,  0.5);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);
+
+	min = MathPointToScreenPoint(0.875, -0.25);
+	max = MathPointToScreenPoint(0.875,  0.25);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);	
+
+	min = MathPointToScreenPoint(1, -1);
+	max = MathPointToScreenPoint(1,  1);
+	g_graphPanel.context.moveTo(min[0], min[1]);
+	g_graphPanel.context.lineTo(max[0], max[1]);	
+
+  g_graphPanel.context.stroke();
+
+	// draw the control points
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var point = MathPointToScreenPoint(g_controlPoints[i], 0.0);
+		DrawControlPoint(point[0], point[1], g_pointDragged == i);
+	}
+
+	table = document.getElementById("Frequencies");
+
+  while (table.firstChild) {
+      table.removeChild(table.firstChild);
+  }
+
+	table.style.border = "1px solid #00FF00";
+
+	var tr = document.createElement('tr');   
+	var td1 = document.createElement('td');
+	var td2 = document.createElement('td');
+	var td3 = document.createElement('td');	
+
+	td1.appendChild(document.createTextNode("Hz"));
+	td2.appendChild(document.createTextNode("Mag"));
+	td3.appendChild(document.createTextNode("Phase"));
+	td1.style.border = "1px solid #00FF00";
+	td2.style.border = "1px solid #00FF00";
+	td3.style.border = "1px solid #00FF00";
+
+	tr.appendChild(td1);
+	tr.appendChild(td2);
+	tr.appendChild(td3);
+
+	table.appendChild(tr);	
+
+	mags = []
+
+	for (var i = 1; i <= g_numFrequencies; i++)
+	{
+	    var tr = document.createElement('tr');   
+
+	    var td1 = document.createElement('td');
+	    var td2 = document.createElement('td');
+	    var td3 = document.createElement('td');
+
+	    td1.style.border = "1px solid #00FF00";
+
+	    re = 0.0;
+	    im = 0.0;
+	    for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+	    {
+	    	re += Math.cos(2.0 * Math.PI * i * g_controlPoints[pointIndex]) / g_controlPoints.length;
+	    	im += Math.sin(2.0 * Math.PI * i * g_controlPoints[pointIndex]) / g_controlPoints.length;
+	    }
+	    mag = Math.sqrt(re*re + im*im);
+	    phase = Math.atan2(im, re);
+	    if (phase < 0)
+	    	phase += 2 * Math.PI;
+	    phase *= 180.0 / Math.PI;
+
+	    mags.push(mag);
+
+	    td1.appendChild(document.createTextNode(String(i)));
+	    td2.appendChild(document.createTextNode(String(mag.toFixed(2))));
+	    td3.appendChild(document.createTextNode(String(phase.toFixed(0))+"°"));
+
+	    if (i > 0)
+	    {
+				btn = document.createElement("button");
+				btn.innerHTML = "+";
+				btn.onclick = function() { AdjustFrequency(i, 1); };
+				td2.appendChild(btn);
+				btn = document.createElement("button");
+				btn.innerHTML = "-";
+				btn.onclick = function() { AdjustFrequency(i, -1); };
+				td2.appendChild(btn);			 
+			}
+
+	    tr.appendChild(td1);
+	    tr.appendChild(td2);
+	    tr.appendChild(td3);
+
+	    table.appendChild(tr);
+	}
+
+	// start the drawing
+	g_graphPanel2.clear();
+	g_graphPanel2.context.strokeStyle='#008000';		
+	g_graphPanel2.context.lineWidth = 1;
+
+  g_graphPanel2.context.font = '24px serif';
+  g_graphPanel2.context.fillStyle='#008000';
+
+	g_graphPanel2.context.beginPath();
+	for (var i = 1; i <= g_numFrequencies; i++)
+	{
+		percent = (i-1) / (g_numFrequencies-1);
+  	g_graphPanel2.context.fillText(parseInt(i), percent * g_graphPanel2.elem.width, g_graphPanel2.elem.height-5);
+
+  	g_graphPanel2.context.moveTo(percent * g_graphPanel2.elem.width, 0);
+  	g_graphPanel2.context.lineTo(percent * g_graphPanel2.elem.width, g_graphPanel2.elem.height);
+	}
+	g_graphPanel2.context.stroke();	
+
+
+	g_graphPanel2.context.strokeStyle='#FFFF00';	
+	g_graphPanel2.context.beginPath();
+
+	// render each horizontal pixel
+	for (var index = 0; index <= g_graphPanel2.elem.width; ++index)
+	{
+		x = (mags.length-1) * index / g_graphPanel2.elem.width;
+		if (x > mags.length - 1)
+			x = mags.length - 1;
+
+		x1 = Math.floor(x);
+		x2 = x1 + 1;
+		t = x - x1;
+
+		y = mags[x1] * (1 - t) + mags[x2] * t;
+		y = 1 - y;
+		y *= g_graphPanel2.elem.height;
+
+		// if it's the first point, move there
+		if (index == 0)
+			g_graphPanel2.context.moveTo(index, y);
+		// else, draw to there
+		else
+			g_graphPanel2.context.lineTo(index, y);
+	}	
+	
+	// finish the line
+	g_graphPanel2.context.stroke();	
+}
+
+</script>
+</head>
+<body>
+<h1>1D Point Set Frequencies</h1>
+<b>Click and drag points.  Double click on a point to remove it.  Double click on an empty space to add a point.</b><br/><br/>
+<canvas class="html5" id="Graph" width="1024" height="100">Your browser doesn't seem to support the necesary html5 features ):</canvas>
+<table>
+	<tr>
+		<td><table id="Frequencies"></table></td>
+		<td><canvas class="html5" id="Graph2" width="600" height="200">Your browser doesn't seem to support the necesary html5 features ):</canvas></td>
+	</tr>
+</table>
+<table style="border: 1px solid #00FF00">
+	<tr>
+		<td>Max Frequency:</td>
+		<td><input type="text" id="numFrequencies" value="8" onchange="val = parseInt(document.getElementById('numFrequencies').value); document.getElementById('numFrequencies').value = val; g_numFrequencies = val; RedrawGraph();" /></td>
+	</tr>
+	<tr>
+		<td>Step Size:</td>
+		<td><input type="text" id="stepSize" value="0.001" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
+	</tr>
+	<tr>
+		<td>Step Count:</td>
+		<td><input type="text" id="stepCount" value="10" onchange="val = parseInt(document.getElementById('stepCount').value); document.getElementById('stepCount').value = val; g_stepCount = val;  RedrawGraph();" /></td>
+	</tr>	
+</table>
+<br>
+</body></html>
+
+TODO: make the + and - buttons work correctly
