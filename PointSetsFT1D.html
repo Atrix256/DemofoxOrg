@@ -24,7 +24,8 @@ var g_pointDragged = -1;
 var g_lastDragPos = [0,0];
 
 var g_numFrequencies = 8;
-var g_stepSize = 0.01;
+var g_stepSize = 0.001;
+var g_stepCount = 10;
 
 var g_controlPointSize = 15
 
@@ -245,26 +246,29 @@ function DMagDPoint(hz, pointIndex)
 
 function AdjustFrequency(hz, multiplier)
 {
-	gradient = [];
-	length = 0.0;
-
-	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+	for (ij = 0; ij < g_stepCount; ij++)
 	{
-		dmdp = DMagDPoint(hz, pointIndex);
-		length += dmdp * dmdp;
-		gradient.push(dmdp);
+		gradient = [];
+		length = 0.0;
+
+		for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+		{
+			dmdp = DMagDPoint(hz, pointIndex);
+			length += dmdp * dmdp;
+			gradient.push(dmdp);
+		}
+
+		if(length <= 0)
+			return;
+
+		length = Math.sqrt(length);
+
+		for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+			gradient[pointIndex] = gradient[pointIndex]  / length;
+
+		for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+			g_controlPoints[pointIndex] = (g_controlPoints[pointIndex] + gradient[pointIndex] * multiplier * g_stepSize + 100) % 1;
 	}
-
-	if(length <= 0)
-		return;
-
-	length = Math.sqrt(length);
-
-	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
-		gradient[pointIndex] = gradient[pointIndex]  / length;
-
-	for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
-		g_controlPoints[pointIndex] = (g_controlPoints[pointIndex] + gradient[pointIndex] * multiplier * g_stepSize + 100) % 1;
 
 	RedrawGraph();
 }
@@ -479,8 +483,12 @@ function RedrawGraph()
 	</tr>
 	<tr>
 		<td>Step Size:</td>
-		<td><input type="text" id="stepSize" value="0.01" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
+		<td><input type="text" id="stepSize" value="0.001" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
 	</tr>
+	<tr>
+		<td>Step Count:</td>
+		<td><input type="text" id="stepCount" value="10" onchange="val = parseInt(document.getElementById('stepCount').value); document.getElementById('stepCount').value = val; g_stepCount = val;  RedrawGraph();" /></td>
+	</tr>	
 </table>
 <br>
 </body></html>
