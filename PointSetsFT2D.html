@@ -285,7 +285,7 @@ function GetGradient(hzX, hzY)
 
 		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
 		{
-			dmdp = [DMagDPointX(hzY, hzY, pointIndex), DMagDPointY(hzY, hzY, pointIndex)];
+			dmdp = [DMagDPointX(hzX, hzY, pointIndex), DMagDPointY(hzX, hzY, pointIndex)];
 			length[0] += dmdp[0] * dmdp[0];
 			length[1] += dmdp[1] * dmdp[1];
 			gradient.push(dmdp);
@@ -311,6 +311,7 @@ function GetGradient(hzX, hzY)
 
 function AdjustFrequency(hzX, hzY, multiplier)
 {
+	//alert(String(hzX) + " " + String(hzY) + " " + String(multiplier));
 	for (var ij = 0; ij < g_stepCount; ij++)
 	{
 		var gradient = GetGradient(hzX, hzY);
@@ -393,15 +394,15 @@ function RedrawGraph()
 		DrawControlPoint(point[0], point[1], g_pointDragged == i);
 	}
 
-	var mags = new Array(g_numFrequenciesX);
-	for (var ix = 1; ix <= g_numFrequenciesX; ix++)
-		mags[ix] = new Array(g_numFrequenciesY);
+	var mags = new Array(g_numFrequenciesX+1);
+	for (var ix = 0; ix <= g_numFrequenciesX; ix++)
+		mags[ix] = new Array(g_numFrequenciesY+1);
 	var maxmag = 1.0;
 
 	// make the data
-	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
+	for (var iy = 0; iy <= g_numFrequenciesY; iy++)
 	{
-		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+		for (var ix = 0; ix <= g_numFrequenciesX; ix++)
 		{		    
 		    re = 0.0;
 		    im = 0.0;
@@ -424,30 +425,51 @@ function RedrawGraph()
 		}
 	}
 
-	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
-		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+	for (var iy = 0; iy <= g_numFrequenciesY; iy++)
+		for (var ix = 0; ix <= g_numFrequenciesX; ix++)
 			mags[ix][iy] /= maxmag;	
 
 	// start the drawing
 	g_graphPanel2.clear();	
 
-	for (var iy = 0; iy < g_numFrequenciesY; iy++)
+	// draw frequencies as colored squares
+	for (var iy = 0; iy <= g_numFrequenciesY; iy++)
 	{
-		y1 = g_graphPanel2.elem.height * iy / (g_numFrequenciesY);
-		y2 = g_graphPanel2.elem.height * (iy+1) / (g_numFrequenciesY);
+		y1 = g_graphPanel2.elem.height * iy / (g_numFrequenciesY+1);
+		y2 = g_graphPanel2.elem.height * (iy+1) / (g_numFrequenciesY+1);
 
-		for (var ix = 0; ix < g_numFrequenciesX; ix++)
+		for (var ix = 0; ix <= g_numFrequenciesX; ix++)
 		{
-			x1 = g_graphPanel2.elem.width * ix / (g_numFrequenciesX);
-			x2 = g_graphPanel2.elem.width * (ix+1) / (g_numFrequenciesX);
+			x1 = g_graphPanel2.elem.width * ix / (g_numFrequenciesX+1);
+			x2 = g_graphPanel2.elem.width * (ix+1) / (g_numFrequenciesX+1);
 
-			var color = mags[ix+1][iy+1] * 255;
+			var color = mags[ix][iy] * 255;
 
 	  	g_graphPanel2.context.fillStyle = "rgb(" + color + ", " + color + ", "+ color + ")";
 			g_graphPanel2.context.fillRect(x1, y1, x2-x1, y2-y1);
-
 		}
 	}
+
+	// draw grid lines on frequency chart
+	g_graphPanel2.context.strokeStyle='#00FF00';	
+	g_graphPanel2.context.lineWidth = 1;
+	g_graphPanel2.context.beginPath();
+	for (var iy = 1; iy < g_numFrequenciesY+1; iy++)
+	{
+		var PA = [g_graphPanel2.elem.width * 0.0, g_graphPanel2.elem.height * iy / (g_numFrequenciesY+1)];
+		var PB = [g_graphPanel2.elem.width * 1.0, g_graphPanel2.elem.height * iy / (g_numFrequenciesY+1)];
+		g_graphPanel2.context.moveTo(PA[0], PA[1]);
+		g_graphPanel2.context.lineTo(PB[0], PB[1]);
+	}	
+	for (var ix = 1; ix < g_numFrequenciesX+1; ix++)
+	{
+		var PA = [g_graphPanel2.elem.width * ix / (g_numFrequenciesX+1), g_graphPanel2.elem.height * 0.0];
+		var PB = [g_graphPanel2.elem.width * ix / (g_numFrequenciesX+1), g_graphPanel2.elem.height * 1.0];
+		g_graphPanel2.context.moveTo(PA[0], PA[1]);
+		g_graphPanel2.context.lineTo(PB[0], PB[1]);
+	}	
+	g_graphPanel2.context.stroke();
+
 
   g_graphPanel2.context.font = '20px serif';
   g_graphPanel2.context.fillStyle='#00FF00';	
@@ -465,9 +487,9 @@ function RedrawGraph()
 	}
 
 	thePoints += "<br><br><b><u>Normalized Gradients</u></b>"
-	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
+	for (var iy = 0; iy <= g_numFrequenciesY; iy++)
 	{
-		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
+		for (var ix = 0; ix <= g_numFrequenciesX; ix++)
 		{
 			var gradient = GetGradient(ix, iy);
 			thePoints += "<br><br>[" + String(ix) + ", "+ String(iy) + "] hz: ["
@@ -492,9 +514,293 @@ function OnClickFreqChange()
 
 function OnClickFrequency(mousePos)
 {
-	var hzX = Math.max(Math.min(Math.floor(mousePos[0] * g_numFrequenciesX / 400), g_numFrequenciesX-1), 0) + 1;
-	var hzY = Math.max(Math.min(Math.floor(mousePos[1] * g_numFrequenciesY / 400), g_numFrequenciesX-1), 0) + 1;
+	var hzX = Math.max(Math.min(Math.floor(mousePos[0] * (g_numFrequenciesX+1) / 400), g_numFrequenciesX), 0);
+	var hzY = Math.max(Math.min(Math.floor(mousePos[1] * (g_numFrequenciesY+1) / 400), g_numFrequenciesY), 0);
 	AdjustFrequency(hzX, hzY, g_increaseFreqOnClick ? 1.0 : -1.0);
+}
+
+function OnPresetChange()
+{
+	preset = document.getElementById("Preset").value;
+	if (preset == "Clear")
+		g_controlPoints = [];
+	else if(preset == "BlueNoise32")
+	{
+		g_controlPoints = [
+			[0.613200, 0.022000],
+			[0.482000, 0.160700],
+			[0.040700, 0.577700],
+			[0.314600, 0.511700],
+			[0.952900, 0.793200],
+			[0.022100, 0.259300],
+			[0.810700, 0.083700],
+			[0.293100, 0.928500],
+			[0.567400, 0.705800],
+			[0.754300, 0.447900],
+			[0.282600, 0.141000],
+			[0.893800, 0.591700],
+			[0.066100, 0.020100],
+			[0.383900, 0.686700],
+			[0.135800, 0.790300],
+			[0.153900, 0.376100],
+			[0.563900, 0.313300],
+			[0.397100, 0.315400],
+			[0.595800, 0.503400],
+			[0.638100, 0.822000],
+			[0.864600, 0.325900],
+			[0.475100, 0.843600],
+			[0.789900, 0.796300],
+			[0.968300, 0.437800],
+			[0.445300, 0.002600],
+			[0.956800, 0.135300],
+			[0.731300, 0.230800],
+			[0.151900, 0.639900],
+			[0.905400, 0.962200],
+			[0.094400, 0.171700],
+			[0.774900, 0.554600],
+			[0.173600, 0.904100],
+		];
+	}
+	else if(preset == "BlueNoise64")
+	{
+		g_controlPoints = [
+			[0.613200, 0.022000],
+			[0.482000, 0.160700],
+			[0.040700, 0.577700],
+			[0.314600, 0.511700],
+			[0.952900, 0.793200],
+			[0.022100, 0.259300],
+			[0.810700, 0.083700],
+			[0.293100, 0.928500],
+			[0.567400, 0.705800],
+			[0.754300, 0.447900],
+			[0.282600, 0.141000],
+			[0.893800, 0.591700],
+			[0.066100, 0.020100],
+			[0.383900, 0.686700],
+			[0.135800, 0.790300],
+			[0.153900, 0.376100],
+			[0.563900, 0.313300],
+			[0.397100, 0.315400],
+			[0.595800, 0.503400],
+			[0.638100, 0.822000],
+			[0.864600, 0.325900],
+			[0.475100, 0.843600],
+			[0.789900, 0.796300],
+			[0.968300, 0.437800],
+			[0.445300, 0.002600],
+			[0.956800, 0.135300],
+			[0.731300, 0.230800],
+			[0.151900, 0.639900],
+			[0.905400, 0.962200],
+			[0.094400, 0.171700],
+			[0.774900, 0.554600],
+			[0.173600, 0.904100],
+			[0.249300, 0.274200],
+			[0.710200, 0.654900],
+			[0.273500, 0.665400],
+			[0.474500, 0.582200],
+			[0.452100, 0.428900],
+			[0.207700, 0.019400],
+			[0.044300, 0.836200],
+			[0.189000, 0.524600],
+			[0.714500, 0.016200],
+			[0.564600, 0.911100],
+			[0.266100, 0.795800],
+			[0.590200, 0.151700],
+			[0.376200, 0.186400],
+			[0.713800, 0.886400],
+			[0.863200, 0.449000],
+			[0.282100, 0.397500],
+			[0.920900, 0.239700],
+			[0.814900, 0.688500],
+			[0.755800, 0.350900],
+			[0.051300, 0.710700],
+			[0.666000, 0.321700],
+			[0.358900, 0.857000],
+			[0.324300, 0.046800],
+			[0.037600, 0.345800],
+			[0.621100, 0.239000],
+			[0.936400, 0.701500],
+			[0.102500, 0.506500],
+			[0.814400, 0.963500],
+			[0.988800, 0.910900],
+			[0.870300, 0.868700],
+			[0.930500, 0.044200],
+			[0.362400, 0.769600],
+		];
+	}	
+	else if(preset == "BlueNoise128")
+	{
+		g_controlPoints = [
+			[0.613200, 0.022000],
+			[0.482000, 0.160700],
+			[0.040700, 0.577700],
+			[0.314600, 0.511700],
+			[0.952900, 0.793200],
+			[0.022100, 0.259300],
+			[0.810700, 0.083700],
+			[0.293100, 0.928500],
+			[0.567400, 0.705800],
+			[0.754300, 0.447900],
+			[0.282600, 0.141000],
+			[0.893800, 0.591700],
+			[0.066100, 0.020100],
+			[0.383900, 0.686700],
+			[0.135800, 0.790300],
+			[0.153900, 0.376100],
+			[0.563900, 0.313300],
+			[0.397100, 0.315400],
+			[0.595800, 0.503400],
+			[0.638100, 0.822000],
+			[0.864600, 0.325900],
+			[0.475100, 0.843600],
+			[0.789900, 0.796300],
+			[0.968300, 0.437800],
+			[0.445300, 0.002600],
+			[0.956800, 0.135300],
+			[0.731300, 0.230800],
+			[0.151900, 0.639900],
+			[0.905400, 0.962200],
+			[0.094400, 0.171700],
+			[0.774900, 0.554600],
+			[0.173600, 0.904100],
+			[0.249300, 0.274200],
+			[0.710200, 0.654900],
+			[0.273500, 0.665400],
+			[0.474500, 0.582200],
+			[0.452100, 0.428900],
+			[0.207700, 0.019400],
+			[0.044300, 0.836200],
+			[0.189000, 0.524600],
+			[0.714500, 0.016200],
+			[0.564600, 0.911100],
+			[0.266100, 0.795800],
+			[0.590200, 0.151700],
+			[0.376200, 0.186400],
+			[0.713800, 0.886400],
+			[0.863200, 0.449000],
+			[0.282100, 0.397500],
+			[0.920900, 0.239700],
+			[0.814900, 0.688500],
+			[0.755800, 0.350900],
+			[0.051300, 0.710700],
+			[0.666000, 0.321700],
+			[0.358900, 0.857000],
+			[0.324300, 0.046800],
+			[0.037600, 0.345800],
+			[0.621100, 0.239000],
+			[0.936400, 0.701500],
+			[0.102500, 0.506500],
+			[0.814400, 0.963500],
+			[0.988800, 0.910900],
+			[0.870300, 0.868700],
+			[0.930500, 0.044200],
+			[0.362400, 0.769600],
+			[0.186500, 0.112800],
+			[0.636600, 0.413800],
+			[0.831200, 0.219300],
+			[0.472300, 0.748800],
+			[0.673400, 0.528700],
+			[0.676000, 0.146900],
+			[0.388800, 0.544100],
+			[0.664500, 0.730400],
+			[0.464000, 0.264200],
+			[0.505200, 0.067900],
+			[0.559400, 0.592800],
+			[0.521300, 0.378100],
+			[0.072300, 0.919300],
+			[0.309500, 0.600100],
+			[0.391900, 0.096900],
+			[0.529700, 0.224700],
+			[0.151500, 0.286400],
+			[0.948100, 0.528200],
+			[0.626300, 0.640600],
+			[0.934100, 0.363300],
+			[0.496600, 0.669800],
+			[0.863900, 0.143600],
+			[0.990300, 0.985900],
+			[0.218100, 0.437300],
+			[0.070400, 0.421600],
+			[0.390200, 0.937200],
+			[0.549800, 0.804400],
+			[0.526900, 0.988500],
+			[0.872000, 0.759400],
+			[0.202700, 0.739800],
+			[0.507600, 0.513500],
+			[0.796200, 0.290200],
+			[0.372400, 0.399600],
+			[0.031300, 0.141600],
+			[0.543100, 0.449500],
+			[0.790400, 0.872800],
+			[0.159700, 0.203500],
+			[0.223100, 0.598100],
+			[0.718900, 0.811800],
+			[0.412600, 0.609900],
+			[0.016300, 0.499100],
+			[0.851400, 0.526800],
+			[0.647400, 0.927400],
+			[0.733000, 0.098200],
+			[0.212700, 0.347200],
+			[0.968000, 0.636800],
+			[0.323600, 0.249900],
+			[0.090300, 0.243200],
+			[0.107000, 0.103100],
+			[0.146400, 0.966400],
+			[0.668800, 0.071300],
+			[0.739200, 0.716500],
+			[0.859100, 0.036900],
+			[0.201100, 0.829000],
+			[0.462600, 0.917900],
+			[0.322600, 0.708700],
+			[0.149100, 0.048600],
+			[0.257100, 0.543200],
+			[0.250400, 0.075300],
+			[0.007200, 0.074100],
+			[0.760000, 0.162200],
+			[0.465700, 0.337200],
+			[0.329900, 0.339100],
+			[0.255300, 0.874900],
+		];
+	}	
+	else if(preset == "2x2Grid")
+	{
+		g_controlPoints = [];
+		for (ix = 0; ix < 2; ix++)
+			for (iy = 0; iy < 2; iy++)
+				g_controlPoints.push([ix / 2, iy / 2]);
+	}
+	else if(preset == "3x3Grid")
+	{
+		g_controlPoints = [];
+		for (ix = 0; ix < 3; ix++)
+			for (iy = 0; iy < 3; iy++)
+				g_controlPoints.push([ix / 3, iy / 3]);
+	}
+	else if(preset == "4x4Grid")
+	{
+		g_controlPoints = [];
+		for (ix = 0; ix < 4; ix++)
+			for (iy = 0; iy < 4; iy++)
+				g_controlPoints.push([ix / 4, iy / 4]);
+	}	
+	else if(preset == "4x2Grid")
+	{
+		g_controlPoints = [];
+		for (ix = 0; ix < 4; ix++)
+			for (iy = 0; iy < 2; iy++)
+				g_controlPoints.push([ix / 4, iy / 2]);
+	}	
+
+/*
+				<option value="BlueNoise">Blue Noise</option>
+				<option value="2x2Grid">2x2 Grid</option>
+				<option value="3x3Grid">3x3 Grid</option>
+				<option value="4x4Grid">4x4 Grid</option>
+				<option value="4x4Grid">4x2 Grid</option>
+*/
+
+	RedrawGraph();
 }
 
 </script>
@@ -537,11 +843,24 @@ function OnClickFrequency(mousePos)
 	<tr>
 		<td>Step Count:</td>
 		<td><input type="text" id="stepCount" value="10" onchange="val = parseInt(document.getElementById('stepCount').value); document.getElementById('stepCount').value = val; g_stepCount = val;  RedrawGraph();" /></td>
-	</tr>		
+	</tr>
+	<tr>
+		<td>Preset Point Sets:</td>
+		<td>
+			<select name="Preset" id="Preset" onChange="OnPresetChange();">
+				<option value=""></option>
+				<option value="Clear">Clear</option>
+				<option value="BlueNoise32">Blue Noise (32)</option>
+				<option value="BlueNoise64">Blue Noise (64)</option>
+				<option value="BlueNoise128">Blue Noise (128)</option>
+				<option value="2x2Grid">2x2 Grid</option>
+				<option value="3x3Grid">3x3 Grid</option>
+				<option value="4x4Grid">4x4 Grid</option>
+				<option value="4x2Grid">4x2 Grid</option>
+			</select>
+		</td>
+	</tr>	
 </table>
 <br>
 <div id="pointsText"></div>
 </body></html>
-
-TODO: presets
-TODO: make the frequency adjustments work correctly
