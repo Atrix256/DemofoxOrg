@@ -23,10 +23,15 @@ var g_mousePos = [0,0];
 var g_pointDragged = -1;
 var g_lastDragPos = [0,0];
 
-var g_numFrequenciesX = 8;
-var g_numFrequenciesY = 8;
+var g_numFrequenciesX = 4;
+var g_numFrequenciesY = 4;
+
+var g_stepSize = 0.001;
+var g_stepCount = 10;
 
 var g_controlPointSize = 15
+
+var g_increaseFreqOnClick = true;
 
 function onPageLoaded()
 {
@@ -233,6 +238,43 @@ function RedrawGraph()
 	// clear the graph panel
 	g_graphPanel.clear();
 
+	// draw 1/2 grid lines
+	g_graphPanel.context.strokeStyle='#00FF00';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();
+	var PA = MathPointToScreenPoint( 0.5, 0.0);
+	var PB = MathPointToScreenPoint( 0.5, 1.0);
+	g_graphPanel.context.moveTo(PA[0], PA[1]);
+	g_graphPanel.context.lineTo(PB[0], PB[1]);
+	var PA = MathPointToScreenPoint( 0.0, 0.5);
+	var PB = MathPointToScreenPoint( 1.0, 0.5);
+	g_graphPanel.context.moveTo(PA[0], PA[1]);
+	g_graphPanel.context.lineTo(PB[0], PB[1]);	
+	g_graphPanel.context.stroke();
+
+	// draw 1/4 grid lines
+	g_graphPanel.context.strokeStyle='#004000';	
+	g_graphPanel.context.lineWidth = 1;
+	g_graphPanel.context.beginPath();
+	var PA = MathPointToScreenPoint( 0.25, 0.0);
+	var PB = MathPointToScreenPoint( 0.25, 1.0);
+	g_graphPanel.context.moveTo(PA[0], PA[1]);
+	g_graphPanel.context.lineTo(PB[0], PB[1]);
+	var PA = MathPointToScreenPoint( 0.75, 0.0);
+	var PB = MathPointToScreenPoint( 0.75, 1.0);
+	g_graphPanel.context.moveTo(PA[0], PA[1]);
+	g_graphPanel.context.lineTo(PB[0], PB[1]);
+	var PA = MathPointToScreenPoint( 0.0, 0.25);
+	var PB = MathPointToScreenPoint( 1.0, 0.25);
+	g_graphPanel.context.moveTo(PA[0], PA[1]);
+	g_graphPanel.context.lineTo(PB[0], PB[1]);
+	var PA = MathPointToScreenPoint( 0.0, 0.75);
+	var PB = MathPointToScreenPoint( 1.0, 0.75);
+	g_graphPanel.context.moveTo(PA[0], PA[1]);
+	g_graphPanel.context.lineTo(PB[0], PB[1]);	
+	g_graphPanel.context.stroke();
+
+
 	// draw a box around [0,1]
 	g_graphPanel.context.strokeStyle='#0000FF';	
 	g_graphPanel.context.lineWidth = 1;
@@ -315,13 +357,48 @@ function RedrawGraph()
   g_graphPanel2.context.font = '20px serif';
   g_graphPanel2.context.fillStyle='#00FF00';	
 	g_graphPanel2.context.fillText("(0,0)", 5, 25);  
+
+	// list the points
+	var pointsText = document.getElementById("pointsText");
+	var thePoints = "Points: ";
+	for (var i = 0; i < g_controlPoints.length; ++i)
+	{
+		if (i == 0)
+			thePoints += "[" + String(g_controlPoints[i][0].toFixed(3)) + ", " + String(g_controlPoints[i][1].toFixed(3)) + "]";
+		else
+			thePoints += ", [" + String(g_controlPoints[i][0].toFixed(3)) + ", " + String(g_controlPoints[i][1].toFixed(3)) + "]";
+	}
+
+/*
+	thePoints += "<br><br><b><u>Normalized Gradients</u></b>"
+	for (var i = 1; i <= g_numFrequencies; i++)
+	{
+		var gradient = GetGradient(i);
+		thePoints += "<br><br>" + String(i) + "hz: ["
+		for (var j = 0; j < gradient.length; ++j)
+		{
+			if (j == 0)
+				thePoints += String(gradient[j].toFixed(2));
+			else
+				thePoints += ", " + String(gradient[j].toFixed(2));
+		}
+		thePoints += "]";
+	}
+	*/
+
+	pointsText.innerHTML = thePoints;	
+}
+
+function OnClickFreqChange()
+{
+	g_increaseFreqOnClick = (document.getElementById("OnClickFreq").value == "Increase");
 }
 
 </script>
 </head>
 <body>
 <h1>2D Point Set Frequencies</h1>
-<b>Click and drag points.  Double click on a point to remove it.  Double click on an empty space to add a point.</b><br/><br/>
+<b>Click and drag points.  Double click on a point to remove it.  Double click on an empty space to add a point. Click on frequency cell to increase or decrease frequency magnitude.</b><br/><br/>
 <table>
 	<tr>
 		<td>
@@ -335,14 +412,35 @@ function RedrawGraph()
 <table style="border: 1px solid #00FF00">
 	<tr>
 		<td>Max Frequency X:</td>
-		<td><input type="text" id="numFrequenciesX" value="8" onchange="val = parseInt(document.getElementById('numFrequenciesX').value); document.getElementById('numFrequenciesX').value = val; g_numFrequenciesX = val; RedrawGraph();" /></td>
+		<td><input type="text" id="numFrequenciesX" value="4" onchange="val = parseInt(document.getElementById('numFrequenciesX').value); document.getElementById('numFrequenciesX').value = val; g_numFrequenciesX = val; RedrawGraph();" /></td>
 	</tr>
 	<tr>
 		<td>Max Frequency Y:</td>
-		<td><input type="text" id="numFrequenciesY" value="8" onchange="val = parseInt(document.getElementById('numFrequenciesY').value); document.getElementById('numFrequenciesY').value = val; g_numFrequenciesY = val; RedrawGraph();" /></td>
+		<td><input type="text" id="numFrequenciesY" value="4" onchange="val = parseInt(document.getElementById('numFrequenciesY').value); document.getElementById('numFrequenciesY').value = val; g_numFrequenciesY = val; RedrawGraph();" /></td>
 	</tr>	
+	<tr>
+		<td>On Click</td>
+		<td>
+			<select name="OnClickFreq" id="Preset" onChange="OnClickFreqChange();">
+				<option value="Increase">Increase Frequency</option>
+				<option value="Decrease">Decrease Frequency</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td>Step Size:</td>
+		<td><input type="text" id="stepSize" value="0.001" onchange="val = parseFloat(document.getElementById('stepSize').value); document.getElementById('stepSize').value = val; g_stepSize = val;  RedrawGraph();" /></td>
+	</tr>
+	<tr>
+		<td>Step Count:</td>
+		<td><input type="text" id="stepCount" value="10" onchange="val = parseInt(document.getElementById('stepCount').value); document.getElementById('stepCount').value = val; g_stepCount = val;  RedrawGraph();" /></td>
+	</tr>		
 </table>
 <br>
+<div id="pointsText"></div>
 </body></html>
 
-TODO: why does having only one point not result in a flat white result, like it does for 1d? they are multiplied together so it should
+TODO: presets
+TODO: click on frequency cell to increase or decrease frequency magnitude.
+TODO: show points and gradients like 1d in text
+TODO: why doesn't having just 1 point make a solid white background?
