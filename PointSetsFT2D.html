@@ -234,9 +234,48 @@ function DrawControlPoint(X, Y, dragging)
 	g_graphPanel.context.stroke();	
 }
 
-function DMagDPoint(hzX, hzY, pointIndex)
+function DMagDPointX(hzX, hzY, pointIndex)
 {
-	return [0.0, 0.0];
+	re = 0.0;
+	im = 0.0;
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var param = 2.0 * Math.PI * (hzX * g_controlPoints[i][0] + hzY * g_controlPoints[i][1]);
+		re += Math.cos(param);
+		im += Math.sin(param);
+	}	
+
+	var param = 2.0 * Math.PI * (hzX * g_controlPoints[pointIndex][0]);
+
+	re *= -4 * Math.PI * hzX * Math.sin(param);
+	im *= 4 * Math.PI * hzX * Math.cos(param);
+
+	re /=  g_controlPoints.length;
+	im /=  g_controlPoints.length;
+
+	return re;
+}
+
+function DMagDPointY(hzX, hzY, pointIndex)
+{
+	re = 0.0;
+	im = 0.0;
+	for (i = 0; i < g_controlPoints.length; ++i)
+	{
+		var param = 2.0 * Math.PI * (hzX * g_controlPoints[i][0] + hzY * g_controlPoints[i][1]);
+		re += Math.cos(param);
+		im += Math.sin(param);
+	}	
+
+	var param = 2.0 * Math.PI * (hzY * g_controlPoints[pointIndex][1]);
+
+	re *= -4 * Math.PI * hzY * Math.sin(param);
+	im *= 4 * Math.PI * hzY * Math.cos(param);
+
+	re /=  g_controlPoints.length;
+	im /=  g_controlPoints.length;
+
+	return re;
 }
 
 function GetGradient(hzX, hzY)
@@ -246,7 +285,7 @@ function GetGradient(hzX, hzY)
 
 		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
 		{
-			dmdp = DMagDPoint(hzY, hzY, pointIndex);
+			dmdp = [DMagDPointX(hzY, hzY, pointIndex), DMagDPointY(hzY, hzY, pointIndex)];
 			length[0] += dmdp[0] * dmdp[0];
 			length[1] += dmdp[1] * dmdp[1];
 			gradient.push(dmdp);
@@ -425,22 +464,23 @@ function RedrawGraph()
 			thePoints += ", [" + String(g_controlPoints[i][0].toFixed(3)) + ", " + String(g_controlPoints[i][1].toFixed(3)) + "]";
 	}
 
-/*
 	thePoints += "<br><br><b><u>Normalized Gradients</u></b>"
-	for (var i = 1; i <= g_numFrequencies; i++)
+	for (var iy = 1; iy <= g_numFrequenciesY; iy++)
 	{
-		var gradient = GetGradient(i);
-		thePoints += "<br><br>" + String(i) + "hz: ["
-		for (var j = 0; j < gradient.length; ++j)
+		for (var ix = 1; ix <= g_numFrequenciesX; ix++)
 		{
-			if (j == 0)
-				thePoints += String(gradient[j].toFixed(2));
-			else
-				thePoints += ", " + String(gradient[j].toFixed(2));
+			var gradient = GetGradient(ix, iy);
+			thePoints += "<br><br>[" + String(ix) + ", "+ String(iy) + "] hz: ["
+			for (var j = 0; j < gradient.length; ++j)
+			{
+				if (j == 0)
+					thePoints += "[" + String(gradient[j][0].toFixed(2)) + ", " + String(gradient[j][1].toFixed(2)) + "]";
+				else
+					thePoints += ", [" + String(gradient[j][0].toFixed(2)) + ", " + String(gradient[j][1].toFixed(2)) + "]";
+			}
+			thePoints += "]";
 		}
-		thePoints += "]";
 	}
-	*/
 
 	pointsText.innerHTML = thePoints;	
 }
@@ -504,6 +544,4 @@ function OnClickFrequency(mousePos)
 </body></html>
 
 TODO: presets
-TODO: click on frequency cell to increase or decrease frequency magnitude.
-TODO: show points and gradients like 1d in text
-TODO: why doesn't having just 1 point make a solid white background?
+TODO: make the frequency adjustments work correctly
