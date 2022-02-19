@@ -234,27 +234,38 @@ function DrawControlPoint(X, Y, dragging)
 	g_graphPanel.context.stroke();	
 }
 
+function DMagDPoint(hzX, hzY, pointIndex)
+{
+	return [0.0, 0.0];
+}
+
 function GetGradient(hzX, hzY)
 {
 		var gradient = [];
 		var length = [0.0, 0.0];
 
-/*
 		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
 		{
-			dmdp = DMagDPoint(hz, pointIndex);
-			length += dmdp * dmdp;
+			dmdp = DMagDPoint(hzY, hzY, pointIndex);
+			length[0] += dmdp[0] * dmdp[0];
+			length[1] += dmdp[1] * dmdp[1];
 			gradient.push(dmdp);
 		}
 
-		if(length <= 0)
-			return [];
-
-		length = Math.sqrt(length);
-
-		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
-			gradient[pointIndex] = gradient[pointIndex]  / length;
-		*/
+		for (var i = 0; i < 2; i++)
+		{
+			if (length[i] <= 0)
+			{
+				for (var j = 0; j < g_controlPoints.length; j++)
+					gradient[j][i] = 0;
+			}
+			else
+			{
+				length[i] = Math.sqrt(length[i]);
+				for (var j = 0; j < g_controlPoints.length; j++)
+					gradient[j][i] = gradient[j][i] / length[i];
+			}
+		}
 
 		return gradient;
 }
