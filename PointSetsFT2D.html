@@ -43,7 +43,8 @@ function onPageLoaded()
 	g_canvas.addEventListener('dblclick', function() {OnDoubleClick();RedrawGraph();}, false);
 
 	g_graphPanel2 = setupCanvas('Graph2');
-	g_canvas2 = document.getElementById('Graph2');	
+	g_canvas2 = document.getElementById('Graph2');
+	g_canvas2.addEventListener('click', function(evt) {OnClickFrequency(GetMousePos(g_canvas2, event));RedrawGraph();}, false);
 	RedrawGraph();
 }
 
@@ -86,7 +87,7 @@ function setupCanvas(name)
 
 function GetMousePos(canvas, evt)
 {
-	var rect = g_canvas.getBoundingClientRect();
+	var rect = canvas.getBoundingClientRect();
 	var pos =
 	[
 		evt.clientX - rect.left,
@@ -233,6 +234,49 @@ function DrawControlPoint(X, Y, dragging)
 	g_graphPanel.context.stroke();	
 }
 
+function GetGradient(hzX, hzY)
+{
+		var gradient = [];
+		var length = [0.0, 0.0];
+
+/*
+		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+		{
+			dmdp = DMagDPoint(hz, pointIndex);
+			length += dmdp * dmdp;
+			gradient.push(dmdp);
+		}
+
+		if(length <= 0)
+			return [];
+
+		length = Math.sqrt(length);
+
+		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+			gradient[pointIndex] = gradient[pointIndex]  / length;
+		*/
+
+		return gradient;
+}
+
+function AdjustFrequency(hzX, hzY, multiplier)
+{
+	for (var ij = 0; ij < g_stepCount; ij++)
+	{
+		var gradient = GetGradient(hzX, hzY);
+		if (gradient.length == 0)
+			return;
+
+		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+		{
+			g_controlPoints[pointIndex][0] = (g_controlPoints[pointIndex][0] + gradient[pointIndex][0] * multiplier * g_stepSize + 10) % 1;
+			g_controlPoints[pointIndex][1] = (g_controlPoints[pointIndex][1] + gradient[pointIndex][1] * multiplier * g_stepSize + 10) % 1;
+		}
+	}
+
+	RedrawGraph();
+}
+
 function RedrawGraph()
 {
 	// clear the graph panel
@@ -313,8 +357,9 @@ function RedrawGraph()
 		    im = 0.0;
 		    for (pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
 		    {
-		    	re += Math.cos(2.0 * Math.PI * ix * g_controlPoints[pointIndex][0]) * Math.cos(2.0 * Math.PI * iy * g_controlPoints[pointIndex][1]) / g_controlPoints.length;
-		    	im += Math.sin(2.0 * Math.PI * ix * g_controlPoints[pointIndex][0]) * Math.sin(2.0 * Math.PI * iy * g_controlPoints[pointIndex][1]) / g_controlPoints.length;
+		    	var param = 2.0 * Math.PI * (ix * g_controlPoints[pointIndex][0] + iy * g_controlPoints[pointIndex][1]);
+		    	re += Math.cos(param) / g_controlPoints.length;
+		    	im += Math.sin(param) / g_controlPoints.length;
 		    }
 		    mag = Math.sqrt(re*re + im*im);
 		    phase = Math.atan2(im, re);
@@ -394,6 +439,13 @@ function OnClickFreqChange()
 	g_increaseFreqOnClick = (document.getElementById("OnClickFreq").value == "Increase");
 }
 
+function OnClickFrequency(mousePos)
+{
+	var hzX = Math.max(Math.min(Math.floor(mousePos[0] * g_numFrequenciesX / 400), g_numFrequenciesX-1), 0);
+	var hzY = Math.max(Math.min(Math.floor(mousePos[1] * g_numFrequenciesY / 400), g_numFrequenciesX-1), 0);
+	AdjustFrequency(hzX, hzY, g_increaseFreqOnClick ? 1.0 : -1.0);
+}
+
 </script>
 </head>
 <body>
@@ -421,7 +473,7 @@ function OnClickFreqChange()
 	<tr>
 		<td>On Click</td>
 		<td>
-			<select name="OnClickFreq" id="Preset" onChange="OnClickFreqChange();">
+			<select name="OnClickFreq" id="OnClickFreq" onChange="OnClickFreqChange();">
 				<option value="Increase">Increase Frequency</option>
 				<option value="Decrease">Decrease Frequency</option>
 			</select>
