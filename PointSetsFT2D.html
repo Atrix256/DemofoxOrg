@@ -492,8 +492,8 @@ function OnClickFreqChange()
 
 function OnClickFrequency(mousePos)
 {
-	var hzX = Math.max(Math.min(Math.floor(mousePos[0] * g_numFrequenciesX / 400), g_numFrequenciesX-1), 0);
-	var hzY = Math.max(Math.min(Math.floor(mousePos[1] * g_numFrequenciesY / 400), g_numFrequenciesX-1), 0);
+	var hzX = Math.max(Math.min(Math.floor(mousePos[0] * g_numFrequenciesX / 400), g_numFrequenciesX-1), 0) + 1;
+	var hzY = Math.max(Math.min(Math.floor(mousePos[1] * g_numFrequenciesY / 400), g_numFrequenciesX-1), 0) + 1;
 	AdjustFrequency(hzX, hzY, g_increaseFreqOnClick ? 1.0 : -1.0);
 }
 
