@@ -281,29 +281,28 @@ function DMagDPointY(hzX, hzY, pointIndex)
 function GetGradient(hzX, hzY)
 {
 		var gradient = [];
-		var length = [0.0, 0.0];
+		var length = 0.0;
 
 		for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
 		{
 			dmdp = [DMagDPointX(hzX, hzY, pointIndex), DMagDPointY(hzX, hzY, pointIndex)];
-			length[0] += dmdp[0] * dmdp[0];
-			length[1] += dmdp[1] * dmdp[1];
+			length += Math.sqrt(dmdp[0] * dmdp[0] + dmdp[1] * dmdp[1]);
 			gradient.push(dmdp);
+		}
+
+		if(length <= 0)
+		{
+			gradient = [];
+			for (var pointIndex = 0; pointIndex < g_controlPoints.length; ++pointIndex)
+				gradient.push([0,0]);
+			return gradient;
 		}
 
 		for (var i = 0; i < 2; i++)
 		{
-			if (length[i] <= 0)
-			{
-				for (var j = 0; j < g_controlPoints.length; j++)
-					gradient[j][i] = 0;
-			}
-			else
-			{
 				length[i] = Math.sqrt(length[i]);
 				for (var j = 0; j < g_controlPoints.length; j++)
-					gradient[j][i] = gradient[j][i] / length[i];
-			}
+					gradient[j][i] = gradient[j][i] / length;
 		}
 
 		return gradient;
