@@ -310,6 +310,9 @@ function GetGradient(hzX, hzY)
 
 function AdjustFrequency(hzX, hzY, multiplier)
 {
+	// multiply the step size by the number of points so they move roughly the same amount regardless of number of points
+	multiplier *= g_controlPoints.length;
+
 	//alert(String(hzX) + " " + String(hzY) + " " + String(multiplier));
 	for (var ij = 0; ij < g_stepCount; ij++)
 	{

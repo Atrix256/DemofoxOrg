@@ -275,6 +275,9 @@ function GetGradient(hz)
 
 function AdjustFrequency(hz, multiplier)
 {
+	// multiply the step size by the number of points so they move roughly the same amount regardless of number of points
+	multiplier *= g_controlPoints.length;
+	
 	for (var ij = 0; ij < g_stepCount; ij++)
 	{
 		var gradient = GetGradient(hz);
