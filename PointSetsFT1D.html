@@ -243,11 +243,8 @@ function DMagDPoint(hz, pointIndex)
 
 	re *= -4 * Math.PI * hz * Math.sin(2 * Math.PI * hz * g_controlPoints[pointIndex]);
 	im *= 4 * Math.PI * hz * Math.cos(2 * Math.PI * hz * g_controlPoints[pointIndex]);
-
-	re /=  g_controlPoints.length;
-	im /=  g_controlPoints.length;
-
-	return re;
+	
+	return re+im;
 }
 
 function GetGradient(hz)
@@ -277,7 +274,7 @@ function AdjustFrequency(hz, multiplier)
 {
 	// multiply the step size by the number of points so they move roughly the same amount regardless of number of points
 	multiplier *= g_controlPoints.length;
-	
+
 	for (var ij = 0; ij < g_stepCount; ij++)
 	{
 		var gradient = GetGradient(hz);

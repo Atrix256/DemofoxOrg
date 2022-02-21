@@ -245,15 +245,12 @@ function DMagDPointX(hzX, hzY, pointIndex)
 		im += Math.sin(param);
 	}	
 
-	var param = 2.0 * Math.PI * (hzX * g_controlPoints[pointIndex][0]);
+	var param = 2.0 * Math.PI * (hzX * g_controlPoints[pointIndex][0] + hzY * g_controlPoints[pointIndex][1]);
 
 	re *= -4 * Math.PI * hzX * Math.sin(param);
 	im *= 4 * Math.PI * hzX * Math.cos(param);
 
-	re /=  g_controlPoints.length;
-	im /=  g_controlPoints.length;
-
-	return re;
+	return re + im;
 }
 
 function DMagDPointY(hzX, hzY, pointIndex)
@@ -267,15 +264,12 @@ function DMagDPointY(hzX, hzY, pointIndex)
 		im += Math.sin(param);
 	}	
 
-	var param = 2.0 * Math.PI * (hzY * g_controlPoints[pointIndex][1]);
+	var param = 2.0 * Math.PI * (hzX * g_controlPoints[pointIndex][0] + hzY * g_controlPoints[pointIndex][1]);
 
 	re *= -4 * Math.PI * hzY * Math.sin(param);
 	im *= 4 * Math.PI * hzY * Math.cos(param);
 
-	re /=  g_controlPoints.length;
-	im /=  g_controlPoints.length;
-
-	return re;
+	return re + im;
 }
 
 function GetGradient(hzX, hzY)
@@ -300,7 +294,6 @@ function GetGradient(hzX, hzY)
 
 		for (var i = 0; i < 2; i++)
 		{
-				length[i] = Math.sqrt(length[i]);
 				for (var j = 0; j < g_controlPoints.length; j++)
 					gradient[j][i] = gradient[j][i] / length;
 		}
