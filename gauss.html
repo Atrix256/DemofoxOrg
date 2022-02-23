@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Gaussian Kernel Calculator</title>
+<style type="text/css">
+body { color: #00FF00; background-color:black;}
+</style>
+<script>
+
+function Generate()
+{
+  // calculate the kernel
+  var sigma = parseFloat(document.getElementById("Sigma").value);
+  var support = parseFloat(document.getElementById("Support").value);
+
+  var radius = Math.ceil(Math.sqrt(-2.0 * sigma * sigma * Math.log(1.0 - support)));
+
+  var minimalKernel = [];
+  var sum = 0.0;
+  for (var i = 0; i <= radius; ++i)
+  {
+  	var value = Math.exp(-(i*i)/(2.0 * sigma * sigma));
+  	sum += value;
+  	minimalKernel.push(value);
+  }
+  for (var i = 0; i <= radius; ++i)
+  	minimalKernel[i] /= sum;
+
+  // Show the 1d minimal kernel
+	kernel1DMinimal = document.getElementById("Kernel1DMinimal");
+  while (kernel1DMinimal.firstChild)
+      kernel1DMinimal.removeChild(kernel1DMinimal.firstChild);
+
+	var row = document.createElement('tr'); 
+	for (var i = 0; i <= radius; ++i)
+	{
+		var cell = document.createElement('td');
+		cell.style.border = "1px solid #00FF00";
+		cell.appendChild(document.createTextNode(String(i)));
+		row.appendChild(cell);		
+	}
+	kernel1DMinimal.appendChild(row);
+
+	var row = document.createElement('tr'); 
+	for (var i = 0; i <= radius; ++i)
+	{
+		var cell = document.createElement('td');
+		cell.style.border = "1px solid #00FF00";
+		cell.appendChild(document.createTextNode(String(minimalKernel[i].toFixed(4)) + ","));
+		row.appendChild(cell);
+	}
+  kernel1DMinimal.appendChild(row);
+
+  // Show the 1d kernel
+	kernel1D = document.getElementById("Kernel1D");
+  while (kernel1D.firstChild)
+      kernel1D.removeChild(kernel1D.firstChild);
+
+ 	var row = document.createElement('tr'); 
+	for (var i = -radius; i <= radius; ++i)
+	{
+		var cell = document.createElement('td');
+		cell.style.border = "1px solid #00FF00";
+		cell.appendChild(document.createTextNode(String(i)));
+		row.appendChild(cell);		
+	}
+	kernel1D.appendChild(row);   
+
+	var row = document.createElement('tr'); 
+	for (var i = -radius; i <= radius; ++i)
+	{
+		var cell = document.createElement('td');
+		cell.style.border = "1px solid #00FF00";
+		cell.appendChild(document.createTextNode(String(minimalKernel[Math.abs(i)].toFixed(4)) + ","));
+		row.appendChild(cell);
+	}
+  kernel1D.appendChild(row);
+
+  // show the 2d kernel
+	kernel2D = document.getElementById("Kernel2D");
+  while (kernel2D.firstChild)
+      kernel2D.removeChild(kernel2D.firstChild);
+
+	for (var j = -radius; j <= radius; ++j)
+	{
+		var row = document.createElement('tr'); 
+		for (var i = -radius; i <= radius; ++i)
+		{
+			var cell = document.createElement('td');
+			cell.style.border = "1px solid #00FF00";
+			cell.appendChild(document.createTextNode(String((minimalKernel[Math.abs(i)] * minimalKernel[Math.abs(j)]).toFixed(4)) + ","));
+			row.appendChild(cell);
+		}
+	  kernel2D.appendChild(row);
+	}
+}
+
+</script>
+</head>
+<body>
+<h1>Gaussian Kernel Calculator</h1>
+Calculates a normalised Gaussian Kernel of the given sigma and support. Support is the percentage of the gaussian energy that the kernel covers and is between 0 and 1.  Lower values make smaller but lower quality kernels. Kernels are symmetric around zero and higher dimensional kernels are just tensor products of 1d kernels, so the minimal 1d kernel is all that is really needed if you use the same sigma for each axis.<br/><br/>
+<table>
+	<tr>
+		<td>Sigma:</td>
+		<td><input type="text" id="Sigma" value="1.0" onchange="document.getElementById('Sigma').value = Math.max(Math.abs(parseFloat(document.getElementById('Sigma').value)), 0);" /></td>
+	</tr>
+	<tr>
+		<td>Support:</td>
+		<td><input type="text" id="Support" value="0.995" onchange="document.getElementById('Support').value = Math.min(Math.max(Math.abs(parseFloat(document.getElementById('Support').value)), 0.01), 0.9999);" /></td>
+	</tr>
+</table>
+<input type=button onclick="Generate();" value="Calculate"/>
+<br/><br/>
+2D Kernel<br/>
+<table id="Kernel2D"></table>
+<br/>
+1D Kernel<br/>
+<table id="Kernel1D"></table>
+<br/>
+1D Minimal Kernel<br/>
+<table id="Kernel1DMinimal"></table>
+</body></html>
+
+<br/><br/>
