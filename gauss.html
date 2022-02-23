@@ -6,6 +6,32 @@ body { color: #00FF00; background-color:black;}
 </style>
 <script>
 
+function erf(x) {
+  // save the sign of x
+  var sign = (x >= 0) ? 1 : -1;
+  x = Math.abs(x);
+
+  // constants
+  var a1 =  0.254829592;
+  var a2 = -0.284496736;
+  var a3 =  1.421413741;
+  var a4 = -1.453152027;
+  var a5 =  1.061405429;
+  var p  =  0.3275911;
+
+  // A&S formula 7.1.26
+  var t = 1.0/(1.0 + p*x);
+  var y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return sign * y; // erf(-x) = -erf(x);
+}
+
+function IntegrateGaussian(x, sigma)
+{
+  p1 = erf((x-0.5)/sigma*Math.sqrt(0.5));
+  p2 = erf((x+0.5)/sigma*Math.sqrt(0.5));
+  return (p2-p1)/2.0;
+}
+
 function Generate()
 {
   // calculate the kernel
@@ -18,8 +44,11 @@ function Generate()
   var sum = 0.0;
   for (var i = 0; i <= radius; ++i)
   {
-  	var value = Math.exp(-(i*i)/(2.0 * sigma * sigma));
-  	sum += value;
+  	var value = IntegrateGaussian(i, sigma);;
+  	if (i == 0)
+  		sum += value;
+  	else
+  		sum += value * 2;
   	minimalKernel.push(value);
   }
   for (var i = 0; i <= radius; ++i)
@@ -98,7 +127,7 @@ function Generate()
 </head>
 <body>
 <h1>Gaussian Kernel Calculator</h1>
-Calculates a normalised Gaussian Kernel of the given sigma and support. Support is the percentage of the gaussian energy that the kernel covers and is between 0 and 1.  Lower values make smaller but lower quality kernels. Kernels are symmetric around zero and higher dimensional kernels are just tensor products of 1d kernels, so the minimal 1d kernel is all that is really needed if you use the same sigma for each axis.<br/><br/>
+Calculates a normalised Gaussian Kernel of the given sigma and support. Support is the percentage of the gaussian energy that the kernel covers and is between 0 and 1.  Lower values make smaller but lower quality kernels. Kernels are symmetric around zero and higher dimensional kernels are just tensor products of 1d kernels, so the minimal 1d kernel is all that is really needed if you use the same sigma for each axis. Small sigma correction is used to make sigmas smaller than 1.0 more accurate (<a href="https://bartwronski.com/2021/10/31/practical-gaussian-filter-binomial-filter-and-small-sigma-gaussians/">https://bartwronski.com/2021/10/31/practical-gaussian-filter-binomial-filter-and-small-sigma-gaussians/amp/</a>)<br/><br/>
 <table>
 	<tr>
 		<td>Sigma:</td>
